@@ -1,7 +1,28 @@
 ---
 import '@/styles/knowledge.css';
 const { nodes = [], edges = [] } = Astro.props;
+const dates = nodes.map((node: any) => Number(node.publishedAt || 0)).filter(Boolean);
+const minDate = dates.length ? Math.min(...dates) : 0;
+const maxDate = dates.length ? Math.max(...dates) : 0;
 ---
+<div class="graph-controls" data-graph-controls>
+  <label class="graph-time-control">
+    <span>Time machine</span>
+    <input id="graph-time" type="range" min={minDate} max={maxDate || minDate} value={maxDate || minDate} step="86400000" disabled={minDate === maxDate} />
+    <strong id="graph-time-label">All published notes</strong>
+  </label>
+  <div class="graph-path-control">
+    <select id="graph-path-from" aria-label="Shortest path start"></select>
+    <span>→</span>
+    <select id="graph-path-to" aria-label="Shortest path end"></select>
+    <button class="knowledge-action" id="graph-find-path" type="button">Find path</button>
+  </div>
+  <div class="graph-play-control">
+    <button class="knowledge-action" id="graph-constellation" type="button" aria-pressed="false">Constellation</button>
+    <button class="knowledge-action" id="graph-serendipity" type="button">Connect two ideas</button>
+  </div>
+</div>
+<div class="graph-status" id="graph-status" aria-live="polite">Hover a node to inspect its neighborhood.</div>
 <div class="graph-shell" data-knowledge-graph>
   <svg class="knowledge-graph" viewBox="0 0 960 610" role="img" aria-label="Interactive graph of notes and their relationships"></svg>
   <div class="graph-tooltip" hidden>
@@ -14,18 +35,27 @@ const { nodes = [], edges = [] } = Astro.props;
   <span class="collection"><i></i>Same series</span>
   <span><i></i>Shared tags / citation</span>
 </div>
-<p class="graph-note">Drag nodes to rearrange them. Hover to isolate neighbors; click a node to open the note. The graph is generated from published notes at build time.</p>
+<p class="graph-note">Drag nodes to rearrange them. The time machine reveals the notebook as it existed at an earlier date. Shortest path and Serendipity use only relationships that already exist in the graph.</p>
 
-<script is:inline define:vars={{ nodes, edges }}>
+<script is:inline define:vars={{ nodes, edges, minDate, maxDate }}>
 (() => {
   const shell = document.querySelector('[data-knowledge-graph]');
   const svg = shell?.querySelector('svg');
   const tooltip = shell?.querySelector('.graph-tooltip');
+  const timeInput = document.getElementById('graph-time');
+  const timeLabel = document.getElementById('graph-time-label');
+  const status = document.getElementById('graph-status');
+  const fromSelect = document.getElementById('graph-path-from');
+  const toSelect = document.getElementById('graph-path-to');
+  const pathButton = document.getElementById('graph-find-path');
+  const constellationButton = document.getElementById('graph-constellation');
+  const serendipityButton = document.getElementById('graph-serendipity');
   if (!shell || !svg || !tooltip || !Array.isArray(nodes) || !nodes.length) return;
 
   const NS = 'http://www.w3.org/2000/svg';
   const width = 960;
   const height = 610;
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const nodeMap = new Map();
   const neighbors = new Map(nodes.map(node => [node.id, new Set()]));
   edges.forEach(edge => {
@@ -38,11 +68,13 @@ const { nodes = [], edges = [] } = Astro.props;
     const radius = Math.min(220, 72 + nodes.length * 13);
     const item = {
       ...node,
+      publishedAt: Number(node.publishedAt || 0),
       x: width / 2 + Math.cos(angle) * radius,
       y: height / 2 + Math.sin(angle) * radius,
       vx: 0,
       vy: 0,
-      fixed: false
+      fixed: false,
+      visible: true
     };
     nodeMap.set(node.id, item);
     return item;
@@ -82,6 +114,12 @@ const { nodes = [], edges = [] } = Astro.props;
     return { node, group };
   });
 
+  const visibleIds = () => new Set(state.filter(node => node.visible).map(node => node.id));
+  const visibleEdges = () => {
+    const ids = visibleIds();
+    return edges.filter(edge => ids.has(edge.source) && ids.has(edge.target));
+  };
+
   const update = () => {
     edgeEls.forEach(({ edge, line }) => {
       const a = nodeMap.get(edge.source);
@@ -95,12 +133,22 @@ const { nodes = [], edges = [] } = Astro.props;
     nodeEls.forEach(({ node, group }) => group.setAttribute('transform', `translate(${node.x},${node.y})`));
   };
 
-  let frame = 0;
-  const simulate = () => {
-    for (let i = 0; i < state.length; i += 1) {
-      for (let j = i + 1; j < state.length; j += 1) {
-        const a = state[i];
-        const b = state[j];
+  let settleFrames = 0;
+  let constellation = false;
+  let animationRunning = false;
+  let lastFrame = 0;
+  const simulate = (timestamp = 0) => {
+    animationRunning = true;
+    if (constellation && timestamp - lastFrame < 45) {
+      requestAnimationFrame(simulate);
+      return;
+    }
+    lastFrame = timestamp;
+    const activeState = state.filter(node => node.visible);
+    for (let i = 0; i < activeState.length; i += 1) {
+      for (let j = i + 1; j < activeState.length; j += 1) {
+        const a = activeState[i];
+        const b = activeState[j];
         let dx = b.x - a.x;
         let dy = b.y - a.y;
         const d2 = Math.max(400, dx * dx + dy * dy);
@@ -115,7 +163,7 @@ const { nodes = [], edges = [] } = Astro.props;
       }
     }
 
-    edges.forEach(edge => {
+    visibleEdges().forEach(edge => {
       const a = nodeMap.get(edge.source);
       const b = nodeMap.get(edge.target);
       if (!a || !b) return;
@@ -130,33 +178,46 @@ const { nodes = [], edges = [] } = Astro.props;
       b.vy -= dy * pull;
     });
 
-    state.forEach(node => {
+    activeState.forEach((node, index) => {
       if (node.fixed) return;
       node.vx += (width / 2 - node.x) * .0007;
       node.vy += (height / 2 - node.y) * .0007;
-      node.vx *= .88;
-      node.vy *= .88;
+      if (constellation) {
+        const phase = timestamp * .00018 + index * .9;
+        node.vx += Math.cos(phase) * .012;
+        node.vy += Math.sin(phase) * .012;
+      }
+      node.vx *= constellation ? .93 : .88;
+      node.vy *= constellation ? .93 : .88;
       node.x = Math.max(35, Math.min(width - 150, node.x + node.vx));
       node.y = Math.max(28, Math.min(height - 28, node.y + node.vy));
     });
     update();
-    frame += 1;
-    if (frame < 240) requestAnimationFrame(simulate);
+    settleFrames += 1;
+    if (constellation || settleFrames < 240) requestAnimationFrame(simulate);
+    else animationRunning = false;
+  };
+  const wakeSimulation = () => {
+    settleFrames = 0;
+    if (!animationRunning && !prefersReducedMotion) requestAnimationFrame(simulate);
   };
 
   const clearHighlight = () => {
-    nodeEls.forEach(({ group }) => group.classList.remove('is-active', 'is-dim'));
-    edgeEls.forEach(({ line }) => line.classList.remove('is-active', 'is-dim'));
+    nodeEls.forEach(({ group }) => group.classList.remove('is-active', 'is-dim', 'is-path'));
+    edgeEls.forEach(({ line }) => line.classList.remove('is-active', 'is-dim', 'is-path'));
     tooltip.hidden = true;
   };
 
   const highlight = (node, group) => {
+    if (!node.visible) return;
     const adjacent = neighbors.get(node.id) || new Set();
     nodeEls.forEach(({ node: other, group: otherGroup }) => {
+      if (!other.visible) return;
       otherGroup.classList.toggle('is-active', other.id === node.id || adjacent.has(other.id));
       otherGroup.classList.toggle('is-dim', other.id !== node.id && !adjacent.has(other.id));
     });
     edgeEls.forEach(({ edge, line }) => {
+      if (line.classList.contains('is-time-hidden')) return;
       const active = edge.source === node.id || edge.target === node.id;
       line.classList.toggle('is-active', active);
       line.classList.toggle('is-dim', !active);
@@ -164,7 +225,7 @@ const { nodes = [], edges = [] } = Astro.props;
     const title = tooltip.querySelector('strong');
     const copy = tooltip.querySelector('p');
     title.textContent = node.title;
-    copy.textContent = [node.category, node.collection, node.lang === 'zh' ? '中文' : 'EN', node.description].filter(Boolean).join(' · ');
+    copy.textContent = [node.publishedLabel, node.category, node.collection, node.lang === 'zh' ? '中文' : 'EN', node.description].filter(Boolean).join(' · ');
     tooltip.hidden = false;
     const shellRect = shell.getBoundingClientRect();
     const nodeRect = group.getBoundingClientRect();
@@ -172,17 +233,110 @@ const { nodes = [], edges = [] } = Astro.props;
     tooltip.style.top = `${Math.min(shellRect.height - 95, Math.max(12, nodeRect.top - shellRect.top + 18))}px`;
   };
 
+  const rebuildSelects = () => {
+    if (!fromSelect || !toSelect) return;
+    const previousFrom = fromSelect.value;
+    const previousTo = toSelect.value;
+    const active = state.filter(node => node.visible);
+    const fill = (select, previous, fallback) => {
+      select.replaceChildren();
+      active.forEach(node => {
+        const option = document.createElement('option');
+        option.value = node.id;
+        option.textContent = node.title;
+        select.appendChild(option);
+      });
+      select.value = active.some(node => node.id === previous) ? previous : (fallback || active[0]?.id || '');
+    };
+    fill(fromSelect, previousFrom, active[0]?.id);
+    fill(toSelect, previousTo, active[1]?.id || active[0]?.id);
+  };
+
+  const applyTime = cutoff => {
+    state.forEach(node => { node.visible = !node.publishedAt || node.publishedAt <= cutoff; });
+    nodeEls.forEach(({ node, group }) => group.classList.toggle('is-time-hidden', !node.visible));
+    edgeEls.forEach(({ edge, line }) => {
+      const a = nodeMap.get(edge.source);
+      const b = nodeMap.get(edge.target);
+      line.classList.toggle('is-time-hidden', !a?.visible || !b?.visible);
+    });
+    if (timeLabel) {
+      const showingAll = cutoff >= Number(maxDate || 0);
+      timeLabel.textContent = showingAll ? 'All published notes' : new Intl.DateTimeFormat('en', { year: 'numeric', month: 'short', day: 'numeric' }).format(new Date(cutoff));
+    }
+    if (status) status.textContent = `${state.filter(node => node.visible).length} notes visible at this point in time.`;
+    rebuildSelects();
+    clearHighlight();
+    wakeSimulation();
+  };
+
+  const adjacencyForVisible = () => {
+    const ids = visibleIds();
+    const map = new Map([...ids].map(id => [id, new Set()]));
+    visibleEdges().forEach(edge => {
+      map.get(edge.source)?.add(edge.target);
+      map.get(edge.target)?.add(edge.source);
+    });
+    return map;
+  };
+
+  const shortestPath = (start, goal) => {
+    if (!start || !goal) return [];
+    if (start === goal) return [start];
+    const adjacency = adjacencyForVisible();
+    const queue = [start];
+    const parent = new Map([[start, null]]);
+    while (queue.length) {
+      const current = queue.shift();
+      for (const next of adjacency.get(current) || []) {
+        if (parent.has(next)) continue;
+        parent.set(next, current);
+        if (next === goal) {
+          const path = [goal];
+          let cursor = current;
+          while (cursor) { path.push(cursor); cursor = parent.get(cursor); }
+          return path.reverse();
+        }
+        queue.push(next);
+      }
+    }
+    return [];
+  };
+
+  const showPath = (path, prefix = 'Path') => {
+    clearHighlight();
+    if (!path.length) {
+      if (status) status.textContent = 'No relationship path exists yet. That gap may itself be useful.';
+      return;
+    }
+    const pathSet = new Set(path);
+    nodeEls.forEach(({ node, group }) => {
+      if (!node.visible) return;
+      group.classList.toggle('is-path', pathSet.has(node.id));
+      group.classList.toggle('is-dim', !pathSet.has(node.id));
+    });
+    edgeEls.forEach(({ edge, line }) => {
+      if (line.classList.contains('is-time-hidden')) return;
+      const edgeOnPath = path.some((id, index) => index < path.length - 1 && ((edge.source === id && edge.target === path[index + 1]) || (edge.target === id && edge.source === path[index + 1])));
+      line.classList.toggle('is-path', edgeOnPath);
+      line.classList.toggle('is-dim', !edgeOnPath);
+    });
+    const names = path.map(id => nodeMap.get(id)?.title || id);
+    if (status) status.textContent = `${prefix}: ${names.join(' → ')}`;
+  };
+
   nodeEls.forEach(({ node, group }) => {
     group.addEventListener('mouseenter', () => highlight(node, group));
     group.addEventListener('mouseleave', clearHighlight);
     group.addEventListener('focus', () => highlight(node, group));
     group.addEventListener('blur', clearHighlight);
-    group.addEventListener('click', () => window.location.assign(node.href));
+    group.addEventListener('click', () => { if (node.visible) window.location.assign(node.href); });
     group.addEventListener('keydown', event => {
-      if (event.key === 'Enter') window.location.assign(node.href);
+      if (event.key === 'Enter' && node.visible) window.location.assign(node.href);
     });
 
     group.addEventListener('pointerdown', event => {
+      if (!node.visible) return;
       event.preventDefault();
       group.setPointerCapture(event.pointerId);
       node.fixed = true;
@@ -205,7 +359,48 @@ const { nodes = [], edges = [] } = Astro.props;
     });
   });
 
+  timeInput?.addEventListener('input', () => applyTime(Number(timeInput.value)));
+  pathButton?.addEventListener('click', () => showPath(shortestPath(fromSelect?.value, toSelect?.value), 'Shortest path'));
+
+  constellationButton?.addEventListener('click', () => {
+    constellation = !constellation;
+    constellationButton.setAttribute('aria-pressed', constellation ? 'true' : 'false');
+    constellationButton.classList.toggle('active', constellation);
+    if (status) status.textContent = constellation ? 'Constellation mode: the graph is gently drifting.' : 'Constellation mode paused.';
+    if (constellation) wakeSimulation();
+  });
+
+  serendipityButton?.addEventListener('click', () => {
+    const active = state.filter(node => node.visible);
+    if (active.length < 2) return;
+    let a = active[Math.floor(Math.random() * active.length)];
+    let b = active[Math.floor(Math.random() * active.length)];
+    for (let tries = 0; tries < 12 && b.id === a.id; tries += 1) b = active[Math.floor(Math.random() * active.length)];
+    if (fromSelect) fromSelect.value = a.id;
+    if (toSelect) toSelect.value = b.id;
+    const path = shortestPath(a.id, b.id);
+    showPath(path, `What connects “${a.title}” and “${b.title}”?`);
+  });
+
+  let idleTimer = 0;
+  const resetIdle = () => {
+    window.clearTimeout(idleTimer);
+    if (prefersReducedMotion) return;
+    idleTimer = window.setTimeout(() => {
+      if (constellation) return;
+      constellation = true;
+      constellationButton?.setAttribute('aria-pressed', 'true');
+      constellationButton?.classList.add('active');
+      if (status) status.textContent = 'Constellation mode started after a quiet moment.';
+      wakeSimulation();
+    }, 12000);
+  };
+  ['pointermove', 'keydown', 'click'].forEach(type => document.addEventListener(type, resetIdle, { passive: true }));
+
+  rebuildSelects();
+  applyTime(Number(maxDate || Date.now()));
   update();
-  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) simulate();
+  if (!prefersReducedMotion) requestAnimationFrame(simulate);
+  resetIdle();
 })();
 </script>
