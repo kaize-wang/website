@@ -3,6 +3,7 @@ import '@/styles/global.css';
 import '@/styles/interaction.css';
 import '@/styles/advanced-tools.css';
 import '@/styles/information-architecture.css';
+import UiLanguageToggle from '@/components/UiLanguageToggle.astro';
 import { site } from '@/site.config';
 import { getPublishedNotes, noteSlug } from '@/utils/notes';
 import { withBase } from '@/utils/url';
@@ -45,56 +46,94 @@ const notesNav = [
 ];
 const contextualNav = isResearchContext ? researchNav : isNotesContext ? notesNav : [];
 const contextualLabel = isResearchContext ? 'Research' : isNotesContext ? 'Notes' : '';
-const contextBack = isArticle ? { label: 'Notes', href: '/notes' } : null;
+const contextBack = isHome
+  ? null
+  : isArticle
+    ? { label: 'Notes', href: '/notes' }
+    : routePath === '/research' || routePath === '/notes' || routePath === '/about' || routePath === '/search'
+      ? { label: 'Home', href: '/' }
+      : isResearchContext
+        ? { label: 'Research', href: '/research' }
+        : isNotesContext
+          ? { label: 'Notes', href: '/notes' }
+          : { label: 'Home', href: '/' };
 
+const navZh: Record<string, string> = {
+  Home: '首页',
+  Research: '研究',
+  Notes: '笔记',
+  About: '关于',
+  Search: '搜索'
+};
 const commandNotes = await getPublishedNotes();
 const commandItems = [
   ...site.nav.map(item => ({
     type: 'Page',
+    typeZh: '页面',
     title: item.label,
+    titleZh: navZh[item.label] || item.label,
     description: item.label === 'Home' ? site.shortBio : `Open ${item.label}`,
+    descriptionZh: item.label === 'Home' ? site.shortBio : `打开${navZh[item.label] || item.label}`,
     href: withBase(item.href),
-    keywords: item.label
+    keywords: `${item.label} ${navZh[item.label] || ''}`
   })),
   {
     type: 'Map',
+    typeZh: '图谱',
     title: 'Knowledge Graph',
+    titleZh: '知识图谱',
     description: 'Time machine, shortest paths, backlinks, constellation, and serendipity.',
+    descriptionZh: '时间机器、最短路径、反向链接、星图与随机联想。',
     href: withBase('/graph'),
-    keywords: 'graph knowledge wiki backlinks network notes timeline time machine shortest path constellation serendipity'
+    keywords: 'graph knowledge wiki backlinks network notes timeline time machine shortest path constellation serendipity 知识图谱 时间 路径 星图'
   },
   {
     type: 'Papers',
+    typeZh: '论文',
     title: 'Paper Reading',
+    titleZh: '论文阅读',
     description: 'Literature reading dashboard with local revisit scheduling.',
+    descriptionZh: '论文阅读工作台与本地重读计划。',
     href: withBase('/papers'),
-    keywords: 'papers literature reading dashboard research revisit spaced repetition'
+    keywords: 'papers literature reading dashboard research revisit spaced repetition 论文 阅读 重读'
   },
   {
     type: 'Map',
+    typeZh: '图谱',
     title: 'Literature Map',
+    titleZh: '文献图谱',
     description: 'Explore reading notes, papers, and explicitly recorded references.',
+    descriptionZh: '查看阅读笔记、论文与明确记录的参考关系。',
     href: withBase('/literature'),
-    keywords: 'literature citations references papers map network'
+    keywords: 'literature citations references papers map network 文献 图谱 引用'
   },
   {
     type: 'Research',
+    typeZh: '研究',
     title: 'Questions Board',
+    titleZh: '研究问题',
     description: 'Track explicitly recorded open, exploring, reframed, and resolved questions.',
+    descriptionZh: '追踪明确记录的开放、探索、重构与已解决问题。',
     href: withBase('/questions'),
-    keywords: 'research questions open exploring resolved board'
+    keywords: 'research questions open exploring resolved board 研究 问题'
   },
   {
     type: 'Research',
+    typeZh: '研究',
     title: 'Research Sandbox',
+    titleZh: '研究沙盒',
     description: 'Open small interactive sketches for mechanism intuition.',
+    descriptionZh: '用于机制直觉的小型交互草图。',
     href: withBase('/sandbox'),
-    keywords: 'research sandbox intuition interactive toy warranty playground'
+    keywords: 'research sandbox intuition interactive toy warranty playground 研究 沙盒 直觉'
   },
   ...commandNotes.map(note => ({
     type: 'Note',
+    typeZh: '笔记',
     title: note.data.title,
+    titleZh: note.data.title,
     description: note.data.description,
+    descriptionZh: note.data.description,
     href: withBase(`/notes/${noteSlug(note.id)}/`),
     keywords: [
       note.data.category,
@@ -118,9 +157,16 @@ const commandItems = [
     <meta name="generator" content={Astro.generator} />
     <title>{pageTitle}</title>
     <script is:inline>
-      const saved = localStorage.getItem('theme');
-      const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      if (saved === 'dark' || (!saved && dark)) document.documentElement.dataset.theme = 'dark';
+      try {
+        const saved = localStorage.getItem('theme');
+        const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (saved === 'dark' || (!saved && dark)) document.documentElement.dataset.theme = 'dark';
+        const savedUiLanguage = localStorage.getItem('kaize-ui-language');
+        document.documentElement.dataset.uiLanguage = savedUiLanguage === 'zh' ? 'zh' : 'en';
+        document.documentElement.lang = savedUiLanguage === 'zh' ? 'zh-CN' : 'en';
+      } catch {
+        document.documentElement.dataset.uiLanguage = 'en';
+      }
     </script>
   </head>
   <body>
@@ -161,7 +207,10 @@ const commandItems = [
 
           <div class="sidebar-bottom">
             <span class="sidebar-small">Research · Notes · Writing</span>
-            <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Toggle light and dark theme" title="Toggle light/dark theme">◐</button>
+            <div class="sidebar-settings">
+              <UiLanguageToggle />
+              <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Toggle light and dark theme" title="Toggle light and dark theme">◐</button>
+            </div>
           </div>
         </div>
       </aside>
@@ -227,6 +276,8 @@ const commandItems = [
         let lastFocused = null;
 
         const normalize = value => String(value || '').toLowerCase();
+        const uiLanguage = () => window.__kaizeUi?.language === 'zh' ? 'zh' : 'en';
+        const uiValue = (item, key) => uiLanguage() === 'zh' ? (item[`${key}Zh`] || item[key]) : item[key];
 
         function syncSelection() {
           const links = [...results.querySelectorAll('a')];
@@ -242,7 +293,7 @@ const commandItems = [
           const q = normalize(query.trim());
           filtered = commandItems.filter(item => {
             if (!q) return true;
-            return normalize([item.title, item.description, item.keywords, item.type].join(' ')).includes(q);
+            return normalize([item.title, item.titleZh, item.description, item.descriptionZh, item.keywords, item.type, item.typeZh].join(' ')).includes(q);
           }).slice(0, 9);
           selected = 0;
           results.replaceChildren();
@@ -250,7 +301,7 @@ const commandItems = [
           if (!filtered.length) {
             const empty = document.createElement('p');
             empty.className = 'command-empty';
-            empty.textContent = 'No matching pages or notes.';
+            empty.textContent = window.__kaizeUi?.t('No matching pages or notes.', '没有匹配的页面或笔记。') || 'No matching pages or notes.';
             results.appendChild(empty);
             return;
           }
@@ -264,14 +315,14 @@ const commandItems = [
             const copy = document.createElement('span');
             copy.className = 'command-result-copy';
             const title = document.createElement('strong');
-            title.textContent = item.title;
+            title.textContent = uiValue(item, 'title');
             const desc = document.createElement('small');
-            desc.textContent = item.description || item.keywords || '';
+            desc.textContent = uiValue(item, 'description') || item.keywords || '';
             copy.append(title, desc);
 
             const type = document.createElement('span');
             type.className = 'command-result-type';
-            type.textContent = item.type;
+            type.textContent = uiValue(item, 'type');
             link.append(copy, type);
             link.addEventListener('mouseenter', () => {
               selected = index;
@@ -324,6 +375,9 @@ const commandItems = [
             event.preventDefault();
             closePalette();
           }
+        });
+        document.addEventListener('kaize:ui-language', () => {
+          if (input) renderResults(input.value);
         });
 
         document.addEventListener('keydown', event => {
