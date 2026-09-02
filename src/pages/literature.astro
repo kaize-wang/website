@@ -1,0 +1,86 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import SiteExtras from '@/components/SiteExtras.astro';
+import LiteratureMap from '@/components/LiteratureMap.astro';
+import '@/styles/knowledge.css';
+import { getPublishedNotes, noteSlug, normalizeWikiKey } from '@/utils/notes';
+import { withBase } from '@/utils/url';
+
+const notes = await getPublishedNotes();
+const paperMap = new Map<string, any>();
+const graphNodes: any[] = [];
+const graphEdges: any[] = [];
+const edgeSeen = new Set<string>();
+
+const paperKey = (paper: any) => paper.doi ? `doi:${paper.doi.toLowerCase()}` : `title:${normalizeWikiKey(paper.title)}`;
+const ensurePaper = (paper: any) => {
+  const key = paperKey(paper);
+  if (paperMap.has(key)) return paperMap.get(key);
+  const id = `paper:${paperMap.size + 1}`;
+  const node = {
+    id,
+    type: 'paper',
+    title: paper.title,
+    href: paper.url || (paper.doi ? `https://doi.org/${paper.doi}` : ''),
+    meta: [paper.authors, paper.venue, paper.year, paper.doi ? `DOI ${paper.doi}` : ''].flat().filter(Boolean).join(' · ')
+  };
+  paperMap.set(key, node);
+  graphNodes.push(node);
+  return node;
+};
+
+for (const note of notes) {
+  if (!note.data.paper && !note.data.references.length) continue;
+  const noteNode = {
+    id: `note:${note.id}`,
+    type: 'note',
+    title: note.data.title,
+    href: withBase(`/notes/${noteSlug(note.id)}/`),
+    meta: [note.data.collection || note.data.category, note.data.lang === 'zh' ? '中文' : 'EN'].join(' · ')
+  };
+  graphNodes.push(noteNode);
+  if (note.data.paper) {
+    const paperNode = ensurePaper({
+      ...note.data.paper,
+      authors: note.data.paper.authors.join(', ')
+    });
+    const key = `${noteNode.id}|${paperNode.id}|reads`;
+    if (!edgeSeen.has(key)) {
+      edgeSeen.add(key);
+      graphEdges.push({ source: noteNode.id, target: paperNode.id, type: 'reads' });
+    }
+  }
+  for (const reference of note.data.references) {
+    const paperNode = ensurePaper(reference);
+    const key = `${noteNode.id}|${paperNode.id}|reference`;
+    if (!edgeSeen.has(key)) {
+      edgeSeen.add(key);
+      graphEdges.push({ source: noteNode.id, target: paperNode.id, type: 'reference' });
+    }
+  }
+}
+
+const uniquePapers = paperMap.size;
+const readingNotes = graphNodes.filter(node => node.type === 'note').length;
+---
+<BaseLayout title="Literature Map" active="Notes">
+  <main class="site-shell">
+    <header class="page-hero">
+      <div class="eyebrow">Notes · Literature</div>
+      <h1>Literature Map</h1>
+      <p>A conservative map of the literature actually recorded in this notebook. Reading notes connect to their focal paper and to references explicitly listed in the note metadata.</p>
+      <div class="knowledge-links">
+        <a class="knowledge-link" href={withBase('/papers')}>← Paper Reading</a>
+        <a class="knowledge-link" href={withBase('/graph')}>Knowledge Graph</a>
+        <a class="knowledge-link" href={withBase('/questions')}>Questions</a>
+        <span class="knowledge-link">{readingNotes} reading notes</span>
+        <span class="knowledge-link">{uniquePapers} papers</span>
+      </div>
+    </header>
+    <section class="section" aria-labelledby="literature-map-title">
+      <div class="section-head"><h2 id="literature-map-title">Reading notes ↔ papers</h2><span class="section-kicker">Explicit relations only</span></div>
+      {graphNodes.length > 0 ? <LiteratureMap nodes={graphNodes} edges={graphEdges} /> : <p class="muted">The literature map will grow when Paper Reading notes and references are added.</p>}
+    </section>
+  </main>
+  <SiteExtras />
+</BaseLayout>
