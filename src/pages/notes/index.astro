@@ -3,6 +3,7 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
 import NoteList from '@/components/NoteList.astro';
 import SiteExtras from '@/components/SiteExtras.astro';
 import '@/styles/scholarly.css';
+import '@/styles/knowledge.css';
 import { getPublishedNotes, noteSlug } from '@/utils/notes';
 import { withBase } from '@/utils/url';
 const notes = await getPublishedNotes();
@@ -29,6 +30,10 @@ const paperReadingStart = paperReadingNotes[0];
         {categories.map(c => <a href={withBase(`/categories/${c.toLowerCase()}/`)}>{c}</a>)}
         <a href={withBase('/archive')}>Archive</a>
       </div>
+      <div class="knowledge-links">
+        <a class="knowledge-link" href={withBase('/graph')}>Knowledge Graph</a>
+        <a class="knowledge-link" href={withBase('/papers')}>Paper Reading Dashboard</a>
+      </div>
       {(collections.length > 0 || tags.length > 0) && (
         <div class="notes-browse">
           {collections.length > 0 && (
@@ -48,7 +53,10 @@ const paperReadingStart = paperReadingNotes[0];
           <h2 id="paper-reading-title">Paper Reading</h2>
           <p>精读论文时保留真正改变理解的部分：研究问题、状态与信息、关键结构、证明直觉，以及仍然没有想清楚的问题。正文可以中文或英文，不要求逐篇双语。</p>
         </div>
-        <a href={withBase(`/notes/${noteSlug(paperReadingStart.id)}/`)}>Open example →</a>
+        <div class="knowledge-links" style="margin:0">
+          <a href={withBase('/papers')}>Open dashboard →</a>
+          <a href={withBase(`/notes/${noteSlug(paperReadingStart.id)}/`)}>Example ↗</a>
+        </div>
       </section>
     )}
 
