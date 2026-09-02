@@ -22,10 +22,7 @@ const questions = notes.flatMap(note => (note.data.researchQuestions || []).map(
       <div class="eyebrow">Research · Questions</div>
       <h1>Questions Board</h1>
       <p>A board for questions explicitly recorded in public notes. Nothing is inferred from tags or browsing history: a question appears here only when it is written into note metadata.</p>
-      <div class="knowledge-links">
-        <a class="knowledge-link" href={withBase('/research')}>← Research</a>
-        <a class="knowledge-link" href={withBase('/graph')}>Knowledge Graph</a>
-        <a class="knowledge-link" href={withBase('/literature')}>Literature Map</a>
+      <div class="knowledge-links" aria-label="Question summary">
         <span class="knowledge-link">{questions.length} questions</span>
       </div>
     </header>
