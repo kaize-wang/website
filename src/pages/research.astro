@@ -1,6 +1,5 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import ResearchPlayground from '@/components/ResearchPlayground.astro';
 import SiteExtras from '@/components/SiteExtras.astro';
 import '@/styles/knowledge.css';
 import { site } from '@/site.config';
@@ -18,23 +17,14 @@ const trailNotes = notes
     <header class="page-hero">
       <div class="eyebrow">Academic</div>
       <h1>Research</h1>
-      <p>My current work is centered on inventory systems with warranty and sequential decisions under uncertainty. This page will gradually collect working papers, projects, and related research notes.</p>
-      <div class="knowledge-links">
-        <a class="knowledge-link" href={withBase('/graph')}>Knowledge Graph</a>
-        <a class="knowledge-link" href={withBase('/papers')}>Paper Reading</a>
-        <a class="knowledge-link" href={withBase('/literature')}>Literature Map</a>
-        <a class="knowledge-link" href={withBase('/questions')}>Questions Board</a>
-      </div>
+      <p>My current work is centered on inventory systems with warranty and sequential decisions under uncertainty. This page stays focused on research areas, the public research trail, and formal work as it becomes ready.</p>
     </header>
+
     <section class="section">
       <div class="section-head"><h2>Research Interests</h2></div>
       <div class="research-grid">
         {site.researchAreas.map((area,i) => <article class="research-card"><span class="num">0{i+1}</span><h3>{area.name}</h3><p>{area.description}</p></article>)}
       </div>
-    </section>
-    <section class="section">
-      <div class="section-head"><h2>Try an intuition</h2><span class="section-kicker">Interactive, deliberately simplified</span></div>
-      <ResearchPlayground />
     </section>
 
     {trailNotes.length > 0 && (
