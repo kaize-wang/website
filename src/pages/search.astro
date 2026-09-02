@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { getPublishedNotes, formatDate, noteSlug } from '@/utils/notes';
+import { withBase } from '@/utils/url';
 const notes = await getPublishedNotes();
 const index = notes.map(note => ({
   title: note.data.title,
@@ -8,7 +9,7 @@ const index = notes.map(note => ({
   category: note.data.category,
   tags: note.data.tags,
   date: formatDate(note.data.publishDate),
-  href: `/notes/${noteSlug(note.id)}/`
+  href: withBase(`/notes/${noteSlug(note.id)}/`)
 }));
 ---
 <BaseLayout title="Search" active="Search">

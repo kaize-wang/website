@@ -3,6 +3,7 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
 import NoteList from '@/components/NoteList.astro';
 import { site } from '@/site.config';
 import { getPublishedNotes, textUnits } from '@/utils/notes';
+import { withBase } from '@/utils/url';
 const notes = await getPublishedNotes();
 const recent = notes.slice(0,4);
 const days = Math.max(1, Math.floor((Date.now() - new Date(site.startedAt).getTime()) / 86400000) + 1);
@@ -11,7 +12,7 @@ const words = notes.reduce((n, note) => n + textUnits(note.body ?? ''), 0);
 <BaseLayout title={site.title} active="Home">
   <main class="site-shell">
     <div class="hero-banner">
-      <img src="/banner-placeholder.svg" alt="Website banner" />
+      <img src={withBase('/banner-placeholder.svg')} alt="Website banner" />
       <div class="banner-caption">{site.bannerCaption}</div>
     </div>
 
@@ -40,7 +41,7 @@ const words = notes.reduce((n, note) => n + textUnits(note.body ?? ''), 0);
     </section>
 
     <section class="section">
-      <div class="section-head"><h2>Recent Notes</h2><a class="section-kicker" href="/notes">View all notes →</a></div>
+      <div class="section-head"><h2>Recent Notes</h2><a class="section-kicker" href={withBase('/notes')}>View all notes →</a></div>
       {recent.length ? <NoteList notes={recent} /> : <p class="muted">No notes yet.</p>}
     </section>
 

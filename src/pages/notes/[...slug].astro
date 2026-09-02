@@ -2,6 +2,7 @@
 import { getPublishedNotes, formatDate, readingTime } from '@/utils/notes';
 import { render } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import { withBase } from '@/utils/url';
 export async function getStaticPaths() {
   const notes = await getPublishedNotes();
   return notes.map(note => ({ params: { slug: note.id }, props: { note } }));
@@ -21,7 +22,7 @@ const toc = headings.filter((heading) => heading.depth === 2 || heading.depth ==
         <span>{readingTime(note.body)} min read</span>
       </div>
       <p class="article-desc">{note.data.description}</p>
-      <div class="tags">{note.data.tags.map(tag => <a class="tag" href={`/tags/${encodeURIComponent(tag.toLowerCase())}/`}>{tag}</a>)}</div>
+      <div class="tags">{note.data.tags.map(tag => <a class="tag" href={withBase(`/tags/${encodeURIComponent(tag.toLowerCase())}/`)}>{tag}</a>)}</div>
     </header>
     {toc.length >= 3 && (
       <details class="article-contents">
@@ -32,6 +33,6 @@ const toc = headings.filter((heading) => heading.depth === 2 || heading.depth ==
       </details>
     )}
     <div class="prose"><Content /></div>
-    <div class="backline"><a href="/notes">← Back to Notes</a><span>{headings.length ? `${headings.length} sections` : ''}</span></div>
+    <div class="backline"><a href={withBase('/notes')}>← Back to Notes</a><span>{headings.length ? `${headings.length} sections` : ''}</span></div>
   </article>
 </BaseLayout>

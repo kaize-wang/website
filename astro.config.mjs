@@ -5,7 +5,8 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 
 export default defineConfig({
-  site: 'https://example.com',
+  site: 'https://kaize-wang.github.io',
+  base: '/website',
   integrations: [mdx(), sitemap()],
   markdown: {
     remarkPlugins: [remarkMath],
