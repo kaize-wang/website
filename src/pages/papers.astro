@@ -2,12 +2,13 @@
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import SiteExtras from '@/components/SiteExtras.astro';
 import '@/styles/knowledge.css';
+import '@/styles/advanced-tools.css';
 import { getPublishedNotes, noteSlug } from '@/utils/notes';
 import { withBase } from '@/utils/url';
 
 const notes = await getPublishedNotes();
 const paperNotes = notes.filter(note => note.data.paper);
-const statuses = ['All', 'Reading', 'Read', 'Revisit', 'Core'];
+const statuses = ['All', 'Due', 'Reading', 'Read', 'Revisit', 'Core'];
 ---
 <BaseLayout title="Paper Reading" active="Notes">
   <main class="site-shell">
@@ -18,8 +19,11 @@ const statuses = ['All', 'Reading', 'Read', 'Revisit', 'Core'];
       <div class="knowledge-links">
         <a class="knowledge-link" href={withBase('/notes')}>← Notes</a>
         <a class="knowledge-link" href={withBase('/graph')}>Knowledge Graph</a>
+        <a class="knowledge-link" href={withBase('/literature')}>Literature Map</a>
+        <a class="knowledge-link" href={withBase('/questions')}>Questions</a>
         <span class="knowledge-link">{paperNotes.length} papers</span>
       </div>
+      <div class="revisit-overview"><strong id="revisit-due-count">0</strong><span>due for revisit in this browser</span></div>
     </header>
 
     <section class="section" aria-labelledby="paper-dashboard-title">
@@ -36,12 +40,22 @@ const statuses = ['All', 'Reading', 'Read', 'Revisit', 'Core'];
           const status = note.data.readingStatus || '';
           const takeaways = note.data.paperTakeaways;
           return (
-            <article class="paper-dashboard-card" data-paper-status={status}>
+            <article class="paper-dashboard-card" data-paper-status={status} data-revisit-card data-note-id={note.id}>
               <div class="paper-dashboard-meta">
                 <span class="paper-year">{paper.year}</span>
                 <div>{paper.authors.join(' · ')}</div>
                 {paper.venue && <div>{paper.venue}</div>}
                 {status && <span class="paper-status">{status}</span>}
+                <div class="revisit-panel">
+                  <div class="revisit-state" data-revisit-state>No local revisit schedule.</div>
+                  <div class="revisit-actions">
+                    <button type="button" data-reviewed-days="30">Reviewed today · +30d</button>
+                    <button type="button" data-revisit-days="7">7d</button>
+                    <button type="button" data-revisit-days="30">30d</button>
+                    <button type="button" data-revisit-days="90">90d</button>
+                    <button type="button" data-revisit-clear>Clear</button>
+                  </div>
+                </div>
               </div>
               <div class="paper-dashboard-body">
                 <h2><a href={withBase(`/notes/${noteSlug(note.id)}/`)}>{paper.title}</a></h2>
@@ -61,6 +75,7 @@ const statuses = ['All', 'Reading', 'Read', 'Revisit', 'Core'];
       </div>
 
       {paperNotes.length === 0 && <p class="muted">No Paper Reading notes yet.</p>}
+      <p class="graph-note">Revisit dates are stored only in this browser. They are intentionally separate from public reading-status metadata.</p>
     </section>
   </main>
   <SiteExtras />
@@ -68,12 +83,74 @@ const statuses = ['All', 'Reading', 'Read', 'Revisit', 'Core'];
   <script is:inline>
     (() => {
       const buttons = [...document.querySelectorAll('[data-paper-filter]')];
-      const cards = [...document.querySelectorAll('[data-paper-status]')];
+      const cards = [...document.querySelectorAll('[data-revisit-card]')];
+      const dueCount = document.getElementById('revisit-due-count');
+      let currentFilter = 'All';
+      const keyFor = id => `kaize:paper-revisit:${id}`;
+      const readState = id => {
+        try { return JSON.parse(localStorage.getItem(keyFor(id)) || 'null'); } catch { return null; }
+      };
+      const writeState = (id, value) => {
+        try {
+          if (value) localStorage.setItem(keyFor(id), JSON.stringify(value));
+          else localStorage.removeItem(keyFor(id));
+        } catch {}
+      };
+      const fmt = value => new Intl.DateTimeFormat('en', { year: 'numeric', month: 'short', day: 'numeric' }).format(new Date(value));
+
+      const syncCard = card => {
+        const id = card.dataset.noteId || '';
+        const state = readState(id);
+        const node = card.querySelector('[data-revisit-state]');
+        const now = Date.now();
+        const due = Number(state?.due || 0);
+        const last = Number(state?.last || 0);
+        const isDue = Boolean(due && due <= now);
+        card.classList.toggle('is-revisit-due', isDue);
+        if (node) {
+          if (!state || !due) node.textContent = 'No local revisit schedule.';
+          else if (isDue) node.textContent = `Due now${last ? ` · reviewed ${fmt(last)}` : ''}`;
+          else node.textContent = `Due ${fmt(due)}${last ? ` · reviewed ${fmt(last)}` : ''}`;
+        }
+        return isDue;
+      };
+
+      const applyFilter = () => {
+        cards.forEach(card => {
+          const status = card.dataset.paperStatus || '';
+          card.hidden = currentFilter === 'All' ? false : currentFilter === 'Due' ? !card.classList.contains('is-revisit-due') : status !== currentFilter;
+        });
+      };
+      const syncAll = () => {
+        const due = cards.reduce((count, card) => count + (syncCard(card) ? 1 : 0), 0);
+        if (dueCount) dueCount.textContent = String(due);
+        applyFilter();
+      };
+      const schedule = (card, days, reviewed) => {
+        const id = card.dataset.noteId || '';
+        const now = Date.now();
+        const existing = readState(id) || {};
+        writeState(id, {
+          due: now + days * 86400000,
+          last: reviewed ? now : Number(existing.last || 0)
+        });
+        syncAll();
+      };
+
       buttons.forEach(button => button.addEventListener('click', () => {
-        const status = button.dataset.paperFilter || 'All';
+        currentFilter = button.dataset.paperFilter || 'All';
         buttons.forEach(item => item.classList.toggle('active', item === button));
-        cards.forEach(card => { card.hidden = status !== 'All' && card.dataset.paperStatus !== status; });
+        applyFilter();
       }));
+      cards.forEach(card => {
+        card.querySelectorAll('[data-revisit-days]').forEach(button => button.addEventListener('click', () => schedule(card, Number(button.dataset.revisitDays || 30), false)));
+        card.querySelectorAll('[data-reviewed-days]').forEach(button => button.addEventListener('click', () => schedule(card, Number(button.dataset.reviewedDays || 30), true)));
+        card.querySelector('[data-revisit-clear]')?.addEventListener('click', () => {
+          writeState(card.dataset.noteId || '', null);
+          syncAll();
+        });
+      });
+      syncAll();
     })();
   </script>
 </BaseLayout>
