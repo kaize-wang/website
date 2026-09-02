@@ -33,7 +33,7 @@ const statuses = ['All', 'Reading', 'Read', 'Revisit', 'Core'];
       <div class="paper-dashboard" id="paper-dashboard">
         {paperNotes.map(note => {
           const paper = note.data.paper!;
-          const status = note.data.readingStatus || 'Read';
+          const status = note.data.readingStatus || '';
           const takeaways = note.data.paperTakeaways;
           return (
             <article class="paper-dashboard-card" data-paper-status={status}>
@@ -41,7 +41,7 @@ const statuses = ['All', 'Reading', 'Read', 'Revisit', 'Core'];
                 <span class="paper-year">{paper.year}</span>
                 <div>{paper.authors.join(' · ')}</div>
                 {paper.venue && <div>{paper.venue}</div>}
-                <span class="paper-status">{status}</span>
+                {status && <span class="paper-status">{status}</span>}
               </div>
               <div class="paper-dashboard-body">
                 <h2><a href={withBase(`/notes/${noteSlug(note.id)}/`)}>{paper.title}</a></h2>
