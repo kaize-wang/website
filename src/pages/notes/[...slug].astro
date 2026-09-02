@@ -28,7 +28,7 @@ const toc = headings.filter((heading) => heading.depth === 2 || heading.depth ==
         <div class="tags">{note.data.tags.map(tag => <a class="tag tag-link" data-preview={`Browse notes tagged ${tag}`} href={withBase(`/tags/${encodeURIComponent(tag.toLowerCase())}/`)}>{tag}</a>)}</div>
         <div class="article-toolbox">
           <button class="mini-action" id="copy-page-link" type="button">Copy link</button>
-          <span class="article-local-visits"><strong data-kaize-stat="pageViews">—</strong> views</span>
+          <span class="article-local-visits"><strong id="busuanzi_page_pv">—</strong> views</span>
         </div>
       </header>
 
