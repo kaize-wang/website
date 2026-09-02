@@ -36,6 +36,7 @@ const notes = defineCollection({
     collection: z.string().optional(),
     lang: z.enum(['zh', 'en']).default('zh'),
     translationOf: z.string().optional(),
+    englishSummary: z.string().optional(),
     paper: paperSchema.optional(),
     references: z.array(referenceSchema).default([]),
     draft: z.boolean().default(false),
