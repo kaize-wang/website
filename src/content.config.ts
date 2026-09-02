@@ -20,6 +20,13 @@ const paperSchema = z.object({
   url: z.string().url().optional()
 });
 
+const paperTakeawaysSchema = z.object({
+  story: z.string(),
+  state: z.string(),
+  structure: z.string(),
+  question: z.string()
+});
+
 const notes = defineCollection({
   loader: glob({
     base: './src/content/notes',
@@ -34,10 +41,13 @@ const notes = defineCollection({
     category: z.enum(['Research', 'Reading', 'Technical', 'Life']).default('Research'),
     tags: z.array(z.string()).default([]),
     collection: z.string().optional(),
+    aliases: z.array(z.string()).default([]),
     lang: z.enum(['zh', 'en']).default('zh'),
     translationOf: z.string().optional(),
     englishSummary: z.string().optional(),
     paper: paperSchema.optional(),
+    readingStatus: z.enum(['Reading', 'Read', 'Revisit', 'Core']).optional(),
+    paperTakeaways: paperTakeawaysSchema.optional(),
     references: z.array(referenceSchema).default([]),
     draft: z.boolean().default(false),
     featured: z.boolean().default(false)
