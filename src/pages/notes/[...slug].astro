@@ -67,6 +67,13 @@ const relatedNotes = allNotes
           </div>
         )}
 
+        {note.data.englishSummary && (
+          <details class="bilingual-summary">
+            <summary>English summary</summary>
+            <p lang="en">{note.data.englishSummary}</p>
+          </details>
+        )}
+
         <div class="article-toolbox">
           <button class="mini-action" id="copy-page-link" type="button">Copy link</button>
           <button class="focus-reading-button" id="focus-reading" type="button" aria-pressed="false">Focus</button>
