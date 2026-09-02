@@ -1,11 +1,12 @@
 ---
-import { getPublishedNotes, formatDate, readingTime, noteSlug } from '@/utils/notes';
+import { getPublishedNotes, formatDate, readingTime, noteSlug, backlinksFor, outgoingWikiNotes } from '@/utils/notes';
 import { render } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import SiteExtras from '@/components/SiteExtras.astro';
 import ArticleEnhancements from '@/components/ArticleEnhancements.astro';
 import '@/styles/experiments.css';
 import '@/styles/scholarly.css';
+import '@/styles/knowledge.css';
 import { withBase } from '@/utils/url';
 
 export async function getStaticPaths() {
@@ -35,6 +36,18 @@ const relatedNotes = allNotes
   .sort((a, b) => b.score - a.score || b.item.data.publishDate.valueOf() - a.item.data.publishDate.valueOf())
   .slice(0, 3)
   .map(({ item }) => item);
+const backlinks = backlinksFor(note, allNotes);
+const outgoingWiki = outgoingWikiNotes(note, allNotes);
+const wanderPool = [...outgoingWiki, ...backlinks, ...relatedNotes, ...allNotes.filter(item => item.id !== note.id)]
+  .filter((item, index, list) => list.findIndex(candidate => candidate.id === item.id) === index)
+  .slice(0, 10);
+const wanderUrls = wanderPool.map(item => withBase(`/notes/${noteSlug(item.id)}/`));
+const wikiNotes = allNotes.map(item => ({
+  id: item.id,
+  title: item.data.title,
+  aliases: item.data.aliases || [],
+  href: withBase(`/notes/${noteSlug(item.id)}/`)
+}));
 ---
 <BaseLayout title={note.data.title} description={note.data.description} active="Notes">
   <div class="article-page-layout">
@@ -77,6 +90,7 @@ const relatedNotes = allNotes
         <div class="article-toolbox">
           <button class="mini-action" id="copy-page-link" type="button">Copy link</button>
           <button class="focus-reading-button" id="focus-reading" type="button" aria-pressed="false">Focus</button>
+          {wanderUrls.length > 0 && <button class="mini-action" id="wander-note" type="button" title="Follow a nearby note in the knowledge graph">Wander →</button>}
           <span class="article-local-visits"><strong id="busuanzi_page_pv">—</strong> views</span>
         </div>
       </header>
@@ -120,6 +134,21 @@ const relatedNotes = allNotes
               </li>
             ))}
           </ol>
+        </section>
+      )}
+
+      {backlinks.length > 0 && (
+        <section class="backlinks-section" aria-labelledby="backlinks-title">
+          <h2 id="backlinks-title">Referenced by</h2>
+          <p class="backlinks-note">Notes that explicitly link here with <code>[[wiki links]]</code>.</p>
+          <div class="backlinks-list">
+            {backlinks.map(item => (
+              <a class="backlink-item" href={withBase(`/notes/${noteSlug(item.id)}/`)}>
+                <strong>{item.data.title}</strong>
+                <span>{item.data.lang === 'zh' ? '中文' : 'EN'} · {item.data.collection || item.data.category}</span>
+              </a>
+            ))}
+          </div>
         </section>
       )}
 
@@ -167,7 +196,7 @@ const relatedNotes = allNotes
     )}
   </div>
   <SiteExtras />
-  <ArticleEnhancements />
+  <ArticleEnhancements wikiNotes={wikiNotes} wanderUrls={wanderUrls} />
 
   <script is:inline>
   (() => {
