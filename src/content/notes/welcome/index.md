@@ -4,6 +4,7 @@ description: "A short note on using this site as a durable place for research, r
 publishDate: 2026-09-02
 category: Life
 tags: [website, writing]
+lang: en
 draft: false
 featured: true
 ---
