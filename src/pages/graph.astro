@@ -3,7 +3,7 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
 import SiteExtras from '@/components/SiteExtras.astro';
 import KnowledgeGraph from '@/components/KnowledgeGraph.astro';
 import '@/styles/knowledge.css';
-import { getPublishedNotes, graphEdges, noteSlug } from '@/utils/notes';
+import { getPublishedNotes, graphEdges, noteSlug, formatDate } from '@/utils/notes';
 import { withBase } from '@/utils/url';
 
 const notes = await getPublishedNotes();
@@ -14,7 +14,9 @@ const nodes = notes.map(note => ({
   href: withBase(`/notes/${noteSlug(note.id)}/`),
   category: note.data.category,
   collection: note.data.collection || '',
-  lang: note.data.lang
+  lang: note.data.lang,
+  publishedAt: note.data.publishDate.valueOf(),
+  publishedLabel: formatDate(note.data.publishDate)
 }));
 const edges = graphEdges(notes);
 const wikiEdges = edges.filter(edge => edge.type === 'wiki').length;
@@ -29,6 +31,8 @@ const collections = new Set(notes.map(note => note.data.collection).filter(Boole
       <div class="knowledge-links">
         <a class="knowledge-link" href={withBase('/notes')}>← Notes</a>
         <a class="knowledge-link" href={withBase('/papers')}>Paper Reading</a>
+        <a class="knowledge-link" href={withBase('/literature')}>Literature Map</a>
+        <a class="knowledge-link" href={withBase('/questions')}>Questions</a>
         <span class="knowledge-link">{notes.length} notes</span>
         <span class="knowledge-link">{wikiEdges} wiki links</span>
         <span class="knowledge-link">{collections} series</span>
@@ -36,7 +40,7 @@ const collections = new Set(notes.map(note => note.data.collection).filter(Boole
     </header>
 
     <section class="section" aria-labelledby="graph-title">
-      <div class="section-head"><h2 id="graph-title">Explore the notebook</h2><span class="section-kicker">Generated at build time</span></div>
+      <div class="section-head"><h2 id="graph-title">Explore the notebook</h2><span class="section-kicker">Time · paths · serendipity</span></div>
       <KnowledgeGraph nodes={nodes} edges={edges} />
     </section>
   </main>
