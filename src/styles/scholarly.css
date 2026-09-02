@@ -46,6 +46,22 @@
 .paper-meta-links { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px 14px; }
 .paper-meta-links a { color: var(--accent); }
 
+.bilingual-summary {
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--paper) 78%, var(--bg));
+  color: var(--muted);
+  font-size: 11px;
+}
+.bilingual-summary summary {
+  cursor: pointer;
+  color: var(--text);
+  font-weight: 600;
+  letter-spacing: .03em;
+}
+.bilingual-summary p { margin: 9px 0 2px; line-height: 1.65; }
+
 .paper-reading-intro {
   display: grid;
   grid-template-columns: minmax(0,1fr) auto;
