@@ -1,0 +1,100 @@
+a:focus-visible,
+button:focus-visible,
+summary:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.context-nav-wrap {
+  width: min(calc(100% - 64px), var(--content));
+  margin: 22px auto -14px;
+}
+.context-nav {
+  display: flex;
+  align-items: center;
+  min-height: 34px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.context-nav a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--muted) 45%, transparent);
+  text-underline-offset: 4px;
+}
+.context-nav a:hover {
+  color: var(--accent);
+  text-decoration-color: currentColor;
+}
+
+.pill,
+.category-nav a,
+.tag-link,
+.section-head a.section-kicker,
+.notes-browse a,
+.note-main-link {
+  cursor: pointer;
+}
+.pill:hover,
+.category-nav a:hover,
+.tag-link:hover {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+  color: var(--accent);
+}
+.section-head a.section-kicker {
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--muted) 45%, transparent);
+  text-underline-offset: 4px;
+}
+.section-head a.section-kicker:hover {
+  text-decoration-color: currentColor;
+}
+.note-main-link {
+  display: block;
+}
+.note-main-link:hover .note-title {
+  color: var(--accent);
+}
+.note-main-link:hover .note-desc {
+  color: var(--text);
+}
+.tag-link {
+  border: 1px solid transparent;
+}
+.research-card,
+.stat,
+.education-item {
+  cursor: default;
+}
+
+@media (max-width: 1040px) {
+  .context-nav-wrap { width: min(calc(100% - 44px), var(--content)); }
+}
+
+@media (max-width: 760px) {
+  .context-nav-wrap { width: min(calc(100% - 30px), var(--content)); margin-top: 16px; }
+  .hero-banner {
+    height: auto !important;
+    min-height: 0 !important;
+  }
+  .hero-banner img {
+    height: 190px !important;
+    min-height: 190px !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .context-nav-wrap { width: min(calc(100% - 28px), var(--content)); margin-top: 12px; }
+  .hero-banner img {
+    height: 160px !important;
+    min-height: 160px !important;
+  }
+  .banner-caption {
+    padding: 9px 12px;
+    line-height: 1.45;
+  }
+}

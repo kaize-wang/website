@@ -11,11 +11,13 @@ const { notes } = Astro.props as { notes: Note[] };
     <article class="note-row">
       <div class="note-date">{formatDate(note.data.publishDate)}</div>
       <div>
-        <a href={withBase(`/notes/${noteSlug(note.id)}/`)}><h3 class="note-title">{note.data.title}</h3></a>
-        <p class="note-desc">{note.data.description}</p>
+        <a class="note-main-link" href={withBase(`/notes/${noteSlug(note.id)}/`)} aria-label={`Read ${note.data.title}`}>
+          <h3 class="note-title">{note.data.title}</h3>
+          <p class="note-desc">{note.data.description}</p>
+        </a>
         <div class="tags">
-          <span class="tag">{note.data.category}</span>
-          {note.data.tags.slice(0,3).map(tag => <a class="tag" href={withBase(`/tags/${encodeURIComponent(tag.toLowerCase())}/`)}>{tag}</a>)}
+          <a class="tag tag-link" href={withBase(`/categories/${note.data.category.toLowerCase()}/`)}>{note.data.category}</a>
+          {note.data.tags.slice(0,3).map(tag => <a class="tag tag-link" href={withBase(`/tags/${encodeURIComponent(tag.toLowerCase())}/`)}>{tag}</a>)}
         </div>
       </div>
       <div class="note-meta">{readingTime(note.body ?? '')} min read</div>

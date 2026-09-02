@@ -1,9 +1,29 @@
 ---
 import '@/styles/global.css';
+import '@/styles/interaction.css';
 import { site } from '@/site.config';
 import { withBase } from '@/utils/url';
 const { title = site.title, description = site.shortBio, active = '' } = Astro.props;
 const pageTitle = title === site.title ? title : `${title} · ${site.title}`;
+
+const rawBase = import.meta.env.BASE_URL || '/';
+const basePrefix = rawBase === '/' ? '' : rawBase.replace(/\/$/, '');
+let routePath = Astro.url.pathname;
+if (basePrefix && routePath.startsWith(basePrefix)) routePath = routePath.slice(basePrefix.length);
+routePath = routePath.replace(/\/+$/, '') || '/';
+
+const isHome = routePath === '/';
+const isNotesContext =
+  routePath.startsWith('/notes/') ||
+  routePath.startsWith('/tags/') ||
+  routePath.startsWith('/categories/') ||
+  routePath.startsWith('/collections/') ||
+  routePath === '/archive';
+const contextBack = isHome
+  ? null
+  : isNotesContext
+    ? { label: 'Notes', href: '/notes' }
+    : { label: 'Home', href: '/' };
 ---
 <!doctype html>
 <html lang="en">
@@ -24,13 +44,17 @@ const pageTitle = title === site.title ? title : `${title} · ${site.title}`;
       <aside class="site-sidebar">
         <div class="sidebar-inner">
           <div class="sidebar-identity">
-            <a class="brand" href={withBase('/')}>{site.title}</a>
+            <a class="brand" href={withBase('/')} aria-label="Go to homepage">{site.title}</a>
             <p class="sidebar-caption">Academic homepage</p>
           </div>
 
           <nav class="sidebar-nav" aria-label="Main navigation">
             {site.nav.map(item => (
-              <a class={active === item.label ? 'active' : ''} href={withBase(item.href)}>
+              <a
+                class={active === item.label ? 'active' : ''}
+                href={withBase(item.href)}
+                aria-current={active === item.label ? 'page' : undefined}
+              >
                 <span>{item.label}</span>
               </a>
             ))}
@@ -38,12 +62,19 @@ const pageTitle = title === site.title ? title : `${title} · ${site.title}`;
 
           <div class="sidebar-bottom">
             <span class="sidebar-small">Research · Notes · Writing</span>
-            <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Toggle theme">◐</button>
+            <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Toggle light and dark theme" title="Toggle light/dark theme">◐</button>
           </div>
         </div>
       </aside>
 
       <div class="site-main">
+        {contextBack && (
+          <div class="context-nav-wrap">
+            <nav class="context-nav" aria-label="Back navigation">
+              <a href={withBase(contextBack.href)}>← Back to {contextBack.label}</a>
+            </nav>
+          </div>
+        )}
         <slot />
         <footer class="site-footer">
           <div class="site-shell footer-inner">
