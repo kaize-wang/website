@@ -1,7 +1,10 @@
 ---
+import type { CollectionEntry } from 'astro:content';
 import { formatDate, noteSlug, readingTime } from '@/utils/notes';
 import { withBase } from '@/utils/url';
-const { notes } = Astro.props;
+
+type Note = CollectionEntry<'notes'>;
+const { notes } = Astro.props as { notes: Note[] };
 ---
 <div class="note-list">
   {notes.map(note => (

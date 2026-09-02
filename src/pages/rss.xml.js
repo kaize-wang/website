@@ -6,7 +6,7 @@ import { withBase } from '@/utils/url';
 export async function GET(context) {
   const notes = await getPublishedNotes();
   return rss({
-    title: `${site.fullName} · Notes`,
+    title: `${site.title} · Notes`,
     description: site.shortBio,
     site: context.site,
     items: notes.map(note => ({

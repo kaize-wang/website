@@ -1,5 +1,5 @@
 export const site = {
-  title: 'Kaize Wang',
+  title: 'kaizewang',
   fullName: 'Kaize Wang',
   chineseName: '王凯泽',
   shortBio: 'Student and researcher at Nankai University working on inventory systems, warranty, stochastic optimization, and operations research.',
