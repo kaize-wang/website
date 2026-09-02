@@ -3,62 +3,87 @@ import '@/styles/experiments.css';
 import '@/styles/visitor-analytics.css';
 import { withBase } from '@/utils/url';
 const { compact = false } = Astro.props as { compact?: boolean };
-const mapId = '1788186347';
-const mapImage = `https://smallcounter.com/map/view.php?type=180&id=${mapId}`;
+const regions = [
+  { code: 'NA', name: 'North America', x: 118, y: 103 },
+  { code: 'SA', name: 'South America', x: 185, y: 194 },
+  { code: 'EU', name: 'Europe', x: 323, y: 88 },
+  { code: 'AF', name: 'Africa', x: 354, y: 165 },
+  { code: 'AS', name: 'Asia', x: 475, y: 104 },
+  { code: 'OC', name: 'Oceania', x: 548, y: 205 }
+];
 ---
 {compact ? (
-  <section class="section visitor-summary-section" id="visitors">
+  <section class="section visitor-summary-section" id="visitors" data-visitor-analytics>
     <div class="section-head">
       <h2>Visitors</h2>
       <a class="section-kicker" href={withBase('/about#visitors')}>Explore visitor map →</a>
     </div>
     <div class="visitor-summary-card">
-      <div class="visitor-summary-stats" aria-label="Lightweight website visit statistics">
+      <div class="visitor-summary-stats" aria-label="Website visit statistics">
         <div><strong id="busuanzi_site_pv">—</strong><span>page views</span></div>
         <div><strong id="busuanzi_site_uv">—</strong><span>visitors</span></div>
+        <div><strong data-kaize-geo-stat="countriesReached">—</strong><span>countries</span></div>
         <div><strong id="busuanzi_today_pv">—</strong><span>today views</span></div>
-        <div><strong id="busuanzi_today_uv">—</strong><span>today visitors</span></div>
       </div>
-      <a class="external-visitor-map-link visitor-map-compact" href={withBase('/about#visitors')} aria-label="Open the full visitor map">
-        <img class="external-visitor-map" src={mapImage} alt="World map showing approximate visitor locations" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" />
-        <span class="external-map-fallback" hidden>Visitor map is temporarily unavailable.</span>
-      </a>
+      <svg class="visitor-map visitor-map-mini" viewBox="0 0 640 280" role="img" aria-label="Approximate visitor footprint by world region">
+        <path class="visitor-land" d="M55 76 L118 48 168 60 188 96 156 118 128 108 102 137 70 126 47 101 Z" />
+        <path class="visitor-land" d="M165 151 L205 151 219 183 203 226 181 251 166 216 171 184 151 169 Z" />
+        <path class="visitor-land" d="M279 72 L323 58 354 71 368 94 348 111 315 104 296 121 276 102 Z" />
+        <path class="visitor-land" d="M320 122 L365 117 397 148 389 198 361 238 331 211 317 161 Z" />
+        <path class="visitor-land" d="M361 70 L435 52 520 63 581 90 560 119 502 118 468 139 421 125 388 107 Z" />
+        <path class="visitor-land" d="M503 190 L553 178 584 199 565 226 520 222 495 205 Z" />
+        {regions.map(region => <circle class="visitor-region-dot" data-region-dot={region.code} cx={region.x} cy={region.y} r="0" aria-label={region.name} />)}
+      </svg>
     </div>
-    <p class="visitor-summary-note">No account or analytics dashboard. Counts are supplied by Busuanzi; the map is a lightweight SmallCounter embed.</p>
+    <p class="visitor-summary-note">Visit totals use Busuanzi; the map keeps only coarse aggregate regions and never displays visitor IP addresses.</p>
   </section>
 ) : (
-  <div class="experiment-card visitor-analytics-card" id="visitors">
-    <div class="experiment-kicker">Visitor map</div>
+  <div class="experiment-card visitor-analytics-card" id="visitors" data-visitor-analytics data-current-location-request>
+    <div class="experiment-kicker">Live visitor footprint</div>
     <h3>Where this site is being read</h3>
-    <p class="experiment-intro">A deliberately simple public counter: Busuanzi supplies site/page visit totals, while SmallCounter draws the geographic visitor map. There is no account, API key, private dashboard, or server to maintain.</p>
+    <p class="experiment-intro">The map is drawn locally in the site's own visual style. Busuanzi supplies the simple PV/UV totals; a lightweight coarse geolocation layer only accumulates region, country, and city coverage for the footprint.</p>
 
     <div class="visitor-live-stats" aria-label="Website visit statistics">
       <div><strong id="busuanzi_site_pv">—</strong><span>Page views</span></div>
       <div><strong id="busuanzi_site_uv">—</strong><span>Visitors</span></div>
       <div><strong id="busuanzi_today_pv">—</strong><span>Today views</span></div>
-      <div><strong id="busuanzi_today_uv">—</strong><span>Today visitors</span></div>
+      <div><strong data-kaize-geo-stat="countriesReached">—</strong><span>Countries reached</span></div>
+      <div><strong data-kaize-geo-stat="citiesReached">—</strong><span>Cities reached</span></div>
     </div>
 
-    <div class="external-visitor-map-link visitor-map-full" aria-label="Approximate visitor world map">
-      <img class="external-visitor-map" src={mapImage} alt="World map showing approximate visitor locations" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" />
-      <span class="external-map-fallback" hidden>Visitor map is temporarily unavailable.</span>
+    <div class="visitor-demo visitor-demo-live">
+      <div>
+        <svg class="visitor-map" viewBox="0 0 640 280" role="img" aria-label="Accumulated visitor footprint by world region">
+          <path class="visitor-land" d="M55 76 L118 48 168 60 188 96 156 118 128 108 102 137 70 126 47 101 Z" />
+          <path class="visitor-land" d="M165 151 L205 151 219 183 203 226 181 251 166 216 171 184 151 169 Z" />
+          <path class="visitor-land" d="M279 72 L323 58 354 71 368 94 348 111 315 104 296 121 276 102 Z" />
+          <path class="visitor-land" d="M320 122 L365 117 397 148 389 198 361 238 331 211 317 161 Z" />
+          <path class="visitor-land" d="M361 70 L435 52 520 63 581 90 560 119 502 118 468 139 421 125 388 107 Z" />
+          <path class="visitor-land" d="M503 190 L553 178 584 199 565 226 520 222 495 205 Z" />
+          {regions.map(region => (
+            <g class="visitor-region-group">
+              <circle class="visitor-region-halo" data-region-halo={region.code} cx={region.x} cy={region.y} r="0" />
+              <circle class="visitor-region-dot" data-region-dot={region.code} cx={region.x} cy={region.y} r="0" />
+              <text class="visitor-region-count" data-region-count={region.code} x={region.x + 11} y={region.y - 10}></text>
+            </g>
+          ))}
+        </svg>
+        <div class="visitor-region-legend">
+          {regions.map(region => <span><i></i>{region.name}: <strong data-region-legend={region.code}>0</strong></span>)}
+        </div>
+      </div>
+      <div class="visitor-copy visitor-current-card">
+        <span class="now-label">This visit, approximately</span>
+        <strong data-current-location>Detecting coarse location…</strong>
+        <p data-current-region>Country / region information is resolved only for this browser.</p>
+        <p class="visitor-time" data-current-timezone></p>
+        <p>City-level geolocation can be wrong when a visitor uses a VPN, mobile carrier, campus network, or proxy.</p>
+      </div>
     </div>
 
     <div class="visitor-privacy-note">
-      <strong>Simple by design.</strong>
-      <span>The public counters may not match professional analytics exactly. The map service infers an approximate location from the visitor request; this site does not run its own IP database, display visitor IP addresses, or expose a detailed visitor-log link.</span>
+      <strong>Simple underneath.</strong>
+      <span>No account or analytics dashboard is required. PV/UV comes from Busuanzi. The map stores only coarse aggregate counters for regions and coverage; the page never publishes IP addresses or a visitor log.</span>
     </div>
   </div>
 )}
-
-<script is:inline>
-(() => {
-  document.querySelectorAll('.external-visitor-map').forEach((image) => {
-    image.addEventListener('error', () => {
-      image.hidden = true;
-      const fallback = image.parentElement?.querySelector('.external-map-fallback');
-      if (fallback) fallback.hidden = false;
-    }, { once: true });
-  });
-})();
-</script>
