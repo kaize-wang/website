@@ -1,0 +1,90 @@
+---
+title: "论文精读示例：Replacement Warranty 下，库存状态需要记住什么？"
+description: "用 Huang, Kulkarni & Swaminathan (2008) 演示 Paper Reading 专栏：研究问题、状态信息、结构性结果，以及读完后仍值得追问的地方。"
+publishDate: 2026-09-02
+category: Reading
+tags: [inventory, warranty, paper-reading, stochastic-demand]
+collection: Paper Reading
+lang: zh
+paper:
+  title: "Managing the Inventory of an Item with a Replacement Warranty"
+  authors: ["Wei Huang", "Vidyadhar Kulkarni", "Jayashankar M. Swaminathan"]
+  year: 2008
+  venue: "Management Science 54(8): 1441–1452"
+  doi: "10.1287/mnsc.1080.0863"
+references:
+  - id: huang2008
+    title: "Managing the Inventory of an Item with a Replacement Warranty"
+    authors: "Wei Huang, Vidyadhar Kulkarni, and Jayashankar M. Swaminathan"
+    year: 2008
+    venue: "Management Science 54(8): 1441–1452"
+    doi: "10.1287/mnsc.1080.0863"
+draft: false
+featured: true
+---
+
+> 这是一篇**站点功能示例 + 阅读笔记骨架**。它用一篇我正在反复阅读的论文演示 Paper Reading 专栏应该长什么样；下面的“阅读记法”和问题意识是为了组织理解，不应被当作我当前研究模型已经定稿的表述。
+
+## 为什么这篇论文值得反复读
+
+这篇文章面对的核心情形很直接：企业既要满足新产品需求，又要为保修期内失效的产品提供 replacement。后者并不是一个与历史无关的外生需求，因为它取决于当前仍处于保修期内的产品数量及其年龄结构。[Huang et al. (2008)](#ref-huang2008)
+
+这件事对我真正重要的地方，不只是“多了一类需求”，而是：**过去卖出去的东西，会通过 warranty population 继续影响未来库存决策。** 因此，信息结构本身就是模型的一部分。
+
+> [!sidenote]
+> 这里尤其容易把“随机需求”说得太宽泛。论文真正强调的是 replacement demand 与在保产品年龄结构之间的依赖。这个侧注也顺便演示本站的 sidenote：宽屏时它会进入页边，窄屏时自动回到正文。
+
+## 先抓住状态，而不是先抓公式
+
+论文用向量 \(w\) 表示不同 warranty ages 上仍在保的产品数量。为了阅读时更直观，我会把某一期的状态示意性地写成
+
+$$
+w_t=(w_{t,1},w_{t,2},\ldots,w_{t,L}).
+$$
+
+这里的重点并不是下标怎么写，而是：如果只知道“总共有多少件在保”，通常会丢掉年龄信息；而年龄会影响后续 failure / replacement 的分布。
+
+为了提醒自己需求的两层来源，也可以做一个**纯阅读用的示意分解**：
+
+$$
+D_t^{\mathrm{total}}
+=
+D_t^{\mathrm{new}}
++
+D_t^{\mathrm{rep}}(w_t,\xi_t).
+$$
+
+这不是论文中的原公式，只是一种阅读记法。现在把鼠标移到公式右上角，会看到 `Copy TeX`；以后推导笔记里的 display equation 都自动有这个功能。
+
+## 结构性结果应该怎样记
+
+文章证明了一个 \(w\)-dependent base-stock ordering policy：base-stock level 不是固定常数，而是 \(w\) 的函数。换句话说，在保产品的年龄结构会进入补货目标。[Huang et al. (2008)](#ref-huang2008)
+
+我觉得阅读这种结构性论文时，比“记住定理编号”更有价值的是记住下面这句话：
+
+> **状态信息改变了目标库存位置，因此 inventory policy 与 warranty information 不能完全分开设计。**
+
+论文进一步讨论了新产品需求同分布的特殊情形，并给出相应 stationary policy 的结果。数值研究中，作者还报告：与忽略 warranty demand 的策略相比，\(w\)-dependent policy 的期望成本平均改善约 69%；拥有 warranty-age information 平均带来约 4% 的进一步改善。这里的数字属于论文给定实验设定下的 computational findings，不应脱离论文环境单独外推。
+
+## 我希望 Paper Reading 固定回答的四个问题
+
+以后这一专栏不需要每篇都写成长摘要。我更希望固定追问四件事：
+
+1. **Story**：论文到底在解释哪个运营问题？
+2. **State / Information**：为了做当前决策，系统必须记住什么？
+3. **Structure**：作者最终得到的是 base-stock、threshold、convexity，还是别的结构？
+4. **Open question**：如果把某个关键假设拿掉，最先坏掉的是什么？
+
+对这篇文章而言，第四问尤其值得继续保留。作者自己指出，模型采用独立 Bernoulli failure 的设定，而现实中可能出现由装配缺陷或零部件问题导致的批量相关失效；这会要求更一般的 warranty returns model。[Huang et al. (2008)](#ref-huang2008)
+
+## 关于中文与英文
+
+这篇笔记故意用中文写正文，而保留 paper title、policy 名称和一部分技术术语的英文。对我现阶段来说，这可能是最自然的状态：**先用最顺手的语言把研究问题想清楚，再逐渐提高英文表达密度。**
+
+如果以后我真的把同一篇笔记重写成英文，可以把英文版本的 frontmatter 设为 `lang: en`，并用 `translationOf` 指向这一篇。网站会自动在两篇文章顶部建立 `Read in English / 阅读中文版` 的互链；在那之前，不需要为了“看起来国际化”而维护两份重复内容。
+
+## 读完以后留下什么
+
+如果一篇阅读笔记最终只能留下一个摘要，它很容易和论文 abstract 重复。我希望这个专栏真正留下的是：**我当时为什么卡住、哪个状态变量突然变得重要、哪个结论改变了我的理解，以及下一次讨论时应该继续追问什么。**
+
+这比完整复述论文更值得长期保存。
