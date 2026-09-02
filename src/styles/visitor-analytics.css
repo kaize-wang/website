@@ -1,6 +1,6 @@
 .visitor-summary-card {
   display: grid;
-  grid-template-columns: minmax(0, .92fr) minmax(250px, 1.08fr);
+  grid-template-columns: minmax(0, .95fr) minmax(260px, 1.2fr);
   gap: 22px;
   align-items: center;
   padding: 18px;
@@ -35,6 +35,10 @@
   letter-spacing: .07em;
   text-transform: uppercase;
 }
+.visitor-map-mini {
+  border: 0;
+  background: transparent;
+}
 .visitor-summary-note {
   margin: 8px 0 0;
   color: var(--muted);
@@ -43,7 +47,7 @@
 
 .visitor-live-stats {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   margin: 0 0 22px;
   border: 1px solid var(--line);
 }
@@ -54,42 +58,54 @@
 }
 .visitor-live-stats > div:last-child { border-right: 0; }
 .visitor-live-stats strong { font-size: 21px; }
-
-.external-visitor-map-link {
-  display: grid;
-  place-items: center;
-  min-width: 0;
-  overflow: hidden;
+.visitor-demo-live { align-items: start; }
+.visitor-region-dot {
+  fill: var(--accent);
+  stroke: var(--paper);
+  stroke-width: 2.5;
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: r .35s ease, opacity .25s ease;
+}
+.visitor-region-dot.visible { opacity: .9; }
+.visitor-region-halo {
+  fill: color-mix(in srgb, var(--accent) 12%, transparent);
+  stroke: color-mix(in srgb, var(--accent) 36%, transparent);
+  stroke-width: 1;
+  opacity: 0;
+  transition: r .4s ease, opacity .25s ease;
+}
+.visitor-region-halo.visible { opacity: 1; }
+.visitor-region-count {
+  fill: var(--muted);
+  font: 10px ui-sans-serif, system-ui, sans-serif;
+  pointer-events: none;
+}
+.visitor-region-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin-top: 9px;
+  color: var(--muted);
+  font-size: 10px;
+}
+.visitor-region-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.visitor-region-legend i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: .72;
+}
+.visitor-region-legend strong { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+.visitor-current-card {
+  padding: 17px 18px;
   border: 1px solid var(--line);
   background: var(--bg);
-  color: var(--muted);
-  text-decoration: none;
 }
-.visitor-map-compact { min-height: 156px; }
-.visitor-map-full {
-  min-height: 220px;
-  padding: 20px;
-}
-.external-visitor-map {
-  display: block;
-  width: auto;
-  max-width: 100%;
-  height: auto;
-  image-rendering: auto;
-}
-.visitor-map-compact .external-visitor-map {
-  width: min(100%, 360px);
-}
-.visitor-map-full .external-visitor-map {
-  width: min(100%, 520px);
-}
-.external-map-fallback {
-  padding: 24px;
-  color: var(--muted);
-  font-size: 12px;
-  text-align: center;
-}
-
+.visitor-current-card .now-label { margin-bottom: 8px; }
+.visitor-current-card strong { font-size: 22px; line-height: 1.25; }
 .visitor-privacy-note {
   display: grid;
   grid-template-columns: 150px minmax(0, 1fr);
@@ -105,6 +121,10 @@
 
 @media (max-width: 900px) {
   .visitor-summary-card { grid-template-columns: 1fr; }
+  .visitor-live-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .visitor-live-stats > div { border-bottom: 1px solid var(--line); }
+  .visitor-live-stats > div:nth-child(3) { border-right: 0; }
+  .visitor-live-stats > div:nth-last-child(-n+2) { border-bottom: 0; }
 }
 @media (max-width: 620px) {
   .visitor-summary-card { padding: 14px; }
@@ -113,8 +133,12 @@
   .visitor-summary-stats > div { border-bottom: 1px solid var(--line); }
   .visitor-summary-stats > div:last-child { border-bottom: 0; }
   .visitor-live-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .visitor-live-stats > div { border-bottom: 1px solid var(--line); }
-  .visitor-live-stats > div:nth-child(even) { border-right: 0; }
-  .visitor-live-stats > div:nth-last-child(-n+2) { border-bottom: 0; }
+  .visitor-live-stats > div { border-right: 0; border-bottom: 1px solid var(--line); }
+  .visitor-live-stats > div:nth-child(odd) { border-right: 1px solid var(--line); }
+  .visitor-live-stats > div:last-child { border-bottom: 0; border-right: 0; }
   .visitor-privacy-note { grid-template-columns: 1fr; gap: 5px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .visitor-region-dot,
+  .visitor-region-halo { transition: none; }
 }
