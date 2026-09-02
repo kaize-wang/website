@@ -28,11 +28,7 @@ const collections = new Set(notes.map(note => note.data.collection).filter(Boole
       <div class="eyebrow">Notes · Relationships</div>
       <h1>Knowledge Graph</h1>
       <p>A map of published notes. Explicit wiki links form the strongest relationships; shared series, tags, and citations add quieter connections in the background.</p>
-      <div class="knowledge-links">
-        <a class="knowledge-link" href={withBase('/notes')}>← Notes</a>
-        <a class="knowledge-link" href={withBase('/papers')}>Paper Reading</a>
-        <a class="knowledge-link" href={withBase('/literature')}>Literature Map</a>
-        <a class="knowledge-link" href={withBase('/questions')}>Questions</a>
+      <div class="knowledge-links" aria-label="Graph summary">
         <span class="knowledge-link">{notes.length} notes</span>
         <span class="knowledge-link">{wikiEdges} wiki links</span>
         <span class="knowledge-link">{collections} series</span>
