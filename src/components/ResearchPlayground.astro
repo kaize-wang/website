@@ -1,0 +1,95 @@
+---
+import '@/styles/experiments.css';
+---
+<div class="experiment-card" id="warranty-playground">
+  <div class="experiment-kicker">Interactive intuition sandbox</div>
+  <h3>Warranty inventory pressure</h3>
+  <p class="experiment-intro">Move the assumptions and watch an illustrative replacement-demand path respond. This is intentionally a toy model for intuition; it is not the model, calibration, or numerical result of the research paper.</p>
+  <div class="research-playground">
+    <div class="playground-controls">
+      <label class="playground-control">
+        <span class="playground-control-head"><span>Warranty horizon</span><output id="pg-horizon-out">12 months</output></span>
+        <input id="pg-horizon" type="range" min="3" max="24" step="1" value="12" />
+      </label>
+      <label class="playground-control">
+        <span class="playground-control-head"><span>Monthly sales</span><output id="pg-sales-out">100</output></span>
+        <input id="pg-sales" type="range" min="40" max="220" step="10" value="100" />
+      </label>
+      <label class="playground-control">
+        <span class="playground-control-head"><span>Annual failure rate</span><output id="pg-failure-out">8%</output></span>
+        <input id="pg-failure" type="range" min="2" max="20" step="1" value="8" />
+      </label>
+      <label class="playground-control">
+        <span class="playground-control-head"><span>Service buffer</span><output id="pg-buffer-out">25%</output></span>
+        <input id="pg-buffer" type="range" min="0" max="80" step="5" value="25" />
+      </label>
+    </div>
+    <div class="playground-chart-wrap">
+      <div class="playground-metrics">
+        <div class="playground-metric"><strong id="pg-installed">1,200</strong><span>protected units</span></div>
+        <div class="playground-metric"><strong id="pg-replacements">8.0</strong><span>steady replacements / month</span></div>
+        <div class="playground-metric"><strong id="pg-target">10.0</strong><span>illustrative service target</span></div>
+      </div>
+      <svg class="playground-svg" viewBox="0 0 620 250" role="img" aria-label="Illustrative replacement demand and buffered service target over eighteen months">
+        <line class="playground-grid-line" x1="42" y1="45" x2="600" y2="45" />
+        <line class="playground-grid-line" x1="42" y1="105" x2="600" y2="105" />
+        <line class="playground-grid-line" x1="42" y1="165" x2="600" y2="165" />
+        <line class="playground-grid-line" x1="42" y1="220" x2="600" y2="220" />
+        <path class="playground-demand" id="pg-demand-path" d="" />
+        <path class="playground-target" id="pg-target-path" d="" />
+      </svg>
+      <div class="playground-legend"><span><i></i>replacement demand</span><span><i class="target"></i>buffered service target</span></div>
+      <p class="playground-explanation" id="pg-explanation"></p>
+    </div>
+  </div>
+</div>
+<script is:inline>
+(() => {
+  const root = document.getElementById('warranty-playground');
+  if (!root) return;
+  const $ = (id) => root.querySelector(`#${id}`);
+  const horizon = $('pg-horizon');
+  const sales = $('pg-sales');
+  const failure = $('pg-failure');
+  const buffer = $('pg-buffer');
+  const demandPath = $('pg-demand-path');
+  const targetPath = $('pg-target-path');
+
+  const pathFor = (values, maxValue) => values.map((value, index) => {
+    const x = 42 + index * (558 / (values.length - 1));
+    const y = 220 - (value / maxValue) * 170;
+    return `${index ? 'L' : 'M'} ${x.toFixed(1)} ${y.toFixed(1)}`;
+  }).join(' ');
+
+  const update = () => {
+    const h = Number(horizon.value);
+    const s = Number(sales.value);
+    const annualF = Number(failure.value) / 100;
+    const b = Number(buffer.value) / 100;
+    $('pg-horizon-out').textContent = `${h} months`;
+    $('pg-sales-out').textContent = s.toLocaleString();
+    $('pg-failure-out').textContent = `${Math.round(annualF * 100)}%`;
+    $('pg-buffer-out').textContent = `${Math.round(b * 100)}%`;
+
+    const demand = Array.from({ length: 18 }, (_, index) => {
+      const eligibleCohorts = Math.min(index + 1, h);
+      const protectedUnits = eligibleCohorts * s;
+      return protectedUnits * annualF / 12;
+    });
+    const target = demand.map(value => value * (1 + b));
+    const maxValue = Math.max(1, ...target) * 1.08;
+    demandPath.setAttribute('d', pathFor(demand, maxValue));
+    targetPath.setAttribute('d', pathFor(target, maxValue));
+
+    const installed = h * s;
+    const steady = installed * annualF / 12;
+    const steadyTarget = steady * (1 + b);
+    $('pg-installed').textContent = Math.round(installed).toLocaleString();
+    $('pg-replacements').textContent = steady.toFixed(1);
+    $('pg-target').textContent = steadyTarget.toFixed(1);
+    $('pg-explanation').textContent = `Under this toy steady-state picture, ${installed.toLocaleString()} units remain under warranty and generate about ${steady.toFixed(1)} expected replacement requests per month before the service buffer.`;
+  };
+  [horizon, sales, failure, buffer].forEach(input => input.addEventListener('input', update));
+  update();
+})();
+</script>

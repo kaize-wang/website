@@ -2,6 +2,8 @@
 import { getPublishedNotes, formatDate, readingTime } from '@/utils/notes';
 import { render } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import SiteExtras from '@/components/SiteExtras.astro';
+import '@/styles/experiments.css';
 import { withBase } from '@/utils/url';
 export async function getStaticPaths() {
   const notes = await getPublishedNotes();
@@ -23,8 +25,18 @@ const toc = headings.filter((heading) => heading.depth === 2 || heading.depth ==
           <span>{readingTime(note.body)} min read</span>
         </div>
         <p class="article-desc">{note.data.description}</p>
-        <div class="tags">{note.data.tags.map(tag => <a class="tag tag-link" href={withBase(`/tags/${encodeURIComponent(tag.toLowerCase())}/`)}>{tag}</a>)}</div>
+        <div class="tags">{note.data.tags.map(tag => <a class="tag tag-link" data-preview={`Browse notes tagged ${tag}`} href={withBase(`/tags/${encodeURIComponent(tag.toLowerCase())}/`)}>{tag}</a>)}</div>
+        <div class="article-toolbox">
+          <button class="mini-action" id="copy-page-link" type="button">Copy link</button>
+          <span class="article-local-visits" id="article-local-visits">Local visits: —</span>
+        </div>
       </header>
+
+      <div class="resume-reading" id="resume-reading" aria-live="polite">
+        <span id="resume-copy">Resume where you left off?</span>
+        <button class="mini-action" id="resume-button" type="button">Resume reading →</button>
+      </div>
+
       {toc.length >= 2 && (
         <details class="article-contents">
           <summary>Contents</summary>
@@ -34,6 +46,24 @@ const toc = headings.filter((heading) => heading.depth === 2 || heading.depth ==
         </details>
       )}
       <div class="prose"><Content /></div>
+
+      <section class="article-reactions" aria-labelledby="reaction-title">
+        <h2 id="reaction-title">Your reaction</h2>
+        <p class="reaction-note">Stored only in this browser — no account and no global counter.</p>
+        <div class="reaction-row">
+          <button class="mini-action reaction-button" data-reaction="useful" type="button">Useful</button>
+          <button class="mini-action reaction-button" data-reaction="interesting" type="button">Interesting</button>
+          <button class="mini-action reaction-button" data-reaction="clear" type="button">Clear</button>
+        </div>
+      </section>
+
+      <section class="comments-section" aria-labelledby="comments-title">
+        <h2 id="comments-title">Comments</h2>
+        <p class="comments-note">Powered by GitHub Issues through Utterances. GitHub sign-in is required to comment.</p>
+        <script is:inline src="https://utteranc.es/client.js" repo="kaize-wang/website" issue-term="pathname" theme="preferred-color-scheme" crossorigin="anonymous" async></script>
+        <p class="comments-fallback">If the widget says Utterances is not installed, authorize it for the <a href="https://github.com/apps/utterances">website repository</a> once. You can also use <a href="https://github.com/kaize-wang/website/issues">GitHub Issues</a> directly.</p>
+      </section>
+
       <div class="backline"><a href={withBase('/notes')}>← Back to Notes</a><span>{headings.length ? `${headings.length} sections` : ''}</span></div>
     </article>
 
@@ -46,4 +76,105 @@ const toc = headings.filter((heading) => heading.depth === 2 || heading.depth ==
       </aside>
     )}
   </div>
+  <SiteExtras />
+
+  <script is:inline>
+  (() => {
+    const copyText = async (text) => {
+      try { await navigator.clipboard.writeText(text); return true; }
+      catch {
+        const area = document.createElement('textarea');
+        area.value = text;
+        area.style.position = 'fixed';
+        area.style.opacity = '0';
+        document.body.appendChild(area);
+        area.select();
+        const ok = document.execCommand('copy');
+        area.remove();
+        return ok;
+      }
+    };
+
+    const copyLink = document.getElementById('copy-page-link');
+    copyLink?.addEventListener('click', async () => {
+      const ok = await copyText(window.location.href);
+      copyLink.textContent = ok ? 'Copied' : 'Copy failed';
+      window.setTimeout(() => copyLink.textContent = 'Copy link', 1500);
+    });
+
+    document.querySelectorAll('.prose pre').forEach((pre) => {
+      if (pre.querySelector('.code-copy')) return;
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'code-copy';
+      button.textContent = 'Copy';
+      button.addEventListener('click', async () => {
+        const code = pre.querySelector('code')?.textContent || pre.textContent || '';
+        const ok = await copyText(code);
+        button.textContent = ok ? 'Copied' : 'Failed';
+        window.setTimeout(() => button.textContent = 'Copy', 1300);
+      });
+      pre.appendChild(button);
+    });
+
+    const pathKey = window.location.pathname;
+    const visitNode = document.getElementById('article-local-visits');
+    try {
+      const countKey = `kaize-local-visits:${pathKey}`;
+      const sessionKey = `kaize-session-visit:${pathKey}`;
+      let count = Number(localStorage.getItem(countKey) || '0');
+      if (!sessionStorage.getItem(sessionKey)) {
+        count += 1;
+        localStorage.setItem(countKey, String(count));
+        sessionStorage.setItem(sessionKey, '1');
+      }
+      if (visitNode) visitNode.textContent = `${count} visit${count === 1 ? '' : 's'} on this device`;
+    } catch { if (visitNode) visitNode.textContent = 'Local visit count unavailable'; }
+
+    const readKey = `kaize-reading:${pathKey}`;
+    const resume = document.getElementById('resume-reading');
+    const resumeButton = document.getElementById('resume-button');
+    const resumeCopy = document.getElementById('resume-copy');
+    let saved = 0;
+    try { saved = Number(localStorage.getItem(readKey) || '0'); } catch {}
+    if (saved > .08 && saved < .92 && resume && resumeCopy) {
+      resume.classList.add('visible');
+      resumeCopy.textContent = `You previously reached about ${Math.round(saved * 100)}% of this note.`;
+    }
+    resumeButton?.addEventListener('click', () => {
+      const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+      window.scrollTo({ top: max * saved, behavior: 'smooth' });
+      resume?.classList.remove('visible');
+    });
+    let readTick = false;
+    window.addEventListener('scroll', () => {
+      if (readTick) return;
+      readTick = true;
+      requestAnimationFrame(() => {
+        const max = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+        const ratio = Math.min(1, Math.max(0, window.scrollY / max));
+        try {
+          if (ratio > .96) localStorage.removeItem(readKey);
+          else if (ratio > .03) localStorage.setItem(readKey, String(ratio));
+        } catch {}
+        readTick = false;
+      });
+    }, { passive: true });
+
+    const reactionKey = `kaize-reaction:${pathKey}`;
+    const reactionButtons = [...document.querySelectorAll('.reaction-button')];
+    let currentReaction = '';
+    try { currentReaction = localStorage.getItem(reactionKey) || ''; } catch {}
+    const syncReaction = () => reactionButtons.forEach(button => button.classList.toggle('selected', button.dataset.reaction === currentReaction));
+    reactionButtons.forEach(button => button.addEventListener('click', () => {
+      currentReaction = currentReaction === button.dataset.reaction ? '' : button.dataset.reaction;
+      try {
+        if (currentReaction) localStorage.setItem(reactionKey, currentReaction);
+        else localStorage.removeItem(reactionKey);
+      } catch {}
+      syncReaction();
+    }));
+    syncReaction();
+  })();
+  </script>
 </BaseLayout>

@@ -1,0 +1,123 @@
+---
+import '@/styles/experiments.css';
+---
+<div class="experiment-card" id="boids-playground">
+  <div class="experiment-kicker">Small experiment</div>
+  <h3>Flocking study</h3>
+  <p class="experiment-intro">A tiny Boids-style system: each point aligns with nearby neighbors, stays with the group, and avoids crowding. Move the pointer through the field to disturb the flock.</p>
+  <div class="boids-toolbar">
+    <button class="mini-action" id="boids-toggle" type="button">Pause</button>
+    <button class="mini-action" id="boids-reset" type="button">Reset</button>
+    <button class="mini-action" id="boids-mode" type="button">Pointer: repel</button>
+    <span class="boids-status" id="boids-status">36 agents</span>
+  </div>
+  <canvas class="boids-canvas" id="boids-canvas" width="900" height="350" aria-label="Interactive flocking simulation"></canvas>
+</div>
+<script is:inline>
+(() => {
+  const root = document.getElementById('boids-playground');
+  const canvas = document.getElementById('boids-canvas');
+  if (!root || !(canvas instanceof HTMLCanvasElement)) return;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  const toggle = document.getElementById('boids-toggle');
+  const reset = document.getElementById('boids-reset');
+  const modeButton = document.getElementById('boids-mode');
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let paused = reduced;
+  let pointerMode = 'repel';
+  let raf = 0;
+  const pointer = { x: -9999, y: -9999, active: false };
+  const count = 36;
+  let boids = [];
+
+  const randomBoid = () => ({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    vx: (Math.random() - .5) * 2.2,
+    vy: (Math.random() - .5) * 2.2
+  });
+  const resetBoids = () => { boids = Array.from({ length: count }, randomBoid); draw(); };
+  const limit = (boid, max = 3.1) => {
+    const speed = Math.hypot(boid.vx, boid.vy) || 1;
+    if (speed > max) { boid.vx = boid.vx / speed * max; boid.vy = boid.vy / speed * max; }
+  };
+
+  const step = () => {
+    const next = boids.map((boid, i) => {
+      let ax = 0, ay = 0, cx = 0, cy = 0, sx = 0, sy = 0, neighbors = 0;
+      for (let j = 0; j < boids.length; j++) {
+        if (i === j) continue;
+        const other = boids[j];
+        const dx = other.x - boid.x, dy = other.y - boid.y;
+        const d = Math.hypot(dx, dy);
+        if (d < 85) { ax += other.vx; ay += other.vy; cx += other.x; cy += other.y; neighbors++; }
+        if (d > 0 && d < 28) { sx -= dx / d; sy -= dy / d; }
+      }
+      let vx = boid.vx, vy = boid.vy;
+      if (neighbors) {
+        ax /= neighbors; ay /= neighbors; cx /= neighbors; cy /= neighbors;
+        vx += (ax - vx) * .018 + (cx - boid.x) * .0009 + sx * .035;
+        vy += (ay - vy) * .018 + (cy - boid.y) * .0009 + sy * .035;
+      }
+      if (pointer.active) {
+        const dx = pointer.x - boid.x, dy = pointer.y - boid.y;
+        const d = Math.hypot(dx, dy);
+        if (d < 130 && d > 1) {
+          const force = (130 - d) / 130 * .18 * (pointerMode === 'repel' ? -1 : 1);
+          vx += dx / d * force; vy += dy / d * force;
+        }
+      }
+      const result = { x: boid.x + vx, y: boid.y + vy, vx, vy };
+      if (result.x < -10) result.x = canvas.width + 10;
+      if (result.x > canvas.width + 10) result.x = -10;
+      if (result.y < -10) result.y = canvas.height + 10;
+      if (result.y > canvas.height + 10) result.y = -10;
+      limit(result);
+      return result;
+    });
+    boids = next;
+  };
+
+  const draw = () => {
+    const styles = getComputedStyle(document.documentElement);
+    const text = styles.getPropertyValue('--text').trim() || '#1e211f';
+    const accent = styles.getPropertyValue('--accent').trim() || '#7d2f2f';
+    const bg = styles.getPropertyValue('--bg').trim() || '#f6f4ef';
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    boids.forEach((boid, index) => {
+      const angle = Math.atan2(boid.vy, boid.vx);
+      ctx.save();
+      ctx.translate(boid.x, boid.y);
+      ctx.rotate(angle);
+      ctx.beginPath();
+      ctx.moveTo(7, 0);
+      ctx.lineTo(-5, 3.5);
+      ctx.lineTo(-3, 0);
+      ctx.lineTo(-5, -3.5);
+      ctx.closePath();
+      ctx.fillStyle = index % 9 === 0 ? accent : text;
+      ctx.globalAlpha = index % 9 === 0 ? .95 : .58;
+      ctx.fill();
+      ctx.restore();
+    });
+  };
+  const loop = () => { if (!paused) step(); draw(); raf = requestAnimationFrame(loop); };
+  const point = (event) => {
+    const rect = canvas.getBoundingClientRect();
+    pointer.x = (event.clientX - rect.left) / rect.width * canvas.width;
+    pointer.y = (event.clientY - rect.top) / rect.height * canvas.height;
+    pointer.active = true;
+  };
+  canvas.addEventListener('pointermove', point);
+  canvas.addEventListener('pointerleave', () => pointer.active = false);
+  toggle?.addEventListener('click', () => { paused = !paused; toggle.textContent = paused ? 'Start' : 'Pause'; });
+  reset?.addEventListener('click', resetBoids);
+  modeButton?.addEventListener('click', () => { pointerMode = pointerMode === 'repel' ? 'attract' : 'repel'; modeButton.textContent = `Pointer: ${pointerMode}`; });
+  if (reduced) toggle.textContent = 'Start';
+  resetBoids();
+  raf = requestAnimationFrame(loop);
+  window.addEventListener('pagehide', () => cancelAnimationFrame(raf), { once: true });
+})();
+</script>

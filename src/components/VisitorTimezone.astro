@@ -1,0 +1,53 @@
+---
+import '@/styles/experiments.css';
+---
+<div class="experiment-card" id="visitor-timezone">
+  <div class="experiment-kicker">Privacy-friendly visitor demo</div>
+  <h3>This visit, approximately</h3>
+  <p class="experiment-intro">This does not request geolocation and does not store a visitor location. It only uses the browser timezone to place one coarse dot on a schematic map.</p>
+  <div class="visitor-demo">
+    <svg class="visitor-map" viewBox="0 0 640 280" role="img" aria-label="Schematic world map with an approximate timezone-region marker">
+      <path class="visitor-land" d="M55 76 L118 48 168 60 188 96 156 118 128 108 102 137 70 126 47 101 Z" />
+      <path class="visitor-land" d="M165 151 L205 151 219 183 203 226 181 251 166 216 171 184 151 169 Z" />
+      <path class="visitor-land" d="M279 72 L323 58 354 71 368 94 348 111 315 104 296 121 276 102 Z" />
+      <path class="visitor-land" d="M320 122 L365 117 397 148 389 198 361 238 331 211 317 161 Z" />
+      <path class="visitor-land" d="M361 70 L435 52 520 63 581 90 560 119 502 118 468 139 421 125 388 107 Z" />
+      <path class="visitor-land" d="M503 190 L553 178 584 199 565 226 520 222 495 205 Z" />
+      <circle class="visitor-dot" id="visitor-dot" cx="320" cy="140" r="7" />
+    </svg>
+    <div class="visitor-copy">
+      <strong id="visitor-region">Timezone region</strong>
+      <p id="visitor-zone">Detecting browser timezone…</p>
+      <p class="visitor-time" id="visitor-local-time"></p>
+      <p>Schematic / not to scale. No precise location is inferred.</p>
+    </div>
+  </div>
+</div>
+<script is:inline>
+(() => {
+  const root = document.getElementById('visitor-timezone');
+  if (!root) return;
+  const zone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+  const zones = [
+    { test: /^America\//, name: 'Americas', x: 126, y: 112 },
+    { test: /^Europe\//, name: 'Europe', x: 322, y: 88 },
+    { test: /^Africa\//, name: 'Africa', x: 355, y: 166 },
+    { test: /^Asia\//, name: 'Asia', x: 475, y: 103 },
+    { test: /^Australia\//, name: 'Australia', x: 548, y: 205 },
+    { test: /^(Pacific|Indian)\//, name: 'Pacific / Indian Ocean', x: 590, y: 145 }
+  ];
+  const region = zones.find(item => item.test.test(zone)) || { name: 'UTC / other', x: 320, y: 140 };
+  const dot = root.querySelector('#visitor-dot');
+  dot?.setAttribute('cx', String(region.x));
+  dot?.setAttribute('cy', String(region.y));
+  root.querySelector('#visitor-region').textContent = region.name;
+  root.querySelector('#visitor-zone').textContent = zone;
+  const timeNode = root.querySelector('#visitor-local-time');
+  const updateTime = () => {
+    timeNode.textContent = new Intl.DateTimeFormat(undefined, { timeZone: zone, dateStyle: 'medium', timeStyle: 'short' }).format(new Date());
+  };
+  updateTime();
+  const timer = window.setInterval(updateTime, 30000);
+  window.addEventListener('pagehide', () => window.clearInterval(timer), { once: true });
+})();
+</script>

@@ -1,0 +1,81 @@
+---
+import '@/styles/experiments.css';
+---
+<div class="site-toast" id="site-toast" role="status" aria-live="polite"></div>
+<script is:inline>
+(() => {
+  const init = () => {
+    const toast = document.getElementById('site-toast');
+    let toastTimer = 0;
+    const showToast = (message) => {
+      if (!toast) return;
+      toast.textContent = message;
+      toast.classList.add('visible');
+      window.clearTimeout(toastTimer);
+      toastTimer = window.setTimeout(() => toast.classList.remove('visible'), 2200);
+    };
+
+    const favicon = document.createElement('link');
+    favicon.rel = 'icon';
+    document.head.appendChild(favicon);
+    const drawFavicon = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 32;
+      canvas.height = 32;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      const dark = document.documentElement.dataset.theme === 'dark';
+      ctx.fillStyle = dark ? '#1d1f1c' : '#fbfaf6';
+      ctx.fillRect(0, 0, 32, 32);
+      ctx.strokeStyle = dark ? '#373a35' : '#d9d6cf';
+      ctx.strokeRect(.5, .5, 31, 31);
+      ctx.fillStyle = dark ? '#eceae3' : '#1e211f';
+      ctx.font = 'bold 20px Georgia';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('K', 16, 17);
+      ctx.beginPath();
+      ctx.fillStyle = document.hidden ? (dark ? '#777' : '#999') : (dark ? '#d4938d' : '#7d2f2f');
+      ctx.arc(25.5, 6.5, 3, 0, Math.PI * 2);
+      ctx.fill();
+      favicon.href = canvas.toDataURL('image/png');
+    };
+    drawFavicon();
+    document.addEventListener('visibilitychange', drawFavicon);
+    new MutationObserver(drawFavicon).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+    document.querySelectorAll('[data-avatar-reactive]').forEach((avatar) => {
+      avatar.addEventListener('pointermove', (event) => {
+        if (event.pointerType === 'touch') return;
+        const rect = avatar.getBoundingClientRect();
+        const x = (event.clientX - rect.left) / rect.width - .5;
+        const y = (event.clientY - rect.top) / rect.height - .5;
+        avatar.style.setProperty('--avatar-ry', `${x * 9}deg`);
+        avatar.style.setProperty('--avatar-rx', `${y * -9}deg`);
+      });
+      avatar.addEventListener('pointerleave', () => {
+        avatar.style.setProperty('--avatar-ry', '0deg');
+        avatar.style.setProperty('--avatar-rx', '0deg');
+      });
+    });
+
+    let keyBuffer = '';
+    document.addEventListener('keydown', (event) => {
+      const target = event.target;
+      if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement || event.metaKey || event.ctrlKey || event.altKey) return;
+      if (event.key.length !== 1) return;
+      keyBuffer = (keyBuffer + event.key.toLowerCase()).slice(-5);
+      if (keyBuffer === 'kaize') {
+        showToast('You found the quiet corner.');
+        document.querySelector('.brand')?.animate(
+          [{ letterSpacing: '-.015em' }, { letterSpacing: '.08em' }, { letterSpacing: '-.015em' }],
+          { duration: 650, easing: 'ease-out' }
+        );
+        keyBuffer = '';
+      }
+    });
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true });
+  else init();
+})();
+</script>

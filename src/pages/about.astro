@@ -1,5 +1,8 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import BoidsPlayground from '@/components/BoidsPlayground.astro';
+import VisitorTimezone from '@/components/VisitorTimezone.astro';
+import SiteExtras from '@/components/SiteExtras.astro';
 import { site } from '@/site.config';
 ---
 <BaseLayout title="About" active="About">
@@ -16,5 +19,16 @@ import { site } from '@/site.config';
         <p>For academic correspondence, you can reach me at <a href={`mailto:${site.email}`}>{site.email}</a>.</p>
       </div>
     </section>
+
+    <section class="section">
+      <div class="section-head"><h2>Playground</h2><span class="section-kicker">Small things that make the site feel alive</span></div>
+      <BoidsPlayground />
+    </section>
+
+    <section class="section">
+      <div class="section-head"><h2>Visitor demo</h2></div>
+      <VisitorTimezone />
+    </section>
   </main>
+  <SiteExtras />
 </BaseLayout>
