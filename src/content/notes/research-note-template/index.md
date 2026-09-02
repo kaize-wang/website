@@ -6,6 +6,7 @@ category: Research
 tags: [inventory, warranty]
 collection: Warranty & Inventory Notes
 lang: zh
+# englishSummary: "Optional 3–5 sentence English summary for a Chinese note."
 # translationOf: path-of-the-other-language-version
 # paper:
 #   title: "Paper title"
