@@ -1,0 +1,211 @@
+---
+import '@/styles/knowledge.css';
+const { nodes = [], edges = [] } = Astro.props;
+---
+<div class="graph-shell" data-knowledge-graph>
+  <svg class="knowledge-graph" viewBox="0 0 960 610" role="img" aria-label="Interactive graph of notes and their relationships"></svg>
+  <div class="graph-tooltip" hidden>
+    <strong></strong>
+    <p></p>
+  </div>
+</div>
+<div class="graph-legend" aria-label="Graph relationship legend">
+  <span class="wiki"><i></i>Wiki link</span>
+  <span class="collection"><i></i>Same series</span>
+  <span><i></i>Shared tags / citation</span>
+</div>
+<p class="graph-note">Drag nodes to rearrange them. Hover to isolate neighbors; click a node to open the note. The graph is generated from published notes at build time.</p>
+
+<script is:inline define:vars={{ nodes, edges }}>
+(() => {
+  const shell = document.querySelector('[data-knowledge-graph]');
+  const svg = shell?.querySelector('svg');
+  const tooltip = shell?.querySelector('.graph-tooltip');
+  if (!shell || !svg || !tooltip || !Array.isArray(nodes) || !nodes.length) return;
+
+  const NS = 'http://www.w3.org/2000/svg';
+  const width = 960;
+  const height = 610;
+  const nodeMap = new Map();
+  const neighbors = new Map(nodes.map(node => [node.id, new Set()]));
+  edges.forEach(edge => {
+    neighbors.get(edge.source)?.add(edge.target);
+    neighbors.get(edge.target)?.add(edge.source);
+  });
+
+  const state = nodes.map((node, index) => {
+    const angle = (Math.PI * 2 * index) / Math.max(1, nodes.length) - Math.PI / 2;
+    const radius = Math.min(220, 72 + nodes.length * 13);
+    const item = {
+      ...node,
+      x: width / 2 + Math.cos(angle) * radius,
+      y: height / 2 + Math.sin(angle) * radius,
+      vx: 0,
+      vy: 0,
+      fixed: false
+    };
+    nodeMap.set(node.id, item);
+    return item;
+  });
+
+  const edgeLayer = document.createElementNS(NS, 'g');
+  const nodeLayer = document.createElementNS(NS, 'g');
+  svg.append(edgeLayer, nodeLayer);
+
+  const edgeEls = edges.map(edge => {
+    const line = document.createElementNS(NS, 'line');
+    line.classList.add('graph-edge');
+    line.dataset.source = edge.source;
+    line.dataset.target = edge.target;
+    line.dataset.type = edge.type;
+    edgeLayer.appendChild(line);
+    return { edge, line };
+  });
+
+  const nodeEls = state.map(node => {
+    const group = document.createElementNS(NS, 'g');
+    group.classList.add('graph-node');
+    group.dataset.id = node.id;
+    group.dataset.category = node.category;
+    group.setAttribute('tabindex', '0');
+    group.setAttribute('role', 'link');
+    group.setAttribute('aria-label', `Open note: ${node.title}`);
+
+    const circle = document.createElementNS(NS, 'circle');
+    circle.setAttribute('r', node.category === 'Research' ? '8.5' : node.category === 'Reading' ? '7.5' : '6.5');
+    const text = document.createElementNS(NS, 'text');
+    text.setAttribute('x', '12');
+    text.setAttribute('y', '4');
+    text.textContent = node.title.length > 34 ? `${node.title.slice(0, 32)}…` : node.title;
+    group.append(circle, text);
+    nodeLayer.appendChild(group);
+    return { node, group };
+  });
+
+  const update = () => {
+    edgeEls.forEach(({ edge, line }) => {
+      const a = nodeMap.get(edge.source);
+      const b = nodeMap.get(edge.target);
+      if (!a || !b) return;
+      line.setAttribute('x1', a.x);
+      line.setAttribute('y1', a.y);
+      line.setAttribute('x2', b.x);
+      line.setAttribute('y2', b.y);
+    });
+    nodeEls.forEach(({ node, group }) => group.setAttribute('transform', `translate(${node.x},${node.y})`));
+  };
+
+  let frame = 0;
+  const simulate = () => {
+    for (let i = 0; i < state.length; i += 1) {
+      for (let j = i + 1; j < state.length; j += 1) {
+        const a = state[i];
+        const b = state[j];
+        let dx = b.x - a.x;
+        let dy = b.y - a.y;
+        const d2 = Math.max(400, dx * dx + dy * dy);
+        const force = 9800 / d2;
+        const d = Math.sqrt(d2);
+        dx /= d;
+        dy /= d;
+        a.vx -= dx * force;
+        a.vy -= dy * force;
+        b.vx += dx * force;
+        b.vy += dy * force;
+      }
+    }
+
+    edges.forEach(edge => {
+      const a = nodeMap.get(edge.source);
+      const b = nodeMap.get(edge.target);
+      if (!a || !b) return;
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const d = Math.max(1, Math.hypot(dx, dy));
+      const target = edge.type === 'wiki' ? 118 : edge.type === 'collection' ? 145 : 175;
+      const pull = (d - target) * .0009 * Math.max(1, edge.weight);
+      a.vx += dx * pull;
+      a.vy += dy * pull;
+      b.vx -= dx * pull;
+      b.vy -= dy * pull;
+    });
+
+    state.forEach(node => {
+      if (node.fixed) return;
+      node.vx += (width / 2 - node.x) * .0007;
+      node.vy += (height / 2 - node.y) * .0007;
+      node.vx *= .88;
+      node.vy *= .88;
+      node.x = Math.max(35, Math.min(width - 150, node.x + node.vx));
+      node.y = Math.max(28, Math.min(height - 28, node.y + node.vy));
+    });
+    update();
+    frame += 1;
+    if (frame < 240) requestAnimationFrame(simulate);
+  };
+
+  const clearHighlight = () => {
+    nodeEls.forEach(({ group }) => group.classList.remove('is-active', 'is-dim'));
+    edgeEls.forEach(({ line }) => line.classList.remove('is-active', 'is-dim'));
+    tooltip.hidden = true;
+  };
+
+  const highlight = (node, group) => {
+    const adjacent = neighbors.get(node.id) || new Set();
+    nodeEls.forEach(({ node: other, group: otherGroup }) => {
+      otherGroup.classList.toggle('is-active', other.id === node.id || adjacent.has(other.id));
+      otherGroup.classList.toggle('is-dim', other.id !== node.id && !adjacent.has(other.id));
+    });
+    edgeEls.forEach(({ edge, line }) => {
+      const active = edge.source === node.id || edge.target === node.id;
+      line.classList.toggle('is-active', active);
+      line.classList.toggle('is-dim', !active);
+    });
+    const title = tooltip.querySelector('strong');
+    const copy = tooltip.querySelector('p');
+    title.textContent = node.title;
+    copy.textContent = [node.category, node.collection, node.lang === 'zh' ? '中文' : 'EN', node.description].filter(Boolean).join(' · ');
+    tooltip.hidden = false;
+    const shellRect = shell.getBoundingClientRect();
+    const nodeRect = group.getBoundingClientRect();
+    tooltip.style.left = `${Math.min(shellRect.width - 314, Math.max(14, nodeRect.left - shellRect.left + 15))}px`;
+    tooltip.style.top = `${Math.min(shellRect.height - 95, Math.max(12, nodeRect.top - shellRect.top + 18))}px`;
+  };
+
+  nodeEls.forEach(({ node, group }) => {
+    group.addEventListener('mouseenter', () => highlight(node, group));
+    group.addEventListener('mouseleave', clearHighlight);
+    group.addEventListener('focus', () => highlight(node, group));
+    group.addEventListener('blur', clearHighlight);
+    group.addEventListener('click', () => window.location.assign(node.href));
+    group.addEventListener('keydown', event => {
+      if (event.key === 'Enter') window.location.assign(node.href);
+    });
+
+    group.addEventListener('pointerdown', event => {
+      event.preventDefault();
+      group.setPointerCapture(event.pointerId);
+      node.fixed = true;
+      const move = moveEvent => {
+        const rect = svg.getBoundingClientRect();
+        node.x = (moveEvent.clientX - rect.left) * width / rect.width;
+        node.y = (moveEvent.clientY - rect.top) * height / rect.height;
+        node.vx = 0;
+        node.vy = 0;
+        update();
+      };
+      const up = () => {
+        group.removeEventListener('pointermove', move);
+        group.removeEventListener('pointerup', up);
+        group.removeEventListener('pointercancel', up);
+      };
+      group.addEventListener('pointermove', move);
+      group.addEventListener('pointerup', up);
+      group.addEventListener('pointercancel', up);
+    });
+  });
+
+  update();
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) simulate();
+})();
+</script>
