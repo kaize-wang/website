@@ -1,5 +1,7 @@
 ---
 import '@/styles/scholarly.css';
+import '@/styles/knowledge.css';
+const { wikiNotes = [], wanderUrls = [] } = Astro.props;
 ---
 <div class="citation-popover" id="citation-popover" role="status" hidden>
   <strong id="citation-popover-title"></strong>
@@ -15,7 +17,7 @@ import '@/styles/scholarly.css';
   </div>
 </div>
 
-<script is:inline>
+<script is:inline define:vars={{ wikiNotes, wanderUrls }}>
 (() => {
   const copyText = async (text) => {
     try {
@@ -44,6 +46,64 @@ import '@/styles/scholarly.css';
     label.textContent = 'Side note';
     quote.prepend(label);
   });
+
+  const normalizeWiki = value => String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
+  const wikiMap = new Map();
+  (wikiNotes || []).forEach(note => {
+    [note.id, note.title, ...(note.aliases || [])].forEach(key => wikiMap.set(normalizeWiki(key), note));
+  });
+  const slugFragment = value => String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s-]/gu, '')
+    .replace(/\s+/g, '-');
+
+  const prose = document.querySelector('.prose');
+  if (prose && wikiMap.size) {
+    const walker = document.createTreeWalker(prose, NodeFilter.SHOW_TEXT);
+    const textNodes = [];
+    let current;
+    while ((current = walker.nextNode())) {
+      const parent = current.parentElement;
+      if (!parent) continue;
+      if (parent.closest('a, code, pre, script, style, .katex, .math-copy-button')) continue;
+      if (/\[\[[^\]]+\]\]/.test(current.nodeValue || '')) textNodes.push(current);
+    }
+
+    textNodes.forEach(textNode => {
+      const text = textNode.nodeValue || '';
+      const pattern = /\[\[([^\]|]+?)(?:\|([^\]]+))?\]\]/g;
+      let match;
+      let last = 0;
+      const fragment = document.createDocumentFragment();
+      while ((match = pattern.exec(text))) {
+        if (match.index > last) fragment.append(document.createTextNode(text.slice(last, match.index)));
+        const raw = match[1].trim();
+        const parts = raw.split('#');
+        const target = parts.shift()?.trim() || '';
+        const section = parts.join('#').trim();
+        const label = (match[2] || target).trim();
+        const resolved = wikiMap.get(normalizeWiki(target));
+        if (resolved) {
+          const link = document.createElement('a');
+          link.className = 'wiki-link';
+          link.textContent = label;
+          link.href = `${resolved.href}${section ? `#${slugFragment(section)}` : ''}`;
+          link.title = `Wiki link → ${resolved.title}`;
+          fragment.append(link);
+        } else {
+          const unresolved = document.createElement('span');
+          unresolved.className = 'wiki-unresolved';
+          unresolved.textContent = label;
+          unresolved.title = `Unresolved wiki link: ${target}`;
+          fragment.append(unresolved);
+        }
+        last = pattern.lastIndex;
+      }
+      if (last < text.length) fragment.append(document.createTextNode(text.slice(last)));
+      textNode.replaceWith(fragment);
+    });
+  }
 
   const referenceNodes = new Map();
   document.querySelectorAll('[data-reference-id]').forEach((node) => {
@@ -155,6 +215,13 @@ import '@/styles/scholarly.css';
     syncFocusButton();
   });
   syncFocusButton();
+
+  const wanderButton = document.getElementById('wander-note');
+  wanderButton?.addEventListener('click', () => {
+    if (!Array.isArray(wanderUrls) || !wanderUrls.length) return;
+    const target = wanderUrls[Math.floor(Math.random() * wanderUrls.length)];
+    if (target) window.location.assign(target);
+  });
 
   document.addEventListener('keydown', (event) => {
     if (event.key !== 'Escape') return;
