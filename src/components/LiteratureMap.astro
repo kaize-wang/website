@@ -1,0 +1,163 @@
+---
+import '@/styles/knowledge.css';
+const { nodes = [], edges = [] } = Astro.props;
+---
+<div class="literature-map-shell" data-literature-map>
+  <svg class="literature-map" viewBox="0 0 960 560" role="img" aria-label="Map connecting reading notes to papers and references"></svg>
+  <div class="graph-tooltip literature-tooltip" hidden><strong></strong><p></p></div>
+</div>
+<div class="graph-legend">
+  <span class="literature-note-key"><i></i>Reading note</span>
+  <span class="literature-paper-key"><i></i>Paper / reference</span>
+  <span><i></i>Recorded reading or citation relation</span>
+</div>
+<p class="graph-note">This map does not infer paper-to-paper citations. It only visualizes relationships explicitly recorded in this site's notes and references.</p>
+
+<script is:inline define:vars={{ nodes, edges }}>
+(() => {
+  const shell = document.querySelector('[data-literature-map]');
+  const svg = shell?.querySelector('svg');
+  const tooltip = shell?.querySelector('.graph-tooltip');
+  if (!shell || !svg || !tooltip || !Array.isArray(nodes) || !nodes.length) return;
+  const NS = 'http://www.w3.org/2000/svg';
+  const width = 960;
+  const height = 560;
+  const nodeMap = new Map();
+  const neighbors = new Map(nodes.map(node => [node.id, new Set()]));
+  edges.forEach(edge => {
+    neighbors.get(edge.source)?.add(edge.target);
+    neighbors.get(edge.target)?.add(edge.source);
+  });
+
+  const state = nodes.map((node, index) => {
+    const papers = nodes.filter(item => item.type === 'paper').length || 1;
+    const notes = nodes.length - papers || 1;
+    const laneIndex = node.type === 'note'
+      ? nodes.filter((item, i) => i <= index && item.type === 'note').length - 1
+      : nodes.filter((item, i) => i <= index && item.type === 'paper').length - 1;
+    const laneCount = node.type === 'note' ? notes : papers;
+    const item = {
+      ...node,
+      x: node.type === 'note' ? 240 : 700,
+      y: 80 + (laneIndex + 1) * (400 / (laneCount + 1)),
+      vx: 0,
+      vy: 0
+    };
+    nodeMap.set(node.id, item);
+    return item;
+  });
+
+  const edgeLayer = document.createElementNS(NS, 'g');
+  const nodeLayer = document.createElementNS(NS, 'g');
+  svg.append(edgeLayer, nodeLayer);
+  const edgeEls = edges.map(edge => {
+    const line = document.createElementNS(NS, 'line');
+    line.classList.add('literature-edge');
+    line.dataset.type = edge.type;
+    edgeLayer.appendChild(line);
+    return { edge, line };
+  });
+  const nodeEls = state.map(node => {
+    const group = document.createElementNS(NS, 'g');
+    group.classList.add('literature-node');
+    group.dataset.type = node.type;
+    group.setAttribute('tabindex', '0');
+    group.setAttribute('role', node.href ? 'link' : 'group');
+    const circle = document.createElementNS(NS, 'circle');
+    circle.setAttribute('r', node.type === 'note' ? '8' : '6.5');
+    const text = document.createElementNS(NS, 'text');
+    text.setAttribute('x', node.type === 'note' ? '-12' : '12');
+    text.setAttribute('y', '4');
+    text.setAttribute('text-anchor', node.type === 'note' ? 'end' : 'start');
+    text.textContent = node.title.length > 42 ? `${node.title.slice(0, 40)}…` : node.title;
+    group.append(circle, text);
+    nodeLayer.appendChild(group);
+    return { node, group };
+  });
+
+  const update = () => {
+    edgeEls.forEach(({ edge, line }) => {
+      const a = nodeMap.get(edge.source);
+      const b = nodeMap.get(edge.target);
+      if (!a || !b) return;
+      line.setAttribute('x1', a.x); line.setAttribute('y1', a.y);
+      line.setAttribute('x2', b.x); line.setAttribute('y2', b.y);
+    });
+    nodeEls.forEach(({ node, group }) => group.setAttribute('transform', `translate(${node.x},${node.y})`));
+  };
+
+  let frame = 0;
+  const simulate = () => {
+    state.forEach(node => {
+      const targetX = node.type === 'note' ? 250 : 710;
+      node.vx += (targetX - node.x) * .0012;
+      node.vy += (height / 2 - node.y) * .00025;
+    });
+    edges.forEach(edge => {
+      const a = nodeMap.get(edge.source); const b = nodeMap.get(edge.target);
+      if (!a || !b) return;
+      const dx = b.x - a.x; const dy = b.y - a.y;
+      const d = Math.max(1, Math.hypot(dx, dy));
+      const pull = (d - 330) * .00012;
+      a.vx += dx * pull; a.vy += dy * pull;
+      b.vx -= dx * pull; b.vy -= dy * pull;
+    });
+    for (let i = 0; i < state.length; i += 1) {
+      for (let j = i + 1; j < state.length; j += 1) {
+        const a = state[i]; const b = state[j];
+        const dx = b.x - a.x; const dy = b.y - a.y;
+        const d2 = Math.max(500, dx * dx + dy * dy);
+        const f = 5200 / d2; const d = Math.sqrt(d2);
+        a.vx -= dx / d * f; a.vy -= dy / d * f;
+        b.vx += dx / d * f; b.vy += dy / d * f;
+      }
+    }
+    state.forEach(node => {
+      node.vx *= .88; node.vy *= .88;
+      node.x = Math.max(90, Math.min(width - 90, node.x + node.vx));
+      node.y = Math.max(35, Math.min(height - 35, node.y + node.vy));
+    });
+    update();
+    frame += 1;
+    if (frame < 220) requestAnimationFrame(simulate);
+  };
+
+  const clear = () => {
+    nodeEls.forEach(({ group }) => group.classList.remove('is-active', 'is-dim'));
+    edgeEls.forEach(({ line }) => line.classList.remove('is-active', 'is-dim'));
+    tooltip.hidden = true;
+  };
+  const highlight = (node, group) => {
+    const adjacent = neighbors.get(node.id) || new Set();
+    nodeEls.forEach(({ node: other, group: otherGroup }) => {
+      otherGroup.classList.toggle('is-active', other.id === node.id || adjacent.has(other.id));
+      otherGroup.classList.toggle('is-dim', other.id !== node.id && !adjacent.has(other.id));
+    });
+    edgeEls.forEach(({ edge, line }) => {
+      const active = edge.source === node.id || edge.target === node.id;
+      line.classList.toggle('is-active', active);
+      line.classList.toggle('is-dim', !active);
+    });
+    tooltip.querySelector('strong').textContent = node.title;
+    tooltip.querySelector('p').textContent = node.meta || '';
+    tooltip.hidden = false;
+    const shellRect = shell.getBoundingClientRect();
+    const nodeRect = group.getBoundingClientRect();
+    tooltip.style.left = `${Math.min(shellRect.width - 314, Math.max(14, nodeRect.left - shellRect.left + 15))}px`;
+    tooltip.style.top = `${Math.min(shellRect.height - 95, Math.max(12, nodeRect.top - shellRect.top + 18))}px`;
+  };
+
+  nodeEls.forEach(({ node, group }) => {
+    group.addEventListener('mouseenter', () => highlight(node, group));
+    group.addEventListener('mouseleave', clear);
+    group.addEventListener('focus', () => highlight(node, group));
+    group.addEventListener('blur', clear);
+    if (node.href) {
+      group.addEventListener('click', () => window.location.assign(node.href));
+      group.addEventListener('keydown', event => { if (event.key === 'Enter') window.location.assign(node.href); });
+    }
+  });
+  update();
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) requestAnimationFrame(simulate);
+})();
+</script>
