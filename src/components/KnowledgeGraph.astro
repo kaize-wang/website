@@ -1,5 +1,6 @@
 ---
 import '@/styles/knowledge.css';
+import '@/styles/advanced-tools.css';
 const { nodes = [], edges = [] } = Astro.props;
 const dates = nodes.map((node: any) => Number(node.publishedAt || 0)).filter(Boolean);
 const minDate = dates.length ? Math.min(...dates) : 0;
