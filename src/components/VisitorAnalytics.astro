@@ -3,9 +3,8 @@ import '@/styles/experiments.css';
 import '@/styles/visitor-analytics.css';
 import { withBase } from '@/utils/url';
 const { compact = false } = Astro.props as { compact?: boolean };
-const mapId = '1788163702';
+const mapId = '1788186347';
 const mapImage = `https://smallcounter.com/map/view.php?type=180&id=${mapId}`;
-const mapDetails = `https://smallcounter.com/vmap/${mapId}/`;
 ---
 {compact ? (
   <section class="section visitor-summary-section" id="visitors">
@@ -40,14 +39,14 @@ const mapDetails = `https://smallcounter.com/vmap/${mapId}/`;
       <div><strong id="busuanzi_today_uv">—</strong><span>Today visitors</span></div>
     </div>
 
-    <a class="external-visitor-map-link visitor-map-full" href={mapDetails} target="_blank" rel="noreferrer" aria-label="Open detailed visitor map statistics">
+    <div class="external-visitor-map-link visitor-map-full" aria-label="Approximate visitor world map">
       <img class="external-visitor-map" src={mapImage} alt="World map showing approximate visitor locations" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" />
       <span class="external-map-fallback" hidden>Visitor map is temporarily unavailable.</span>
-    </a>
+    </div>
 
     <div class="visitor-privacy-note">
       <strong>Simple by design.</strong>
-      <span>The public counters may not match professional analytics exactly. The map uses the visitor request to infer an approximate location; this site does not run its own IP database or expose visitor IP addresses. Click the map to open SmallCounter's detailed map page.</span>
+      <span>The public counters may not match professional analytics exactly. The map service infers an approximate location from the visitor request; this site does not run its own IP database, display visitor IP addresses, or expose a detailed visitor-log link.</span>
     </div>
   </div>
 )}
