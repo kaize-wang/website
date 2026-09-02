@@ -27,6 +27,14 @@ const paperTakeawaysSchema = z.object({
   question: z.string()
 });
 
+const researchQuestionSchema = z.object({
+  id: z.string(),
+  text: z.string(),
+  status: z.enum(['Open', 'Exploring', 'Reframed', 'Resolved']).default('Open'),
+  kind: z.enum(['Research', 'Reading']).default('Research'),
+  note: z.string().optional()
+});
+
 const notes = defineCollection({
   loader: glob({
     base: './src/content/notes',
@@ -48,6 +56,7 @@ const notes = defineCollection({
     paper: paperSchema.optional(),
     readingStatus: z.enum(['Reading', 'Read', 'Revisit', 'Core']).optional(),
     paperTakeaways: paperTakeawaysSchema.optional(),
+    researchQuestions: z.array(researchQuestionSchema).default([]),
     references: z.array(referenceSchema).default([]),
     draft: z.boolean().default(false),
     featured: z.boolean().default(false)
