@@ -1,0 +1,56 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import NoteList from '@/components/NoteList.astro';
+import { site } from '@/site.config';
+import { getPublishedNotes, textUnits } from '@/utils/notes';
+const notes = await getPublishedNotes();
+const recent = notes.slice(0,4);
+const days = Math.max(1, Math.floor((Date.now() - new Date(site.startedAt).getTime()) / 86400000) + 1);
+const words = notes.reduce((n, note) => n + textUnits(note.body ?? ''), 0);
+---
+<BaseLayout title={site.title} active="Home">
+  <main class="site-shell">
+    <div class="hero-banner">
+      <img src="/banner-placeholder.svg" alt="Website banner" />
+      <div class="banner-caption">{site.bannerCaption}</div>
+    </div>
+
+    <section class="profile-grid">
+      <div><img class="avatar" src={site.avatar} alt={`${site.fullName} profile photo`} /></div>
+      <div>
+        <div class="eyebrow">Academic homepage · personal notes</div>
+        <h1>{site.fullName}</h1>
+        <p class="role">{site.role}</p>
+        <p class="affiliation">{site.affiliation} · {site.location}</p>
+        <div class="profile-links">
+          <a class="pill" href={`mailto:${site.email}`}>Email</a>
+          {site.scholar && <a class="pill" href={site.scholar}>Google Scholar</a>}
+          {site.github && <a class="pill" href={site.github}>GitHub</a>}
+          {site.cv && <a class="pill" href={site.cv}>CV</a>}
+        </div>
+        <div class="about-copy">{site.about.map(p => <p>{p}</p>)}</div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head"><h2>Education</h2></div>
+      <div class="education-list">
+        {site.education.map(item => <div class="education-item"><div><strong>{item.school}</strong><small>{item.degree}</small></div>{item.period && <time>{item.period}</time>}</div>)}
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head"><h2>Recent Notes</h2><a class="section-kicker" href="/notes">View all notes →</a></div>
+      {recent.length ? <NoteList notes={recent} /> : <p class="muted">No notes yet.</p>}
+    </section>
+
+    <section class="section">
+      <div class="section-head"><h2>Site Notes</h2></div>
+      <div class="stats">
+        <div class="stat"><div class="stat-number">{notes.length}</div><div class="stat-label">Published notes</div></div>
+        <div class="stat"><div class="stat-number">{words.toLocaleString()}</div><div class="stat-label">Approx. words / chars</div></div>
+        <div class="stat"><div class="stat-number">{days}</div><div class="stat-label">Days since this site started</div></div>
+      </div>
+    </section>
+  </main>
+</BaseLayout>

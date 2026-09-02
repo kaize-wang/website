@@ -1,0 +1,23 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { site } from '@/site.config';
+---
+<BaseLayout title="Research" active="Research">
+  <main class="site-shell">
+    <header class="page-hero">
+      <div class="eyebrow">Academic</div>
+      <h1>Research</h1>
+      <p>My current work is centered on inventory systems with warranty and sequential decisions under uncertainty. This page will gradually collect working papers, projects, and related research notes.</p>
+    </header>
+    <section class="section">
+      <div class="section-head"><h2>Research Interests</h2></div>
+      <div class="research-grid">
+        {site.researchAreas.map((area,i) => <article class="research-card"><span class="num">0{i+1}</span><h3>{area.name}</h3><p>{area.description}</p></article>)}
+      </div>
+    </section>
+    <section class="section">
+      <div class="section-head"><h2>Working Papers & Publications</h2></div>
+      <p class="muted">Working papers and publications will be added here when the bibliographic information is ready.</p>
+    </section>
+  </main>
+</BaseLayout>

@@ -1,0 +1,35 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getPublishedNotes, formatDate, noteSlug } from '@/utils/notes';
+const notes = await getPublishedNotes();
+const index = notes.map(note => ({
+  title: note.data.title,
+  description: note.data.description,
+  category: note.data.category,
+  tags: note.data.tags,
+  date: formatDate(note.data.publishDate),
+  href: `/notes/${noteSlug(note.id)}/`
+}));
+---
+<BaseLayout title="Search" active="Search">
+  <main class="site-shell">
+    <header class="page-hero"><div class="eyebrow">Notes / Search</div><h1>Search</h1><p>Search titles, descriptions, categories, and tags. This index is generated from your Markdown notes at build time.</p></header>
+    <section class="section">
+      <label for="q" class="muted" style="display:block;margin-bottom:8px;font-size:13px">Search notes</label>
+      <input id="q" type="search" placeholder="warranty, reading, optimization…" style="width:100%;padding:14px 16px;border:1px solid var(--line);background:var(--paper);color:var(--text);font:inherit;border-radius:3px;outline:none" />
+      <div id="results" class="note-list" style="margin-top:28px"></div>
+    </section>
+  </main>
+  <script define:vars={{ index }}>
+    const input = document.querySelector('#q');
+    const results = document.querySelector('#results');
+    const esc = (s) => s.replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+    function render(query = '') {
+      const q = query.trim().toLowerCase();
+      const rows = index.filter(n => !q || [n.title,n.description,n.category,...n.tags].join(' ').toLowerCase().includes(q));
+      results.innerHTML = rows.length ? rows.map(n => `<article class="note-row"><div class="note-date">${esc(n.date)}</div><div><a href="${esc(n.href)}"><h3 class="note-title">${esc(n.title)}</h3></a><p class="note-desc">${esc(n.description)}</p><div class="tags"><span class="tag">${esc(n.category)}</span>${n.tags.map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div></div><div class="note-meta"></div></article>`).join('') : '<p class="muted">No matching notes.</p>';
+    }
+    render();
+    input?.addEventListener('input', e => render(e.target.value));
+  </script>
+</BaseLayout>

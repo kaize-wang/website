@@ -1,0 +1,21 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import NoteList from '@/components/NoteList.astro';
+import { getPublishedNotes } from '@/utils/notes';
+
+export async function getStaticPaths() {
+  const all = await getPublishedNotes();
+  const names = [...new Set(all.map(note => note.data.collection).filter(Boolean))] as string[];
+  return names.map(name => ({
+    params: { collection: name.toLowerCase() },
+    props: { name, notes: all.filter(note => note.data.collection === name) }
+  }));
+}
+const { name, notes } = Astro.props;
+---
+<BaseLayout title={name} active="Notes">
+  <main class="site-shell">
+    <header class="page-hero"><div class="eyebrow">Notes / Collection</div><h1>{name}</h1><p>{notes.length} note{notes.length === 1 ? '' : 's'} in this series.</p></header>
+    <section class="section"><NoteList notes={notes} /></section>
+  </main>
+</BaseLayout>

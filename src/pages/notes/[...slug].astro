@@ -1,0 +1,37 @@
+---
+import { getPublishedNotes, formatDate, readingTime } from '@/utils/notes';
+import { render } from 'astro:content';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+export async function getStaticPaths() {
+  const notes = await getPublishedNotes();
+  return notes.map(note => ({ params: { slug: note.id }, props: { note } }));
+}
+const { note } = Astro.props;
+const { Content, headings } = await render(note);
+const toc = headings.filter((heading) => heading.depth === 2 || heading.depth === 3);
+---
+<BaseLayout title={note.data.title} description={note.data.description} active="Notes">
+  <article class="article-wrap">
+    <header class="article-head">
+      <div class="eyebrow">{note.data.category}{note.data.collection ? ` · ${note.data.collection}` : ''}</div>
+      <h1>{note.data.title}</h1>
+      <div class="article-meta">
+        <span>{formatDate(note.data.publishDate)}</span>
+        {note.data.updatedDate && <span>Updated {formatDate(note.data.updatedDate)}</span>}
+        <span>{readingTime(note.body)} min read</span>
+      </div>
+      <p class="article-desc">{note.data.description}</p>
+      <div class="tags">{note.data.tags.map(tag => <a class="tag" href={`/tags/${encodeURIComponent(tag.toLowerCase())}/`}>{tag}</a>)}</div>
+    </header>
+    {toc.length >= 3 && (
+      <details class="article-contents">
+        <summary>Contents</summary>
+        <nav>
+          {toc.map(heading => <a class={`depth-${heading.depth}`} href={`#${heading.slug}`}>{heading.text}</a>)}
+        </nav>
+      </details>
+    )}
+    <div class="prose"><Content /></div>
+    <div class="backline"><a href="/notes">← Back to Notes</a><span>{headings.length ? `${headings.length} sections` : ''}</span></div>
+  </article>
+</BaseLayout>

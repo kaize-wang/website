@@ -1,0 +1,19 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import NoteList from '@/components/NoteList.astro';
+import { getPublishedNotes } from '@/utils/notes';
+
+export async function getStaticPaths() {
+  const all = await getPublishedNotes();
+  const tags = [...new Set(all.flatMap(note => note.data.tags.map(tag => tag.toLowerCase())))];
+  return tags.map(tag => ({
+    params: { tag },
+    props: { notes: all.filter(note => note.data.tags.some(t => t.toLowerCase() === tag)) }
+  }));
+}
+const tag = decodeURIComponent(Astro.params.tag || '');
+const { notes } = Astro.props;
+---
+<BaseLayout title={`#${tag}`} active="Notes">
+  <main class="site-shell"><header class="page-hero"><div class="eyebrow">Notes / Tag</div><h1>#{tag}</h1></header><section class="section"><NoteList notes={notes} /></section></main>
+</BaseLayout>

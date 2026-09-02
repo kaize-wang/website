@@ -1,0 +1,22 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import NoteList from '@/components/NoteList.astro';
+import { getPublishedNotes } from '@/utils/notes';
+
+export async function getStaticPaths() {
+  const all = await getPublishedNotes();
+  return ['research','reading','technical','life'].map(category => ({
+    params: { category },
+    props: { notes: all.filter(note => note.data.category.toLowerCase() === category) }
+  }));
+}
+const category = Astro.params.category!;
+const title = category.charAt(0).toUpperCase() + category.slice(1);
+const { notes } = Astro.props;
+---
+<BaseLayout title={`${title} Notes`} active="Notes">
+  <main class="site-shell">
+    <header class="page-hero"><div class="eyebrow">Notes / Category</div><h1>{title}</h1><p>{notes.length} note{notes.length === 1 ? '' : 's'} in this category.</p></header>
+    <section class="section"><NoteList notes={notes} /></section>
+  </main>
+</BaseLayout>

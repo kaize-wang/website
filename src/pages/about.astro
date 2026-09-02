@@ -1,0 +1,20 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { site } from '@/site.config';
+---
+<BaseLayout title="About" active="About">
+  <main class="site-shell">
+    <header class="page-hero">
+      <div class="eyebrow">About</div>
+      <h1>{site.fullName}</h1>
+      <p>{site.shortBio}</p>
+    </header>
+
+    <section class="section">
+      <div class="about-copy">
+        {site.about.map(p => <p>{p}</p>)}
+        <p>For academic correspondence, you can reach me at <a href={`mailto:${site.email}`}>{site.email}</a>.</p>
+      </div>
+    </section>
+  </main>
+</BaseLayout>

@@ -1,0 +1,40 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import NoteList from '@/components/NoteList.astro';
+import { getPublishedNotes } from '@/utils/notes';
+const notes = await getPublishedNotes();
+const categories = ['Research','Reading','Technical','Life'];
+
+const collectionMap = new Map<string, number>();
+const tagMap = new Map<string, number>();
+for (const note of notes) {
+  if (note.data.collection) collectionMap.set(note.data.collection, (collectionMap.get(note.data.collection) ?? 0) + 1);
+  for (const tag of note.data.tags) tagMap.set(tag, (tagMap.get(tag) ?? 0) + 1);
+}
+const collections = [...collectionMap.entries()].sort((a,b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+const tags = [...tagMap.entries()].sort((a,b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0,12);
+---
+<BaseLayout title="Notes" active="Notes">
+  <main class="site-shell">
+    <header class="page-hero">
+      <div class="eyebrow">Research · Reading · Technical · Life</div>
+      <h1>Notes</h1>
+      <p>A public notebook for ideas that are worth keeping. Categories can grow later; the writing comes first.</p>
+      <div class="category-nav">
+        {categories.map(c => <a href={`/categories/${c.toLowerCase()}/`}>{c}</a>)}
+        <a href="/archive">Archive</a>
+      </div>
+      {(collections.length > 0 || tags.length > 0) && (
+        <div class="notes-browse">
+          {collections.length > 0 && (
+            <div><span>Series</span>{collections.map(([name,count]) => <a href={`/collections/${encodeURIComponent(name.toLowerCase())}/`}>{name}<small>{count}</small></a>)}</div>
+          )}
+          {tags.length > 0 && (
+            <div><span>Tags</span>{tags.map(([name,count]) => <a href={`/tags/${encodeURIComponent(name.toLowerCase())}/`}>#{name}<small>{count}</small></a>)}</div>
+          )}
+        </div>
+      )}
+    </header>
+    <section class="section"><NoteList notes={notes} /></section>
+  </main>
+</BaseLayout>

@@ -1,0 +1,13 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import NoteList from '@/components/NoteList.astro';
+import { getPublishedNotes } from '@/utils/notes';
+const notes = await getPublishedNotes();
+const years = [...new Set(notes.map(n => n.data.publishDate.getFullYear()))];
+---
+<BaseLayout title="Archive" active="Notes">
+  <main class="site-shell">
+    <header class="page-hero"><div class="eyebrow">All notes by year</div><h1>Archive</h1><p>A chronological view that stays useful after the site grows.</p></header>
+    {years.map(year => <section class="section"><div class="section-head"><h2>{year}</h2><span class="section-kicker">{notes.filter(n=>n.data.publishDate.getFullYear()===year).length} notes</span></div><NoteList notes={notes.filter(n=>n.data.publishDate.getFullYear()===year)} /></section>)}
+  </main>
+</BaseLayout>

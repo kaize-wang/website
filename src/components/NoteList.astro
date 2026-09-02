@@ -1,0 +1,20 @@
+---
+import { formatDate, noteSlug, readingTime } from '@/utils/notes';
+const { notes } = Astro.props;
+---
+<div class="note-list">
+  {notes.map(note => (
+    <article class="note-row">
+      <div class="note-date">{formatDate(note.data.publishDate)}</div>
+      <div>
+        <a href={`/notes/${noteSlug(note.id)}/`}><h3 class="note-title">{note.data.title}</h3></a>
+        <p class="note-desc">{note.data.description}</p>
+        <div class="tags">
+          <span class="tag">{note.data.category}</span>
+          {note.data.tags.slice(0,3).map(tag => <a class="tag" href={`/tags/${encodeURIComponent(tag.toLowerCase())}/`}>{tag}</a>)}
+        </div>
+      </div>
+      <div class="note-meta">{readingTime(note.body ?? '')} min read</div>
+    </article>
+  ))}
+</div>
