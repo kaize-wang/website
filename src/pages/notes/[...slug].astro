@@ -3,10 +3,13 @@ import { getPublishedNotes, formatDate, readingTime, noteSlug, backlinksFor, out
 import { render } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import SiteExtras from '@/components/SiteExtras.astro';
+import ResearchArticleTools from '@/components/ResearchArticleTools.astro';
 import ArticleEnhancements from '@/components/ArticleEnhancements.astro';
 import '@/styles/experiments.css';
 import '@/styles/scholarly.css';
 import '@/styles/knowledge.css';
+import '@/styles/research-tools.css';
+import { site } from '@/site.config';
 import { withBase } from '@/utils/url';
 
 export async function getStaticPaths() {
@@ -48,6 +51,17 @@ const wikiNotes = allNotes.map(item => ({
   aliases: item.data.aliases || [],
   href: withBase(`/notes/${noteSlug(item.id)}/`)
 }));
+const hasNotation = /\[!notation(?:\s|\])/i.test(note.body || '');
+const hasAssumptions = /\[!assumption(?:\s|\])/i.test(note.body || '');
+const showArticleAside = toc.length >= 2 || hasNotation || hasAssumptions;
+const canonicalUrl = new URL(withBase(`/notes/${noteSlug(note.id)}/`), Astro.site ?? Astro.url.origin).toString();
+const citeYear = note.data.publishDate.getFullYear();
+const citeKeyTail = note.id.replace(/[^a-z0-9]+/gi, '').slice(0, 20) || 'note';
+const citation = {
+  plain: `${site.fullName} (${citeYear}). ${note.data.title}. ${site.title}. ${canonicalUrl}`,
+  markdown: `[${note.data.title}](${canonicalUrl}) — ${site.fullName}, ${citeYear}.`,
+  bibtex: `@misc{wang${citeYear}${citeKeyTail},\n  author = {${site.fullName}},\n  title = {${note.data.title.replace(/[{}]/g, '')}},\n  year = {${citeYear}},\n  url = {${canonicalUrl}},\n  note = {${site.title}}\n}`
+};
 ---
 <BaseLayout title={note.data.title} description={note.data.description} active="Notes">
   <div class="article-page-layout">
@@ -89,6 +103,9 @@ const wikiNotes = allNotes.map(item => ({
 
         <div class="article-toolbox">
           <button class="mini-action" id="copy-page-link" type="button">Copy link</button>
+          <button class="mini-action" id="cite-note" type="button">Cite</button>
+          <button class="mini-action" id="academic-view" type="button" aria-pressed="false">Academic</button>
+          <button class="mini-action" id="print-note" type="button">Print</button>
           <button class="focus-reading-button" id="focus-reading" type="button" aria-pressed="false">Focus</button>
           {wanderUrls.length > 0 && <button class="mini-action" id="wander-note" type="button" title="Follow a nearby note in the knowledge graph">Wander →</button>}
           <span class="article-local-visits"><strong id="busuanzi_page_pv">—</strong> views</span>
@@ -186,16 +203,36 @@ const wikiNotes = allNotes.map(item => ({
       <div class="backline"><a href={withBase('/notes')}>← Back to Notes</a><span>{headings.length ? `${headings.length} sections` : ''}</span></div>
     </article>
 
-    {toc.length >= 2 && (
-      <aside class="floating-toc" data-floating-toc aria-label="On this page">
-        <div class="floating-toc-label">On this page</div>
-        <nav>
-          {toc.map(heading => <a class={`depth-${heading.depth}`} href={`#${heading.slug}`}>{heading.text}</a>)}
-        </nav>
+    {showArticleAside && (
+      <aside class="floating-toc" data-floating-toc aria-label="Article tools">
+        <div class="article-aside-tabs">
+          {toc.length >= 2 && <button class="article-aside-tab active" type="button" data-aside-tab="outline">Outline</button>}
+          {hasNotation && <button class={`article-aside-tab${toc.length < 2 ? ' active' : ''}`} type="button" data-aside-tab="notation">Notation</button>}
+          {hasAssumptions && <button class={`article-aside-tab${toc.length < 2 && !hasNotation ? ' active' : ''}`} type="button" data-aside-tab="assumptions">Assumptions</button>}
+        </div>
+        {toc.length >= 2 && (
+          <div class="article-aside-panel" data-aside-panel="outline">
+            <div class="floating-toc-label">On this page</div>
+            <nav>{toc.map(heading => <a class={`depth-${heading.depth}`} href={`#${heading.slug}`}>{heading.text}</a>)}</nav>
+          </div>
+        )}
+        {hasNotation && (
+          <div class="article-aside-panel" data-aside-panel="notation" hidden={toc.length >= 2}>
+            <div class="floating-toc-label">Notation</div>
+            <div class="article-aside-list"></div><p class="article-aside-empty">No notation blocks found.</p>
+          </div>
+        )}
+        {hasAssumptions && (
+          <div class="article-aside-panel" data-aside-panel="assumptions" hidden={toc.length >= 2 || hasNotation}>
+            <div class="floating-toc-label">Assumptions</div>
+            <div class="article-aside-list"></div><p class="article-aside-empty">No assumption blocks found.</p>
+          </div>
+        )}
       </aside>
     )}
   </div>
   <SiteExtras />
+  <ResearchArticleTools citation={citation} />
   <ArticleEnhancements wikiNotes={wikiNotes} wanderUrls={wanderUrls} />
 
   <script is:inline>
