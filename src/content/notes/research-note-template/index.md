@@ -5,6 +5,7 @@ publishDate: 2026-09-02
 category: Research
 tags: [inventory, warranty]
 collection: Warranty & Inventory Notes
+aliases: ["Optional short name used by wiki links"]
 lang: zh
 # englishSummary: "Optional 3–5 sentence English summary for a Chinese note."
 # translationOf: path-of-the-other-language-version
@@ -14,6 +15,12 @@ lang: zh
 #   year: 2026
 #   venue: "Journal"
 #   doi: "10.xxxx/xxxxx"
+# readingStatus: Reading # Reading | Read | Revisit | Core
+# paperTakeaways:
+#   story: "What operational problem does the paper explain?"
+#   state: "What state / information must the decision maker retain?"
+#   structure: "What structural result is obtained?"
+#   question: "What assumption would be most interesting to relax?"
 # references:
 #   - id: example2026
 #     title: "Paper title"
@@ -26,6 +33,8 @@ featured: false
 ---
 
 Start with the question you are trying to understand.
+
+Internal note links can use wiki syntax: `[[Exact note title]]`, `[[alias|display text]]`, or `[[note-slug|display text]]`. These links generate backlinks and strong edges in the Knowledge Graph. A target that does not exist remains visible as an unresolved link instead of silently breaking.
 
 ## Context
 
@@ -43,6 +52,8 @@ V_t(s)=\min_a\left\{c(s,a)+\mathbb E[V_{t+1}(S_{t+1})\mid s,a]\right\}.
 $$
 
 If `references` is provided in frontmatter, cite one with ordinary Markdown such as `[Author et al. (2026)](#ref-example2026)`. The hover card is generated automatically.
+
+For Paper Reading notes, the optional `readingStatus` and `paperTakeaways` fields feed the Paper Reading Dashboard automatically.
 
 ## What I learned
 
