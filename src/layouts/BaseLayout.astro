@@ -2,6 +2,7 @@
 import '@/styles/global.css';
 import '@/styles/interaction.css';
 import { site } from '@/site.config';
+import { getPublishedNotes, noteSlug } from '@/utils/notes';
 import { withBase } from '@/utils/url';
 const { title = site.title, description = site.shortBio, active = '' } = Astro.props;
 const pageTitle = title === site.title ? title : `${title} · ${site.title}`;
@@ -13,8 +14,9 @@ if (basePrefix && routePath.startsWith(basePrefix)) routePath = routePath.slice(
 routePath = routePath.replace(/\/+$/, '') || '/';
 
 const isHome = routePath === '/';
+const isArticle = routePath.startsWith('/notes/');
 const isNotesContext =
-  routePath.startsWith('/notes/') ||
+  isArticle ||
   routePath.startsWith('/tags/') ||
   routePath.startsWith('/categories/') ||
   routePath.startsWith('/collections/') ||
@@ -24,6 +26,24 @@ const contextBack = isHome
   : isNotesContext
     ? { label: 'Notes', href: '/notes' }
     : { label: 'Home', href: '/' };
+
+const commandNotes = await getPublishedNotes();
+const commandItems = [
+  ...site.nav.map(item => ({
+    type: 'Page',
+    title: item.label,
+    description: item.label === 'Home' ? site.shortBio : `Open ${item.label}`,
+    href: withBase(item.href),
+    keywords: item.label
+  })),
+  ...commandNotes.map(note => ({
+    type: 'Note',
+    title: note.data.title,
+    description: note.data.description,
+    href: withBase(`/notes/${noteSlug(note.id)}/`),
+    keywords: [note.data.category, ...note.data.tags].join(' ')
+  }))
+];
 ---
 <!doctype html>
 <html lang="en">
@@ -60,6 +80,10 @@ const contextBack = isHome
             ))}
           </nav>
 
+          <button class="sidebar-command" id="command-trigger" type="button" aria-haspopup="dialog" aria-controls="command-palette" aria-expanded="false">
+            <span>Quick search</span><kbd>⌘K</kbd>
+          </button>
+
           <div class="sidebar-bottom">
             <span class="sidebar-small">Research · Notes · Writing</span>
             <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Toggle light and dark theme" title="Toggle light/dark theme">◐</button>
@@ -68,6 +92,7 @@ const contextBack = isHome
       </aside>
 
       <div class="site-main">
+        {isArticle && <div class="reading-progress" aria-hidden="true"><span id="reading-progress-bar"></span></div>}
         {contextBack && (
           <div class="context-nav-wrap">
             <nav class="context-nav" aria-label="Back navigation">
@@ -85,12 +110,194 @@ const contextBack = isHome
       </div>
     </div>
 
-    <script is:inline>
-      document.getElementById('theme-toggle')?.addEventListener('click', () => {
-        const isDark = document.documentElement.dataset.theme === 'dark';
-        document.documentElement.dataset.theme = isDark ? '' : 'dark';
-        localStorage.setItem('theme', isDark ? 'light' : 'dark');
-      });
+    <button class="back-to-top" id="back-to-top" type="button" aria-label="Back to top" title="Back to top">↑</button>
+
+    <div class="command-palette" id="command-palette" hidden>
+      <div class="command-panel" role="dialog" aria-modal="true" aria-labelledby="command-title">
+        <div class="command-heading">
+          <span id="command-title">Search kaizewang</span>
+          <kbd>Esc</kbd>
+        </div>
+        <label class="command-input-wrap" for="command-input">
+          <span aria-hidden="true">⌕</span>
+          <input id="command-input" type="search" autocomplete="off" spellcheck="false" placeholder="Search pages, notes, tags…" />
+        </label>
+        <nav class="command-results" id="command-results" aria-label="Search results"></nav>
+        <div class="command-help"><span>↑ ↓ navigate</span><span>↵ open</span></div>
+      </div>
+    </div>
+
+    <script is:inline define:vars={{ commandItems }}>
+      (() => {
+        const themeToggle = document.getElementById('theme-toggle');
+        themeToggle?.addEventListener('click', () => {
+          const isDark = document.documentElement.dataset.theme === 'dark';
+          document.documentElement.dataset.theme = isDark ? '' : 'dark';
+          localStorage.setItem('theme', isDark ? 'light' : 'dark');
+        });
+
+        const palette = document.getElementById('command-palette');
+        const trigger = document.getElementById('command-trigger');
+        const input = document.getElementById('command-input');
+        const results = document.getElementById('command-results');
+        let filtered = commandItems.slice();
+        let selected = 0;
+        let lastFocused = null;
+
+        const normalize = value => String(value || '').toLowerCase();
+
+        function syncSelection() {
+          const links = [...results.querySelectorAll('a')];
+          links.forEach((link, index) => {
+            const active = index === selected;
+            link.classList.toggle('selected', active);
+            link.setAttribute('aria-current', active ? 'true' : 'false');
+          });
+          links[selected]?.scrollIntoView({ block: 'nearest' });
+        }
+
+        function renderResults(query = '') {
+          const q = normalize(query.trim());
+          filtered = commandItems.filter(item => {
+            if (!q) return true;
+            return normalize([item.title, item.description, item.keywords, item.type].join(' ')).includes(q);
+          }).slice(0, 9);
+          selected = 0;
+          results.replaceChildren();
+
+          if (!filtered.length) {
+            const empty = document.createElement('p');
+            empty.className = 'command-empty';
+            empty.textContent = 'No matching pages or notes.';
+            results.appendChild(empty);
+            return;
+          }
+
+          filtered.forEach((item, index) => {
+            const link = document.createElement('a');
+            link.href = item.href;
+            link.className = 'command-result';
+            link.dataset.index = String(index);
+
+            const copy = document.createElement('span');
+            copy.className = 'command-result-copy';
+            const title = document.createElement('strong');
+            title.textContent = item.title;
+            const desc = document.createElement('small');
+            desc.textContent = item.description || item.keywords || '';
+            copy.append(title, desc);
+
+            const type = document.createElement('span');
+            type.className = 'command-result-type';
+            type.textContent = item.type;
+            link.append(copy, type);
+            link.addEventListener('mouseenter', () => {
+              selected = index;
+              syncSelection();
+            });
+            link.addEventListener('click', closePalette);
+            results.appendChild(link);
+          });
+          syncSelection();
+        }
+
+        function openPalette() {
+          if (!palette || !input) return;
+          lastFocused = document.activeElement;
+          palette.hidden = false;
+          trigger?.setAttribute('aria-expanded', 'true');
+          document.body.classList.add('palette-open');
+          input.value = '';
+          renderResults();
+          requestAnimationFrame(() => input.focus());
+        }
+
+        function closePalette() {
+          if (!palette) return;
+          palette.hidden = true;
+          trigger?.setAttribute('aria-expanded', 'false');
+          document.body.classList.remove('palette-open');
+          if (lastFocused instanceof HTMLElement) lastFocused.focus();
+        }
+
+        trigger?.addEventListener('click', openPalette);
+        palette?.addEventListener('click', event => {
+          if (event.target === palette) closePalette();
+        });
+        input?.addEventListener('input', event => renderResults(event.target.value));
+        input?.addEventListener('keydown', event => {
+          if (event.key === 'ArrowDown' && filtered.length) {
+            event.preventDefault();
+            selected = (selected + 1) % filtered.length;
+            syncSelection();
+          } else if (event.key === 'ArrowUp' && filtered.length) {
+            event.preventDefault();
+            selected = (selected - 1 + filtered.length) % filtered.length;
+            syncSelection();
+          } else if (event.key === 'Enter' && filtered.length) {
+            event.preventDefault();
+            results.querySelectorAll('a')[selected]?.click();
+          } else if (event.key === 'Escape') {
+            event.preventDefault();
+            closePalette();
+          }
+        });
+
+        document.addEventListener('keydown', event => {
+          if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+            event.preventDefault();
+            palette?.hidden ? openPalette() : closePalette();
+          } else if (event.key === 'Escape' && palette && !palette.hidden) {
+            closePalette();
+          }
+        });
+
+        const backToTop = document.getElementById('back-to-top');
+        const progress = document.getElementById('reading-progress-bar');
+        const tocLinks = [...document.querySelectorAll('[data-floating-toc] a[href^="#"]')];
+        const tocSections = tocLinks.map(link => {
+          const id = decodeURIComponent(link.hash.slice(1));
+          return { link, section: document.getElementById(id) };
+        }).filter(item => item.section);
+        let ticking = false;
+
+        function updateScrollUI() {
+          const y = window.scrollY;
+          backToTop?.classList.toggle('visible', y > 520);
+
+          if (progress) {
+            const max = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+            const ratio = Math.min(1, Math.max(0, y / max));
+            progress.style.transform = `scaleX(${ratio})`;
+          }
+
+          if (tocSections.length) {
+            let current = tocSections[0];
+            for (const item of tocSections) {
+              if (item.section.getBoundingClientRect().top <= 150) current = item;
+              else break;
+            }
+            tocSections.forEach(item => {
+              const active = item === current;
+              item.link.classList.toggle('active', active);
+              if (active) item.link.setAttribute('aria-current', 'location');
+              else item.link.removeAttribute('aria-current');
+            });
+          }
+          ticking = false;
+        }
+
+        function requestScrollUpdate() {
+          if (ticking) return;
+          ticking = true;
+          requestAnimationFrame(updateScrollUI);
+        }
+
+        backToTop?.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+        window.addEventListener('scroll', requestScrollUpdate, { passive: true });
+        window.addEventListener('resize', requestScrollUpdate);
+        updateScrollUI();
+      })();
     </script>
   </body>
 </html>
