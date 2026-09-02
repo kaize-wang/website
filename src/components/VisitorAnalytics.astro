@@ -1,0 +1,88 @@
+---
+import '@/styles/experiments.css';
+import { withBase } from '@/utils/url';
+const { compact = false } = Astro.props as { compact?: boolean };
+const regions = [
+  { code: 'NA', name: 'North America', x: 118, y: 103 },
+  { code: 'SA', name: 'South America', x: 185, y: 194 },
+  { code: 'EU', name: 'Europe', x: 323, y: 88 },
+  { code: 'AF', name: 'Africa', x: 354, y: 165 },
+  { code: 'AS', name: 'Asia', x: 475, y: 104 },
+  { code: 'OC', name: 'Oceania', x: 548, y: 205 }
+];
+---
+{compact ? (
+  <section class="section visitor-summary-section" id="visitors" data-visitor-analytics>
+    <div class="section-head">
+      <h2>Visitors</h2>
+      <a class="section-kicker" href={withBase('/about#visitors')}>Explore visitor map →</a>
+    </div>
+    <div class="visitor-summary-card">
+      <div class="visitor-summary-stats">
+        <div><strong data-kaize-stat="siteViews">—</strong><span>page views</span></div>
+        <div><strong data-kaize-stat="siteVisitors">—</strong><span>browser visitors</span></div>
+        <div><strong data-kaize-stat="countriesReached">—</strong><span>countries</span></div>
+        <div><strong data-kaize-stat="todayViews">—</strong><span>today</span></div>
+      </div>
+      <svg class="visitor-map visitor-map-mini" viewBox="0 0 640 280" role="img" aria-label="Approximate visitor footprint by world region">
+        <path class="visitor-land" d="M55 76 L118 48 168 60 188 96 156 118 128 108 102 137 70 126 47 101 Z" />
+        <path class="visitor-land" d="M165 151 L205 151 219 183 203 226 181 251 166 216 171 184 151 169 Z" />
+        <path class="visitor-land" d="M279 72 L323 58 354 71 368 94 348 111 315 104 296 121 276 102 Z" />
+        <path class="visitor-land" d="M320 122 L365 117 397 148 389 198 361 238 331 211 317 161 Z" />
+        <path class="visitor-land" d="M361 70 L435 52 520 63 581 90 560 119 502 118 468 139 421 125 388 107 Z" />
+        <path class="visitor-land" d="M503 190 L553 178 584 199 565 226 520 222 495 205 Z" />
+        {regions.map(region => <circle class="visitor-region-dot" data-region-dot={region.code} cx={region.x} cy={region.y} r="0" aria-label={region.name} />)}
+      </svg>
+    </div>
+    <p class="visitor-summary-note">Lightweight public counters. Geographic totals are coarse and begin accumulating from this deployment.</p>
+  </section>
+) : (
+  <div class="experiment-card visitor-analytics-card" id="visitors" data-visitor-analytics data-current-location-request>
+    <div class="experiment-kicker">Live visitor footprint</div>
+    <h3>Where this site is being read</h3>
+    <p class="experiment-intro">Real page-view and browser-level visitor counts are accumulated by a lightweight public counter. Geographic aggregation uses coarse IP geolocation, while this site stores only aggregate numbers — not visitor IP addresses.</p>
+
+    <div class="visitor-live-stats">
+      <div><strong data-kaize-stat="siteViews">—</strong><span>Page views</span></div>
+      <div><strong data-kaize-stat="siteVisitors">—</strong><span>Browser visitors</span></div>
+      <div><strong data-kaize-stat="todayViews">—</strong><span>Today</span></div>
+      <div><strong data-kaize-stat="countriesReached">—</strong><span>Countries reached</span></div>
+      <div><strong data-kaize-stat="citiesReached">—</strong><span>Cities reached</span></div>
+    </div>
+
+    <div class="visitor-demo visitor-demo-live">
+      <div>
+        <svg class="visitor-map" viewBox="0 0 640 280" role="img" aria-label="Accumulated visitor footprint by world region">
+          <path class="visitor-land" d="M55 76 L118 48 168 60 188 96 156 118 128 108 102 137 70 126 47 101 Z" />
+          <path class="visitor-land" d="M165 151 L205 151 219 183 203 226 181 251 166 216 171 184 151 169 Z" />
+          <path class="visitor-land" d="M279 72 L323 58 354 71 368 94 348 111 315 104 296 121 276 102 Z" />
+          <path class="visitor-land" d="M320 122 L365 117 397 148 389 198 361 238 331 211 317 161 Z" />
+          <path class="visitor-land" d="M361 70 L435 52 520 63 581 90 560 119 502 118 468 139 421 125 388 107 Z" />
+          <path class="visitor-land" d="M503 190 L553 178 584 199 565 226 520 222 495 205 Z" />
+          {regions.map(region => (
+            <g class="visitor-region-group">
+              <circle class="visitor-region-halo" data-region-halo={region.code} cx={region.x} cy={region.y} r="0" />
+              <circle class="visitor-region-dot" data-region-dot={region.code} cx={region.x} cy={region.y} r="0" />
+              <text class="visitor-region-count" data-region-count={region.code} x={region.x + 11} y={region.y - 10}>0</text>
+            </g>
+          ))}
+        </svg>
+        <div class="visitor-region-legend">
+          {regions.map(region => <span><i></i>{region.name}: <strong data-region-legend={region.code}>0</strong></span>)}
+        </div>
+      </div>
+      <div class="visitor-copy visitor-current-card">
+        <span class="now-label">This visit, approximately</span>
+        <strong data-current-location>Detecting coarse location…</strong>
+        <p data-current-region>Country / region information is resolved only for the current browser.</p>
+        <p class="visitor-time" data-current-timezone></p>
+        <p>City-level geolocation can be wrong when a visitor uses a VPN, mobile carrier, campus network, or proxy.</p>
+      </div>
+    </div>
+
+    <div class="visitor-privacy-note">
+      <strong>What these numbers mean.</strong>
+      <span>Page views count page loads. “Browser visitors” counts a browser the first time it is seen via local storage, so clearing browser data or changing devices can count again. Countries/cities are approximate IP-derived labels; only aggregate counters are retained by this site.</span>
+    </div>
+  </div>
+)}
