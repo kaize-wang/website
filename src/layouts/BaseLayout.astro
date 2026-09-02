@@ -1,6 +1,7 @@
 ---
 import '@/styles/global.css';
 import '@/styles/interaction.css';
+import '@/styles/advanced-tools.css';
 import { site } from '@/site.config';
 import { getPublishedNotes, noteSlug } from '@/utils/notes';
 import { withBase } from '@/utils/url';
@@ -15,6 +16,7 @@ routePath = routePath.replace(/\/+$/, '') || '/';
 
 const isHome = routePath === '/';
 const isArticle = routePath.startsWith('/notes/');
+const isResearchContext = routePath === '/questions';
 const isNotesContext =
   isArticle ||
   routePath.startsWith('/tags/') ||
@@ -22,12 +24,15 @@ const isNotesContext =
   routePath.startsWith('/collections/') ||
   routePath === '/archive' ||
   routePath === '/graph' ||
-  routePath === '/papers';
+  routePath === '/papers' ||
+  routePath === '/literature';
 const contextBack = isHome
   ? null
-  : isNotesContext
-    ? { label: 'Notes', href: '/notes' }
-    : { label: 'Home', href: '/' };
+  : isResearchContext
+    ? { label: 'Research', href: '/research' }
+    : isNotesContext
+      ? { label: 'Notes', href: '/notes' }
+      : { label: 'Home', href: '/' };
 
 const commandNotes = await getPublishedNotes();
 const commandItems = [
@@ -41,23 +46,46 @@ const commandItems = [
   {
     type: 'Map',
     title: 'Knowledge Graph',
-    description: 'Explore wiki links, backlinks, shared series, tags, and citations.',
+    description: 'Time machine, shortest paths, backlinks, constellation, and serendipity.',
     href: withBase('/graph'),
-    keywords: 'graph knowledge wiki backlinks network notes'
+    keywords: 'graph knowledge wiki backlinks network notes timeline time machine shortest path constellation serendipity'
   },
   {
     type: 'Papers',
     title: 'Paper Reading',
-    description: 'Open the literature reading dashboard.',
+    description: 'Literature reading dashboard with local revisit scheduling.',
     href: withBase('/papers'),
-    keywords: 'papers literature reading dashboard research'
+    keywords: 'papers literature reading dashboard research revisit spaced repetition'
+  },
+  {
+    type: 'Map',
+    title: 'Literature Map',
+    description: 'Explore reading notes, papers, and explicitly recorded references.',
+    href: withBase('/literature'),
+    keywords: 'literature citations references papers map network'
+  },
+  {
+    type: 'Research',
+    title: 'Questions Board',
+    description: 'Track explicitly recorded open, exploring, reframed, and resolved questions.',
+    href: withBase('/questions'),
+    keywords: 'research questions open exploring resolved board'
   },
   ...commandNotes.map(note => ({
     type: 'Note',
     title: note.data.title,
     description: note.data.description,
     href: withBase(`/notes/${noteSlug(note.id)}/`),
-    keywords: [note.data.category, note.data.collection, ...note.data.tags, ...note.data.aliases].filter(Boolean).join(' ')
+    keywords: [
+      note.data.category,
+      note.data.collection,
+      note.data.paper?.title,
+      ...(note.data.paper?.authors || []),
+      note.data.readingStatus,
+      ...note.data.tags,
+      ...note.data.aliases,
+      ...(note.data.researchQuestions || []).map(question => question.text)
+    ].filter(Boolean).join(' ')
   }))
 ];
 ---
