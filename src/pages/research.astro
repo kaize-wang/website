@@ -2,7 +2,16 @@
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import ResearchPlayground from '@/components/ResearchPlayground.astro';
 import SiteExtras from '@/components/SiteExtras.astro';
+import '@/styles/knowledge.css';
 import { site } from '@/site.config';
+import { getPublishedNotes, formatDate, noteSlug } from '@/utils/notes';
+import { withBase } from '@/utils/url';
+
+const notes = await getPublishedNotes();
+const trailNotes = notes
+  .filter(note => note.data.category === 'Research' || note.data.category === 'Reading')
+  .sort((a, b) => a.data.publishDate.valueOf() - b.data.publishDate.valueOf())
+  .slice(-10);
 ---
 <BaseLayout title="Research" active="Research">
   <main class="site-shell">
@@ -10,6 +19,10 @@ import { site } from '@/site.config';
       <div class="eyebrow">Academic</div>
       <h1>Research</h1>
       <p>My current work is centered on inventory systems with warranty and sequential decisions under uncertainty. This page will gradually collect working papers, projects, and related research notes.</p>
+      <div class="knowledge-links">
+        <a class="knowledge-link" href={withBase('/graph')}>Knowledge Graph</a>
+        <a class="knowledge-link" href={withBase('/papers')}>Paper Reading</a>
+      </div>
     </header>
     <section class="section">
       <div class="section-head"><h2>Research Interests</h2></div>
@@ -21,6 +34,26 @@ import { site } from '@/site.config';
       <div class="section-head"><h2>Try an intuition</h2><span class="section-kicker">Interactive, deliberately simplified</span></div>
       <ResearchPlayground />
     </section>
+
+    {trailNotes.length > 0 && (
+      <section class="section" aria-labelledby="research-trail-title">
+        <div class="section-head"><h2 id="research-trail-title">Research Trail</h2><span class="section-kicker">Built from public notes, not a CV</span></div>
+        <div class="research-trail">
+          {trailNotes.map(note => (
+            <div class="trail-item">
+              <time class="trail-date">{formatDate(note.data.publishDate)}</time>
+              <span class="trail-dot" aria-hidden="true"></span>
+              <div class="trail-copy">
+                <a href={withBase(`/notes/${noteSlug(note.id)}/`)}><strong>{note.data.title}</strong></a>
+                <span>{note.data.category}{note.data.collection ? ` · ${note.data.collection}` : ''} · {note.data.lang === 'zh' ? '中文' : 'EN'}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+        <p class="graph-note">This trail is generated only from published Research and Reading notes. It grows when the notebook grows.</p>
+      </section>
+    )}
+
     <section class="section">
       <div class="section-head"><h2>Working Papers & Publications</h2></div>
       <p class="muted">Working papers and publications will be added here when the bibliographic information is ready.</p>
