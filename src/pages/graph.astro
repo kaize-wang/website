@@ -1,0 +1,44 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import SiteExtras from '@/components/SiteExtras.astro';
+import KnowledgeGraph from '@/components/KnowledgeGraph.astro';
+import '@/styles/knowledge.css';
+import { getPublishedNotes, graphEdges, noteSlug } from '@/utils/notes';
+import { withBase } from '@/utils/url';
+
+const notes = await getPublishedNotes();
+const nodes = notes.map(note => ({
+  id: note.id,
+  title: note.data.title,
+  description: note.data.description,
+  href: withBase(`/notes/${noteSlug(note.id)}/`),
+  category: note.data.category,
+  collection: note.data.collection || '',
+  lang: note.data.lang
+}));
+const edges = graphEdges(notes);
+const wikiEdges = edges.filter(edge => edge.type === 'wiki').length;
+const collections = new Set(notes.map(note => note.data.collection).filter(Boolean)).size;
+---
+<BaseLayout title="Knowledge Graph" active="Notes">
+  <main class="site-shell">
+    <header class="page-hero">
+      <div class="eyebrow">Notes · Relationships</div>
+      <h1>Knowledge Graph</h1>
+      <p>A map of published notes. Explicit wiki links form the strongest relationships; shared series, tags, and citations add quieter connections in the background.</p>
+      <div class="knowledge-links">
+        <a class="knowledge-link" href={withBase('/notes')}>← Notes</a>
+        <a class="knowledge-link" href={withBase('/papers')}>Paper Reading</a>
+        <span class="knowledge-link">{notes.length} notes</span>
+        <span class="knowledge-link">{wikiEdges} wiki links</span>
+        <span class="knowledge-link">{collections} series</span>
+      </div>
+    </header>
+
+    <section class="section" aria-labelledby="graph-title">
+      <div class="section-head"><h2 id="graph-title">Explore the notebook</h2><span class="section-kicker">Generated at build time</span></div>
+      <KnowledgeGraph nodes={nodes} edges={edges} />
+    </section>
+  </main>
+  <SiteExtras />
+</BaseLayout>
