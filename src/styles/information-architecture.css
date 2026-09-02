@@ -1,0 +1,160 @@
+.sidebar-context {
+  margin-top: 18px;
+  padding-top: 15px;
+  border-top: 1px solid var(--line);
+}
+.sidebar-context-label {
+  display: block;
+  margin: 0 0 6px 17px;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+}
+.sidebar-context-nav {
+  display: grid;
+  gap: 1px;
+}
+.sidebar-context-nav a {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 29px;
+  padding: 4px 7px 4px 17px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.35;
+}
+.sidebar-context-nav a::before {
+  content: '';
+  position: absolute;
+  left: 4px;
+  width: 5px;
+  height: 1px;
+  background: var(--line);
+  transition: width .14s ease, background .14s ease;
+}
+.sidebar-context-nav a:hover {
+  color: var(--text);
+}
+.sidebar-context-nav a:hover::before {
+  width: 7px;
+  background: var(--muted);
+}
+.sidebar-context-nav a.active {
+  color: var(--accent);
+  font-weight: 600;
+}
+.sidebar-context-nav a.active::before {
+  width: 8px;
+  background: var(--accent);
+}
+
+.page-hero .category-nav + .notes-browse {
+  margin-top: 18px;
+}
+
+.sandbox-page .page-hero {
+  padding-bottom: 30px;
+}
+.sandbox-purpose {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  margin-bottom: 34px;
+  border: 1px solid var(--line);
+  background: var(--line);
+}
+.sandbox-purpose article {
+  padding: 17px 18px;
+  background: var(--paper);
+}
+.sandbox-purpose span {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--accent);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.sandbox-purpose strong {
+  display: block;
+  margin-bottom: 5px;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 18px;
+  font-weight: 500;
+}
+.sandbox-purpose p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.65;
+}
+.sandbox-page .experiment-card {
+  padding: 26px;
+}
+.sandbox-page .experiment-kicker {
+  font-size: 9px;
+}
+.sandbox-page .experiment-card h3 {
+  font-size: 28px;
+}
+.sandbox-page .experiment-intro {
+  max-width: 680px;
+  margin-bottom: 26px;
+  font-size: 12px;
+  line-height: 1.65;
+}
+.sandbox-page .research-playground {
+  gap: 34px;
+}
+
+@media (max-width: 760px) {
+  .sandbox-purpose {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .sidebar-context {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    min-width: 0;
+    margin-top: 0;
+    padding-top: 7px;
+    border-top: 1px solid var(--line);
+  }
+  .sidebar-context-label {
+    display: none;
+  }
+  .sidebar-context-nav {
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .sidebar-context-nav::-webkit-scrollbar {
+    display: none;
+  }
+  .sidebar-context-nav a {
+    flex: none;
+    min-height: 28px;
+    padding: 4px 8px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+  .sidebar-context-nav a::before {
+    display: none;
+  }
+  .sidebar-context-nav a.active {
+    border-color: var(--line);
+    background: var(--soft);
+  }
+  .sandbox-page .experiment-card {
+    padding: 17px;
+  }
+}
