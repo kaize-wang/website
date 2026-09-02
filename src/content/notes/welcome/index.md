@@ -4,6 +4,7 @@ description: "A short note on using this site as a durable place for research, r
 publishDate: 2026-09-02
 category: Life
 tags: [website, writing]
+aliases: ["Welcome"]
 lang: en
 draft: false
 featured: true
@@ -21,7 +22,7 @@ Some posts will be close to my current work on inventory systems, warranty, stoc
 
 ## Reading notes
 
-I also want a durable record of papers I read carefully. The goal is not to summarize everything, but to keep the parts that genuinely change my understanding.
+I also want a durable record of papers I read carefully. The goal is not to summarize everything, but to keep the parts that genuinely change my understanding. The first public example is [[Huang 2008|a Paper Reading note on replacement warranty inventory]].
 
 ## Writing over time
 
