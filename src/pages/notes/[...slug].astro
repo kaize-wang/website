@@ -28,7 +28,7 @@ const toc = headings.filter((heading) => heading.depth === 2 || heading.depth ==
         <div class="tags">{note.data.tags.map(tag => <a class="tag tag-link" data-preview={`Browse notes tagged ${tag}`} href={withBase(`/tags/${encodeURIComponent(tag.toLowerCase())}/`)}>{tag}</a>)}</div>
         <div class="article-toolbox">
           <button class="mini-action" id="copy-page-link" type="button">Copy link</button>
-          <span class="article-local-visits" id="article-local-visits">Local visits: —</span>
+          <span class="article-local-visits"><strong data-kaize-stat="pageViews">—</strong> views</span>
         </div>
       </header>
 
@@ -118,19 +118,6 @@ const toc = headings.filter((heading) => heading.depth === 2 || heading.depth ==
     });
 
     const pathKey = window.location.pathname;
-    const visitNode = document.getElementById('article-local-visits');
-    try {
-      const countKey = `kaize-local-visits:${pathKey}`;
-      const sessionKey = `kaize-session-visit:${pathKey}`;
-      let count = Number(localStorage.getItem(countKey) || '0');
-      if (!sessionStorage.getItem(sessionKey)) {
-        count += 1;
-        localStorage.setItem(countKey, String(count));
-        sessionStorage.setItem(sessionKey, '1');
-      }
-      if (visitNode) visitNode.textContent = `${count} visit${count === 1 ? '' : 's'} on this device`;
-    } catch { if (visitNode) visitNode.textContent = 'Local visit count unavailable'; }
-
     const readKey = `kaize-reading:${pathKey}`;
     const resume = document.getElementById('resume-reading');
     const resumeButton = document.getElementById('resume-button');
