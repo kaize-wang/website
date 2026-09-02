@@ -1,0 +1,64 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import SiteExtras from '@/components/SiteExtras.astro';
+import '@/styles/knowledge.css';
+import { getPublishedNotes, noteSlug } from '@/utils/notes';
+import { withBase } from '@/utils/url';
+
+const notes = await getPublishedNotes();
+const statuses = ['Open', 'Exploring', 'Reframed', 'Resolved'];
+const questions = notes.flatMap(note => (note.data.researchQuestions || []).map(question => ({
+  ...question,
+  sourceTitle: note.data.title,
+  sourceHref: withBase(`/notes/${noteSlug(note.id)}/`),
+  sourceCategory: note.data.category,
+  sourceLang: note.data.lang
+})));
+---
+<BaseLayout title="Research Questions" active="Research">
+  <main class="site-shell">
+    <header class="page-hero">
+      <div class="eyebrow">Research · Questions</div>
+      <h1>Questions Board</h1>
+      <p>A board for questions explicitly recorded in public notes. Nothing is inferred from tags or browsing history: a question appears here only when it is written into note metadata.</p>
+      <div class="knowledge-links">
+        <a class="knowledge-link" href={withBase('/research')}>← Research</a>
+        <a class="knowledge-link" href={withBase('/graph')}>Knowledge Graph</a>
+        <a class="knowledge-link" href={withBase('/literature')}>Literature Map</a>
+        <span class="knowledge-link">{questions.length} questions</span>
+      </div>
+    </header>
+
+    <section class="section" aria-labelledby="questions-board-title">
+      <div class="section-head"><h2 id="questions-board-title">Question states</h2><span class="section-kicker">Open → Exploring → Reframed / Resolved</span></div>
+      {questions.length > 0 ? (
+        <div class="questions-board">
+          {statuses.map(status => {
+            const items = questions.filter(question => question.status === status);
+            return (
+              <section class="question-column" aria-label={`${status} questions`}>
+                <header><h3>{status}</h3><span>{items.length}</span></header>
+                <div class="question-stack">
+                  {items.length > 0 ? items.map(question => (
+                    <article class="question-card">
+                      <div class="question-kind">{question.kind}</div>
+                      <p>{question.text}</p>
+                      <a href={question.sourceHref}>{question.sourceTitle}</a>
+                      <small>{question.sourceCategory} · {question.sourceLang === 'zh' ? '中文' : 'EN'}</small>
+                    </article>
+                  )) : <p class="question-empty">Nothing recorded here yet.</p>}
+                </div>
+              </section>
+            );
+          })}
+        </div>
+      ) : (
+        <div class="empty-research-tool">
+          <strong>No explicit questions yet.</strong>
+          <p>Add <code>researchQuestions</code> to a note when a question is worth tracking. The board will update automatically.</p>
+        </div>
+      )}
+    </section>
+  </main>
+  <SiteExtras />
+</BaseLayout>
