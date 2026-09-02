@@ -2,7 +2,8 @@
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import NoteList from '@/components/NoteList.astro';
 import SiteExtras from '@/components/SiteExtras.astro';
-import { getPublishedNotes } from '@/utils/notes';
+import '@/styles/scholarly.css';
+import { getPublishedNotes, noteSlug } from '@/utils/notes';
 import { withBase } from '@/utils/url';
 const notes = await getPublishedNotes();
 const categories = ['Research','Reading','Technical','Life'];
@@ -15,13 +16,15 @@ for (const note of notes) {
 }
 const collections = [...collectionMap.entries()].sort((a,b) => b[1] - a[1] || a[0].localeCompare(b[0]));
 const tags = [...tagMap.entries()].sort((a,b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0,12);
+const paperReadingNotes = notes.filter(note => note.data.collection === 'Paper Reading');
+const paperReadingStart = paperReadingNotes[0];
 ---
 <BaseLayout title="Notes" active="Notes">
   <main class="site-shell">
     <header class="page-hero">
       <div class="eyebrow">Research · Reading · Technical · Life</div>
       <h1>Notes</h1>
-      <p>A public notebook for ideas that are worth keeping. Categories can grow later; the writing comes first.</p>
+      <p>A public notebook for ideas that are worth keeping. The interface stays in English; each note can be written naturally in Chinese or English.</p>
       <div class="category-nav">
         {categories.map(c => <a href={withBase(`/categories/${c.toLowerCase()}/`)}>{c}</a>)}
         <a href={withBase('/archive')}>Archive</a>
@@ -37,6 +40,18 @@ const tags = [...tagMap.entries()].sort((a,b) => b[1] - a[1] || a[0].localeCompa
         </div>
       )}
     </header>
+
+    {paperReadingStart && (
+      <section class="paper-reading-intro" aria-labelledby="paper-reading-title">
+        <div>
+          <div class="eyebrow">Series · 论文学习</div>
+          <h2 id="paper-reading-title">Paper Reading</h2>
+          <p>精读论文时保留真正改变理解的部分：研究问题、状态与信息、关键结构、证明直觉，以及仍然没有想清楚的问题。正文可以中文或英文，不要求逐篇双语。</p>
+        </div>
+        <a href={withBase(`/notes/${noteSlug(paperReadingStart.id)}/`)}>Open example →</a>
+      </section>
+    )}
+
     <section class="section"><NoteList notes={notes} /></section>
   </main>
   <SiteExtras />
