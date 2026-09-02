@@ -20,6 +20,11 @@ paperTakeaways:
   state: "The age distribution of items still under warranty matters for future replacement demand."
   structure: "The optimal ordering rule is a w-dependent base-stock policy."
   question: "What changes when failures are correlated rather than independent Bernoulli events?"
+researchQuestions:
+  - id: correlated-failures-reading
+    text: "For this reading: what changes when failures are correlated rather than independent Bernoulli events?"
+    status: Exploring
+    kind: Reading
 references:
   - id: huang2008
     title: "Managing the Inventory of an Item with a Replacement Warranty"
@@ -44,13 +49,18 @@ featured: true
 
 ## 先抓住状态，而不是先抓公式
 
+> [!notation id=warranty-state] Reading notation
+> 在这篇示例笔记里，我用 \(w_t\) 表示第 \(t\) 期不同 warranty ages 上仍在保的产品数量。它是为了组织阅读而采用的记法，不是在改写论文的原始符号系统。
+
 论文用向量 \(w\) 表示不同 warranty ages 上仍在保的产品数量。为了阅读时更直观，我会把某一期的状态示意性地写成
 
 $$
 w_t=(w_{t,1},w_{t,2},\ldots,w_{t,L}).
 $$
 
-这里的重点并不是下标怎么写，而是：如果只知道“总共有多少件在保”，通常会丢掉年龄信息；而年龄会影响后续 failure / replacement 的分布。
+:eq[warranty-state-vector]
+
+在这篇笔记里，[[notation:warranty-state]] 和 [[eq:warranty-state-vector]] 指向的是同一个阅读重点：**年龄结构本身携带未来 replacement demand 的信息。** 如果只知道“总共有多少件在保”，通常会丢掉年龄信息；而年龄会影响后续 failure / replacement 的分布。
 
 为了提醒自己需求的两层来源，也可以做一个**纯阅读用的示意分解**：
 
@@ -62,11 +72,16 @@ D_t^{\mathrm{new}}
 D_t^{\mathrm{rep}}(w_t,\xi_t).
 $$
 
-这不是论文中的原公式，只是一种阅读记法。现在把鼠标移到公式右上角，会看到 `Copy TeX`；以后推导笔记里的 display equation 都自动有这个功能。
+:eq[reading-demand-split]
+
+[[eq:reading-demand-split]] 不是论文中的原公式，只是一种阅读记法。现在把鼠标移到公式右上角，会看到 `Copy TeX`；以后推导笔记里的 display equation 都自动有这个功能。
 
 ## 结构性结果应该怎样记
 
-文章证明了一个 \(w\)-dependent base-stock ordering policy：base-stock level 不是固定常数，而是 \(w\) 的函数。换句话说，在保产品的年龄结构会进入补货目标。[Huang et al. (2008)](#ref-huang2008)
+> [!theorem id=w-dependent-base-stock] Structural result reported in Huang et al. (2008)
+> 论文证明了一个 \(w\)-dependent base-stock ordering policy：补货目标并不是固定常数，而是当前 warranty-age vector \(w\) 的函数。
+
+[[thm:w-dependent-base-stock]] 是这里最值得带走的结构性结论。换句话说，在保产品的年龄结构会进入补货目标。[Huang et al. (2008)](#ref-huang2008)
 
 我觉得阅读这种结构性论文时，比“记住定理编号”更有价值的是记住下面这句话：
 
@@ -83,7 +98,10 @@ $$
 3. **Structure**：作者最终得到的是 base-stock、threshold、convexity，还是别的结构？
 4. **Open question**：如果把某个关键假设拿掉，最先坏掉的是什么？
 
-对这篇文章而言，第四问尤其值得继续保留。作者自己指出，模型采用独立 Bernoulli failure 的设定，而现实中可能出现由装配缺陷或零部件问题导致的批量相关失效；这会要求更一般的 warranty returns model。[Huang et al. (2008)](#ref-huang2008)
+> [!assumption id=independent-failures] Paper assumption highlighted for reading
+> 论文的 warranty failure 机制采用独立 Bernoulli trials。这里把它单独标成 Assumption，是为了提醒自己：这是一个会直接影响 replacement-demand dependence structure 的建模选择。
+
+对这篇文章而言，第四问尤其值得继续保留。作者自己指出，现实中可能出现由装配缺陷或零部件问题导致的批量相关失效；这会要求更一般的 warranty returns model。[Huang et al. (2008)](#ref-huang2008) 因此，[[assumption:independent-failures]] 正是一个很自然的“如果拿掉会怎样”的入口。
 
 ## 关于中文与英文
 
