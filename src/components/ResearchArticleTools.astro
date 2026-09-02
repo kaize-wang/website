@@ -1,0 +1,202 @@
+---
+import '@/styles/research-tools.css';
+const { citation = { plain: '', markdown: '', bibtex: '' } } = Astro.props;
+---
+<dialog class="cite-dialog" id="cite-dialog">
+  <div class="cite-dialog-head">
+    <strong>Cite this note</strong>
+    <button class="cite-dialog-close" id="cite-dialog-close" type="button" aria-label="Close citation dialog">×</button>
+  </div>
+  <div class="cite-options">
+    <div class="cite-option"><span>Plain</span><pre>{citation.plain}</pre><button class="cite-copy" type="button" data-cite-format="plain">Copy</button></div>
+    <div class="cite-option"><span>Markdown</span><pre>{citation.markdown}</pre><button class="cite-copy" type="button" data-cite-format="markdown">Copy</button></div>
+    <div class="cite-option"><span>BibTeX</span><pre>{citation.bibtex}</pre><button class="cite-copy" type="button" data-cite-format="bibtex">Copy</button></div>
+  </div>
+</dialog>
+
+<script is:inline define:vars={{ citation }}>
+(() => {
+  const prose = document.querySelector('.prose');
+  if (!prose) return;
+  const crossrefs = new Map();
+  const counters = new Map();
+  const kindConfig = {
+    definition: { label: 'Definition', prefix: 'def' },
+    theorem: { label: 'Theorem', prefix: 'thm' },
+    lemma: { label: 'Lemma', prefix: 'lem' },
+    proposition: { label: 'Proposition', prefix: 'prop' },
+    assumption: { label: 'Assumption', prefix: 'assumption' },
+    notation: { label: 'Notation', prefix: 'notation' }
+  };
+
+  const nextNumber = kind => {
+    const value = (counters.get(kind) || 0) + 1;
+    counters.set(kind, value);
+    return value;
+  };
+
+  const blockPattern = /^\s*\[!(definition|theorem|lemma|proposition|proof|assumption|notation)(?:\s+id=([^\]\s]+))?\]\s*/i;
+  [...prose.querySelectorAll('blockquote')].forEach(quote => {
+    const first = quote.querySelector('p');
+    const text = first?.textContent || '';
+    const match = text.match(blockPattern);
+    if (!match || !first) return;
+    const kind = match[1].toLowerCase();
+    const id = (match[2] || '').trim();
+    first.innerHTML = first.innerHTML.replace(blockPattern, '');
+
+    if (kind === 'proof') {
+      const details = document.createElement('details');
+      details.className = 'scholarly-proof';
+      details.open = true;
+      const summary = document.createElement('summary');
+      summary.textContent = 'Proof';
+      const body = document.createElement('div');
+      body.className = 'scholarly-proof-body';
+      while (quote.firstChild) body.appendChild(quote.firstChild);
+      details.append(summary, body);
+      quote.replaceWith(details);
+      return;
+    }
+
+    const config = kindConfig[kind];
+    if (!config) return;
+    const number = nextNumber(kind);
+    quote.classList.add('scholarly-block', `scholarly-${kind}`);
+    quote.dataset.scholarKind = kind;
+    const label = document.createElement('span');
+    label.className = 'scholarly-label';
+    label.textContent = `${config.label} ${number}`;
+    quote.prepend(label);
+    if (id) {
+      const anchorId = `${config.prefix}-${id}`;
+      quote.id = anchorId;
+      crossrefs.set(`${config.prefix}:${id}`, { href: `#${anchorId}`, label: `${config.label} ${number}` });
+    }
+  });
+
+  [...prose.querySelectorAll('.katex-display')].forEach((display, index) => {
+    const number = index + 1;
+    display.classList.add('numbered-equation');
+    const marker = document.createElement('span');
+    marker.className = 'equation-number';
+    marker.textContent = `(${number})`;
+    display.appendChild(marker);
+    const next = display.nextElementSibling;
+    if (next?.tagName === 'P') {
+      const markerMatch = (next.textContent || '').trim().match(/^:eq\[([^\]]+)\]$/);
+      if (markerMatch) {
+        const id = markerMatch[1].trim();
+        display.id = `eq-${id}`;
+        next.classList.add('equation-marker');
+        crossrefs.set(`eq:${id}`, { href: `#eq-${id}`, label: `Equation (${number})` });
+      }
+    }
+  });
+
+  const refPattern = /\[\[(eq|def|thm|lem|prop|assumption|notation):([^\]]+)\]\]/g;
+  const walker = document.createTreeWalker(prose, NodeFilter.SHOW_TEXT);
+  const nodes = [];
+  let current;
+  while ((current = walker.nextNode())) {
+    const parent = current.parentElement;
+    if (!parent || parent.closest('a, code, pre, script, style, .katex')) continue;
+    if (refPattern.test(current.nodeValue || '')) nodes.push(current);
+    refPattern.lastIndex = 0;
+  }
+  nodes.forEach(textNode => {
+    const text = textNode.nodeValue || '';
+    let last = 0;
+    let match;
+    refPattern.lastIndex = 0;
+    const fragment = document.createDocumentFragment();
+    while ((match = refPattern.exec(text))) {
+      if (match.index > last) fragment.append(document.createTextNode(text.slice(last, match.index)));
+      const key = `${match[1]}:${match[2].trim()}`;
+      const resolved = crossrefs.get(key);
+      if (resolved) {
+        const link = document.createElement('a');
+        link.className = 'crossref-link';
+        link.href = resolved.href;
+        link.textContent = resolved.label;
+        fragment.append(link);
+      } else {
+        const unresolved = document.createElement('span');
+        unresolved.className = 'crossref-unresolved';
+        unresolved.textContent = match[0];
+        unresolved.title = `Unresolved cross-reference: ${key}`;
+        fragment.append(unresolved);
+      }
+      last = refPattern.lastIndex;
+    }
+    if (last < text.length) fragment.append(document.createTextNode(text.slice(last)));
+    textNode.replaceWith(fragment);
+  });
+
+  const fillAside = (kind, panelName) => {
+    const panel = document.querySelector(`[data-aside-panel="${panelName}"]`);
+    if (!panel) return;
+    const list = panel.querySelector('.article-aside-list');
+    const empty = panel.querySelector('.article-aside-empty');
+    const blocks = [...prose.querySelectorAll(`.scholarly-${kind}`)];
+    if (!list) return;
+    blocks.forEach((block, index) => {
+      const item = document.createElement(block.id ? 'a' : 'div');
+      item.className = 'article-aside-item';
+      if (block.id) item.href = `#${block.id}`;
+      const strong = document.createElement('strong');
+      const label = block.querySelector('.scholarly-label')?.textContent || `${kind} ${index + 1}`;
+      strong.textContent = label;
+      const copy = document.createElement('span');
+      const firstText = [...block.querySelectorAll('p')].map(p => p.textContent?.trim()).find(Boolean) || '';
+      copy.textContent = firstText.length > 95 ? `${firstText.slice(0, 93)}…` : firstText;
+      item.append(strong, copy);
+      list.appendChild(item);
+    });
+    if (empty) empty.hidden = blocks.length > 0;
+  };
+  fillAside('notation', 'notation');
+  fillAside('assumption', 'assumptions');
+
+  const tabs = [...document.querySelectorAll('[data-aside-tab]')];
+  const panels = [...document.querySelectorAll('[data-aside-panel]')];
+  tabs.forEach(tab => tab.addEventListener('click', () => {
+    const name = tab.dataset.asideTab;
+    tabs.forEach(item => item.classList.toggle('active', item === tab));
+    panels.forEach(panel => { panel.hidden = panel.dataset.asidePanel !== name; });
+  }));
+
+  const copyText = async value => {
+    try { await navigator.clipboard.writeText(value); return true; }
+    catch {
+      const area = document.createElement('textarea');
+      area.value = value;
+      area.style.position = 'fixed'; area.style.opacity = '0';
+      document.body.appendChild(area); area.select();
+      const ok = document.execCommand('copy'); area.remove(); return ok;
+    }
+  };
+  const citeDialog = document.getElementById('cite-dialog');
+  document.getElementById('cite-note')?.addEventListener('click', () => citeDialog?.showModal());
+  document.getElementById('cite-dialog-close')?.addEventListener('click', () => citeDialog?.close());
+  citeDialog?.addEventListener('click', event => { if (event.target === citeDialog) citeDialog.close(); });
+  document.querySelectorAll('[data-cite-format]').forEach(button => button.addEventListener('click', async () => {
+    const value = citation?.[button.dataset.citeFormat] || '';
+    const ok = await copyText(value);
+    button.textContent = ok ? 'Copied' : 'Failed';
+    window.setTimeout(() => { button.textContent = 'Copy'; }, 1200);
+  }));
+
+  const academicButton = document.getElementById('academic-view');
+  const syncAcademic = () => {
+    const active = document.body.classList.contains('academic-view');
+    if (academicButton) {
+      academicButton.textContent = active ? 'Exit academic' : 'Academic';
+      academicButton.setAttribute('aria-pressed', active ? 'true' : 'false');
+    }
+  };
+  academicButton?.addEventListener('click', () => { document.body.classList.toggle('academic-view'); syncAcademic(); });
+  document.getElementById('print-note')?.addEventListener('click', () => window.print());
+  syncAcademic();
+})();
+</script>
