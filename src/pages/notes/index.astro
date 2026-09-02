@@ -25,17 +25,9 @@ const paperReadingStart = paperReadingNotes[0];
     <header class="page-hero">
       <div class="eyebrow">Research · Reading · Technical · Life</div>
       <h1>Notes</h1>
-      <p>A public notebook for ideas that are worth keeping. The interface stays in English; each note can be written naturally in Chinese or English.</p>
-      <div class="category-nav">
+      <p>A public notebook for ideas worth keeping. Writing lives here; graph, literature, archive, and paper-reading tools are grouped under Notes in the left navigation.</p>
+      <div class="category-nav" aria-label="Browse notes by type">
         {categories.map(c => <a href={withBase(`/categories/${c.toLowerCase()}/`)}>{c}</a>)}
-        <a href={withBase('/archive')}>Archive</a>
-      </div>
-      <div class="knowledge-links">
-        <a class="knowledge-link" href={withBase('/graph')}>Knowledge Graph</a>
-        <a class="knowledge-link" href={withBase('/papers')}>Paper Reading</a>
-        <a class="knowledge-link" href={withBase('/literature')}>Literature Map</a>
-        <a class="knowledge-link" href={withBase('/questions')}>Questions Board</a>
-        <a class="knowledge-link" href={withBase('/search')}>Full-text Search</a>
       </div>
       {(collections.length > 0 || tags.length > 0) && (
         <div class="notes-browse">
