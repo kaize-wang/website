@@ -20,7 +20,9 @@ const isNotesContext =
   routePath.startsWith('/tags/') ||
   routePath.startsWith('/categories/') ||
   routePath.startsWith('/collections/') ||
-  routePath === '/archive';
+  routePath === '/archive' ||
+  routePath === '/graph' ||
+  routePath === '/papers';
 const contextBack = isHome
   ? null
   : isNotesContext
@@ -36,12 +38,26 @@ const commandItems = [
     href: withBase(item.href),
     keywords: item.label
   })),
+  {
+    type: 'Map',
+    title: 'Knowledge Graph',
+    description: 'Explore wiki links, backlinks, shared series, tags, and citations.',
+    href: withBase('/graph'),
+    keywords: 'graph knowledge wiki backlinks network notes'
+  },
+  {
+    type: 'Papers',
+    title: 'Paper Reading',
+    description: 'Open the literature reading dashboard.',
+    href: withBase('/papers'),
+    keywords: 'papers literature reading dashboard research'
+  },
   ...commandNotes.map(note => ({
     type: 'Note',
     title: note.data.title,
     description: note.data.description,
     href: withBase(`/notes/${noteSlug(note.id)}/`),
-    keywords: [note.data.category, ...note.data.tags].join(' ')
+    keywords: [note.data.category, note.data.collection, ...note.data.tags, ...note.data.aliases].filter(Boolean).join(' ')
   }))
 ];
 ---
@@ -81,7 +97,7 @@ const commandItems = [
           </nav>
 
           <button class="sidebar-command" id="command-trigger" type="button" aria-haspopup="dialog" aria-controls="command-palette" aria-expanded="false">
-            <span>Quick search</span><kbd>⌘K</kbd>
+            <span>Quick search</span><kbd id="command-shortcut">⌘K</kbd>
           </button>
 
           <div class="sidebar-bottom">
@@ -123,7 +139,7 @@ const commandItems = [
         </div>
         <label class="command-input-wrap" for="command-input">
           <span aria-hidden="true">⌕</span>
-          <input id="command-input" type="search" autocomplete="off" spellcheck="false" placeholder="Search pages, notes, tags…" />
+          <input id="command-input" type="search" autocomplete="off" spellcheck="false" placeholder="Search pages, notes, papers, graph…" />
         </label>
         <nav class="command-results" id="command-results" aria-label="Search results"></nav>
         <div class="command-help"><span>↑ ↓ navigate</span><span>↵ open</span></div>
@@ -132,6 +148,9 @@ const commandItems = [
 
     <script is:inline define:vars={{ commandItems }}>
       (() => {
+        const shortcut = document.getElementById('command-shortcut');
+        if (shortcut) shortcut.textContent = /Mac|iPhone|iPad/i.test(navigator.platform || '') ? '⌘K' : 'Ctrl K';
+
         const themeToggle = document.getElementById('theme-toggle');
         themeToggle?.addEventListener('click', () => {
           const isDark = document.documentElement.dataset.theme === 'dark';
