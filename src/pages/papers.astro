@@ -1,0 +1,79 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import SiteExtras from '@/components/SiteExtras.astro';
+import '@/styles/knowledge.css';
+import { getPublishedNotes, noteSlug } from '@/utils/notes';
+import { withBase } from '@/utils/url';
+
+const notes = await getPublishedNotes();
+const paperNotes = notes.filter(note => note.data.paper);
+const statuses = ['All', 'Reading', 'Read', 'Revisit', 'Core'];
+---
+<BaseLayout title="Paper Reading" active="Notes">
+  <main class="site-shell">
+    <header class="page-hero">
+      <div class="eyebrow">Notes · Literature</div>
+      <h1>Paper Reading</h1>
+      <p>A literature notebook organized around what changed my understanding: the operational story, required state and information, structural result, and the question that remains open.</p>
+      <div class="knowledge-links">
+        <a class="knowledge-link" href={withBase('/notes')}>← Notes</a>
+        <a class="knowledge-link" href={withBase('/graph')}>Knowledge Graph</a>
+        <span class="knowledge-link">{paperNotes.length} papers</span>
+      </div>
+    </header>
+
+    <section class="section" aria-labelledby="paper-dashboard-title">
+      <div class="paper-dashboard-head">
+        <div class="section-head" style="margin:0"><h2 id="paper-dashboard-title">Reading desk</h2></div>
+        <div class="paper-status-filter" aria-label="Filter papers by reading status">
+          {statuses.map(status => <button class={`paper-filter${status === 'All' ? ' active' : ''}`} type="button" data-paper-filter={status}>{status}</button>)}
+        </div>
+      </div>
+
+      <div class="paper-dashboard" id="paper-dashboard">
+        {paperNotes.map(note => {
+          const paper = note.data.paper!;
+          const status = note.data.readingStatus || 'Read';
+          const takeaways = note.data.paperTakeaways;
+          return (
+            <article class="paper-dashboard-card" data-paper-status={status}>
+              <div class="paper-dashboard-meta">
+                <span class="paper-year">{paper.year}</span>
+                <div>{paper.authors.join(' · ')}</div>
+                {paper.venue && <div>{paper.venue}</div>}
+                <span class="paper-status">{status}</span>
+              </div>
+              <div class="paper-dashboard-body">
+                <h2><a href={withBase(`/notes/${noteSlug(note.id)}/`)}>{paper.title}</a></h2>
+                <p>{note.data.description}</p>
+                {takeaways && (
+                  <div class="paper-takeaways">
+                    <div class="paper-takeaway"><span>Story</span><p>{takeaways.story}</p></div>
+                    <div class="paper-takeaway"><span>State</span><p>{takeaways.state}</p></div>
+                    <div class="paper-takeaway"><span>Structure</span><p>{takeaways.structure}</p></div>
+                    <div class="paper-takeaway"><span>Open question</span><p>{takeaways.question}</p></div>
+                  </div>
+                )}
+              </div>
+            </article>
+          );
+        })}
+      </div>
+
+      {paperNotes.length === 0 && <p class="muted">No Paper Reading notes yet.</p>}
+    </section>
+  </main>
+  <SiteExtras />
+
+  <script is:inline>
+    (() => {
+      const buttons = [...document.querySelectorAll('[data-paper-filter]')];
+      const cards = [...document.querySelectorAll('[data-paper-status]')];
+      buttons.forEach(button => button.addEventListener('click', () => {
+        const status = button.dataset.paperFilter || 'All';
+        buttons.forEach(item => item.classList.toggle('active', item === button));
+        cards.forEach(card => { card.hidden = status !== 'All' && card.dataset.paperStatus !== status; });
+      }));
+    })();
+  </script>
+</BaseLayout>
