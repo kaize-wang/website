@@ -70,10 +70,7 @@ const readingNotes = graphNodes.filter(node => node.type === 'note').length;
       <div class="eyebrow">Notes · Literature</div>
       <h1>Literature Map</h1>
       <p>A conservative map of the literature actually recorded in this notebook. Reading notes connect to their focal paper and to references explicitly listed in the note metadata.</p>
-      <div class="knowledge-links">
-        <a class="knowledge-link" href={withBase('/papers')}>← Paper Reading</a>
-        <a class="knowledge-link" href={withBase('/graph')}>Knowledge Graph</a>
-        <a class="knowledge-link" href={withBase('/questions')}>Questions</a>
+      <div class="knowledge-links" aria-label="Literature summary">
         <span class="knowledge-link">{readingNotes} reading notes</span>
         <span class="knowledge-link">{uniquePapers} papers</span>
       </div>
