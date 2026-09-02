@@ -1,0 +1,37 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import ResearchPlayground from '@/components/ResearchPlayground.astro';
+import SiteExtras from '@/components/SiteExtras.astro';
+import '@/styles/information-architecture.css';
+---
+<BaseLayout title="Research Sandbox" active="Research">
+  <main class="site-shell sandbox-page">
+    <header class="page-hero">
+      <div class="eyebrow">Research · Sandbox</div>
+      <h1>Research Sandbox</h1>
+      <p>Small interactive sketches for building intuition around operational mechanisms. They are deliberately separated from the research overview so exploratory toys are not mistaken for formal models or results.</p>
+    </header>
+
+    <div class="sandbox-purpose" aria-label="How to use this sandbox">
+      <article>
+        <span>Use it for</span>
+        <strong>Mechanism intuition</strong>
+        <p>Change a few assumptions and inspect the qualitative response. The goal is to make a story easier to see before returning to the formal model.</p>
+      </article>
+      <article>
+        <span>Do not read it as</span>
+        <strong>Research evidence</strong>
+        <p>The sketches here are not paper equations, calibrations, estimates, or numerical results. Any formal claim belongs in the Research or Notes sections.</p>
+      </article>
+    </div>
+
+    <section class="section" aria-labelledby="warranty-sandbox-title">
+      <div class="section-head">
+        <h2 id="warranty-sandbox-title">Warranty demand sketch</h2>
+        <span class="section-kicker">Toy mechanism · interactive</span>
+      </div>
+      <ResearchPlayground />
+    </section>
+  </main>
+  <SiteExtras />
+</BaseLayout>
