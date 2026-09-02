@@ -60,7 +60,7 @@ const toc = headings.filter((heading) => heading.depth === 2 || heading.depth ==
       <section class="comments-section" aria-labelledby="comments-title">
         <h2 id="comments-title">Comments</h2>
         <p class="comments-note">Powered by GitHub Issues through Utterances. GitHub sign-in is required to comment.</p>
-        <script is:inline src="https://utteranc.es/client.js" repo="kaize-wang/website" issue-term="pathname" theme="preferred-color-scheme" crossorigin="anonymous" async></script>
+        <div id="utterances-mount"></div>
         <p class="comments-fallback">If the widget says Utterances is not installed, authorize it for the <a href="https://github.com/apps/utterances">website repository</a> once. You can also use <a href="https://github.com/kaize-wang/website/issues">GitHub Issues</a> directly.</p>
       </section>
 
@@ -175,6 +175,18 @@ const toc = headings.filter((heading) => heading.depth === 2 || heading.depth ==
       syncReaction();
     }));
     syncReaction();
+
+    const utterancesMount = document.getElementById('utterances-mount');
+    if (utterancesMount) {
+      const utterancesScript = document.createElement('script');
+      utterancesScript.src = 'https://utteranc.es/client.js';
+      utterancesScript.async = true;
+      utterancesScript.crossOrigin = 'anonymous';
+      utterancesScript.setAttribute('repo', 'kaize-wang/website');
+      utterancesScript.setAttribute('issue-term', 'pathname');
+      utterancesScript.setAttribute('theme', 'preferred-color-scheme');
+      utterancesMount.appendChild(utterancesScript);
+    }
   })();
   </script>
 </BaseLayout>
