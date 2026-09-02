@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import SiteExtras from '@/components/SiteExtras.astro';
 import { getPublishedNotes, formatDate, noteSlug } from '@/utils/notes';
 import { withBase } from '@/utils/url';
 const notes = await getPublishedNotes();
@@ -21,7 +22,8 @@ const index = notes.map(note => ({
       <div id="results" class="note-list" style="margin-top:28px"></div>
     </section>
   </main>
-  <script define:vars={{ index }}>
+  <SiteExtras />
+  <script is:inline define:vars={{ index }}>
     const input = document.querySelector('#q');
     const results = document.querySelector('#results');
     const esc = (s) => s.replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
