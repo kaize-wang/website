@@ -16,11 +16,7 @@ const statuses = ['All', 'Due', 'Reading', 'Read', 'Revisit', 'Core'];
       <div class="eyebrow">Notes · Literature</div>
       <h1>Paper Reading</h1>
       <p>A literature notebook organized around what changed my understanding: the operational story, required state and information, structural result, and the question that remains open.</p>
-      <div class="knowledge-links">
-        <a class="knowledge-link" href={withBase('/notes')}>← Notes</a>
-        <a class="knowledge-link" href={withBase('/graph')}>Knowledge Graph</a>
-        <a class="knowledge-link" href={withBase('/literature')}>Literature Map</a>
-        <a class="knowledge-link" href={withBase('/questions')}>Questions</a>
+      <div class="knowledge-links" aria-label="Paper reading summary">
         <span class="knowledge-link">{paperNotes.length} papers</span>
       </div>
       <div class="revisit-overview"><strong id="revisit-due-count">0</strong><span>due for revisit in this browser</span></div>
