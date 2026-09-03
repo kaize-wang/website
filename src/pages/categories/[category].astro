@@ -4,20 +4,28 @@ import NoteList from '@/components/NoteList.astro';
 import SiteExtras from '@/components/SiteExtras.astro';
 import { getPublishedNotes } from '@/utils/notes';
 
+const categories = [
+  { slug: 'research', label: 'Research' },
+  { slug: 'paper-reading', label: 'Paper Reading' },
+  { slug: 'learning', label: 'Learning' },
+  { slug: 'essay', label: 'Essay' }
+];
+
 export async function getStaticPaths() {
   const all = await getPublishedNotes();
-  return ['research','reading','technical','life'].map(category => ({
-    params: { category },
-    props: { notes: all.filter(note => note.data.category.toLowerCase() === category) }
+  return categories.map(category => ({
+    params: { category: category.slug },
+    props: {
+      title: category.label,
+      notes: all.filter(note => note.data.category === category.label)
+    }
   }));
 }
-const category = Astro.params.category!;
-const title = category.charAt(0).toUpperCase() + category.slice(1);
-const { notes } = Astro.props;
+const { title, notes } = Astro.props;
 ---
 <BaseLayout title={`${title} Notes`} active="Notes">
   <main class="site-shell">
-    <header class="page-hero"><div class="eyebrow">Notes / Category</div><h1>{title}</h1><p>{notes.length} note{notes.length === 1 ? '' : 's'} in this category.</p></header>
+    <header class="page-hero"><div class="eyebrow">Notes / Category</div><h1>{title}</h1><p>{notes.length} note{notes.length === 1 ? '' : 's'} in this shelf.</p></header>
     <section class="section"><NoteList notes={notes} /></section>
   </main>
   <SiteExtras />
