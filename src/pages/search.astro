@@ -1,7 +1,6 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import SiteExtras from '@/components/SiteExtras.astro';
-import '@/styles/knowledge.css';
 import { getPublishedNotes, formatDate, noteSlug } from '@/utils/notes';
 import { withBase } from '@/utils/url';
 const notes = await getPublishedNotes();
@@ -13,9 +12,7 @@ const index = notes.map(note => ({
   tags: note.data.tags,
   aliases: note.data.aliases || [],
   lang: note.data.lang,
-  type: note.data.paper ? 'paper' : 'note',
-  status: note.data.readingStatus || '',
-  year: String(note.data.publishDate.getFullYear()),
+  type: note.data.paper ? 'Paper reading' : note.data.category,
   date: formatDate(note.data.publishDate),
   href: withBase(`/notes/${noteSlug(note.id)}/`),
   body: note.body || '',
@@ -23,29 +20,20 @@ const index = notes.map(note => ({
     note.data.englishSummary || '',
     note.data.paper?.title || '',
     ...(note.data.paper?.authors || []),
-    ...note.data.references.flatMap(ref => [ref.title, ref.authors, ref.venue || '', ref.doi || '']),
-    note.data.paperTakeaways ? Object.values(note.data.paperTakeaways).join(' ') : ''
+    ...note.data.references.flatMap(ref => [ref.title, ref.authors, ref.venue || '', ref.doi || ''])
   ].join(' ')
 }));
 ---
-<BaseLayout title="Search" active="Search">
+<BaseLayout title="Search">
   <main class="site-shell">
     <header class="page-hero">
-      <div class="eyebrow">Notes · Full text</div>
+      <div class="eyebrow">Notebook</div>
       <h1>Search</h1>
-      <p>Search the full text of published notes, paper metadata, references, and English summaries. Combine ordinary words with structured filters.</p>
-      <div class="search-filter-hints">
-        <button type="button" data-search-hint="tag:warranty">tag:warranty</button>
-        <button type="button" data-search-hint="lang:zh">lang:zh</button>
-        <button type="button" data-search-hint="type:paper">type:paper</button>
-        <button type="button" data-search-hint="status:revisit">status:revisit</button>
-        <button type="button" data-search-hint='collection:"Paper Reading"'>collection:"Paper Reading"</button>
-        <button type="button" data-search-hint="year:2026">year:2026</button>
-      </div>
+      <p>Search published notes by title, paper, author, keyword, or text from the note itself.</p>
     </header>
     <section class="section">
       <label for="q" class="muted" style="display:block;margin-bottom:8px;font-size:13px">Full-text search</label>
-      <input id="q" type="search" placeholder='warranty age  tag:warranty  lang:zh' class="smart-search-input" />
+      <input id="q" type="search" placeholder="warranty age, base-stock, Huang…" class="smart-search-input" autofocus />
       <div class="search-summary" id="search-summary" aria-live="polite"></div>
       <div id="results" class="note-list smart-search-results"></div>
     </section>
@@ -67,30 +55,7 @@ const index = notes.map(note => ({
         .replace(/\s+/g, ' ')
         .trim();
 
-      const parseQuery = query => {
-        const filters = {};
-        const terms = [];
-        const pattern = /([a-z]+):"([^"]+)"|([a-z]+):([^\s]+)|"([^"]+)"|(\S+)/gi;
-        let match;
-        while ((match = pattern.exec(query))) {
-          const field = (match[1] || match[3] || '').toLowerCase();
-          const value = match[2] || match[4] || '';
-          if (field && ['tag','lang','type','status','collection','year','category'].includes(field)) {
-            (filters[field] ||= []).push(normalize(value));
-          } else {
-            const term = match[5] || match[6] || value;
-            if (term) terms.push(normalize(term));
-          }
-        }
-        return { filters, terms };
-      };
-
-      const passesFilters = (note, filters) => Object.entries(filters).every(([field, values]) => {
-        const actual = field === 'tag' ? note.tags : [note[field] || ''];
-        const normalized = actual.map(normalize);
-        return values.every(value => normalized.some(item => item === value || item.includes(value)));
-      });
-
+      const termsFor = query => normalize(query).split(/\s+/).filter(Boolean);
       const makeSnippet = (note, terms) => {
         const text = stripMarkdown(`${note.description} ${note.body} ${note.extra}`);
         if (!terms.length) return note.description;
@@ -102,9 +67,7 @@ const index = notes.map(note => ({
         const end = Math.min(text.length, pos + 190);
         return `${start > 0 ? '…' : ''}${text.slice(start, end)}${end < text.length ? '…' : ''}`;
       };
-
       const scoreNote = (note, terms) => {
-        if (!terms.length) return 0;
         const title = normalize(note.title);
         const meta = normalize([note.description,note.category,note.collection,...note.tags,...note.aliases,note.extra].join(' '));
         const body = normalize(note.body);
@@ -112,16 +75,15 @@ const index = notes.map(note => ({
       };
 
       function render(query = '') {
-        const { filters, terms } = parseQuery(query.trim());
+        const terms = termsFor(query.trim());
         const rows = index
-          .filter(note => passesFilters(note, filters))
           .filter(note => {
             if (!terms.length) return true;
             const haystack = normalize([note.title,note.description,note.category,note.collection,...note.tags,...note.aliases,note.body,note.extra].join(' '));
             return terms.every(term => haystack.includes(term));
           })
           .map(note => ({ ...note, score: scoreNote(note, terms) }))
-          .sort((a,b) => b.score - a.score || b.year.localeCompare(a.year));
+          .sort((a,b) => b.score - a.score || a.title.localeCompare(b.title));
 
         summary.textContent = `${rows.length} result${rows.length === 1 ? '' : 's'}${query.trim() ? ` for “${query.trim()}”` : ''}`;
         results.innerHTML = rows.length ? rows.map(note => `
@@ -130,18 +92,11 @@ const index = notes.map(note => ({
             <div>
               <a href="${esc(note.href)}"><h3 class="note-title">${esc(note.title)}</h3></a>
               <p class="note-desc">${esc(makeSnippet(note, terms))}</p>
-              <div class="tags"><span class="tag">${esc(note.category)}</span>${note.collection ? `<span class="tag">${esc(note.collection)}</span>` : ''}<span class="tag">${esc(note.lang === 'zh' ? '中文' : 'EN')}</span>${note.status ? `<span class="tag">${esc(note.status)}</span>` : ''}</div>
             </div>
-            <div class="note-meta">${esc(note.type)}</div>
+            <div class="note-meta"><span>${esc(note.type)}</span><span>${esc(note.lang === 'zh' ? '中文' : 'EN')}</span></div>
           </article>`).join('') : '<p class="muted">No matching notes.</p>';
       }
 
-      document.querySelectorAll('[data-search-hint]').forEach(button => button.addEventListener('click', () => {
-        const hint = button.dataset.searchHint || '';
-        input.value = input.value.trim() ? `${input.value.trim()} ${hint}` : hint;
-        render(input.value);
-        input.focus();
-      }));
       input?.addEventListener('input', event => render(event.target.value));
       render();
     })();
