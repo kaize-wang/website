@@ -7,6 +7,10 @@
 .sidebar-lab-link::before { content: '··· '; opacity: .55; }
 .sidebar-lab-link:hover { color: var(--accent); }
 
+.ui-copy-zh { display: none; }
+:root[data-ui-language='zh'] .ui-copy-en { display: none !important; }
+:root[data-ui-language='zh'] .ui-copy-zh { display: revert; }
+
 .current-focus-card {
   max-width: 820px;
   padding: 21px 23px;
@@ -75,6 +79,39 @@
 .lab-page .page-hero { padding-bottom: 36px; }
 .lab-page .explore-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .lab-page .explore-card { min-height: 158px; }
+.lab-rediscover { max-width: 820px; }
+.lab-surprise-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--text);
+  cursor: pointer;
+  font: 500 18px/1.35 Georgia, 'Times New Roman', serif;
+  text-align: left;
+}
+.lab-surprise-button:hover { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+.lab-github-card {
+  display: block;
+  padding: 18px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+}
+.lab-github-chart-scroll { overflow-x: auto; scrollbar-width: thin; }
+.lab-github-chart { display: block; width: 100%; min-width: 720px; height: auto; }
+.lab-github-chart-dark { display: none; }
+:root[data-theme='dark'] .lab-github-chart-light { display: none; }
+:root[data-theme='dark'] .lab-github-chart-dark { display: block; }
+.lab-github-note {
+  display: block;
+  margin-top: 9px;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
 .visitor-detail-card {
   padding: 20px;
   border: 1px solid var(--line);
@@ -91,6 +128,36 @@
   background: var(--bg);
 }
 
+.article-update-history,
+.contextual-backlinks-section {
+  margin-top: 44px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+.article-update-history h2,
+.contextual-backlinks-section h2 {
+  margin: 0 0 12px;
+  font: 500 21px/1.35 Georgia, 'Times New Roman', serif;
+}
+.article-update-list { display: grid; gap: 9px; margin: 0; padding: 0; list-style: none; }
+.article-update-list li {
+  display: grid;
+  grid-template-columns: 118px minmax(0,1fr);
+  gap: 16px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+}
+.article-update-list li:last-child { border-bottom: 0; }
+.article-update-list time { color: var(--muted); font-size: 11px; }
+.article-update-list span { color: var(--muted); font-size: 13px; line-height: 1.6; }
+.contextual-backlinks-note { margin: -3px 0 14px; color: var(--muted); font-size: 11px; line-height: 1.55; }
+.contextual-backlinks-list { display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line); }
+.contextual-backlink-item { display: grid; gap: 7px; padding: 14px 16px; background: var(--paper); color: var(--text); }
+.contextual-backlink-item strong { font-size: 13px; font-weight: 650; }
+.contextual-backlink-item p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.65; }
+.contextual-backlink-item small { color: var(--muted); font-size: 9px; letter-spacing: .04em; text-transform: uppercase; }
+.contextual-backlink-item:hover strong { color: var(--accent); }
+
 @media (max-width: 980px) {
   .note-shelf-guide { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .lab-page .explore-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -103,4 +170,6 @@
   .current-focus-card { padding: 17px; }
   .visitor-detail-card { padding: 13px; }
   .visitor-detail-card .visitor-live-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .article-update-list li { grid-template-columns: 1fr; gap: 4px; }
+  .lab-github-card { padding: 12px; }
 }
