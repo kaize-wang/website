@@ -9,11 +9,12 @@
     ['Home', '首页'],
     ['Research', '研究'],
     ['Notes', '笔记'],
+    ['Lab', '杂物间'],
     ['Quick search', '快速搜索'],
-    ['Research · Notes', '研究 · 笔记'],
     ['← Back to Home', '← 返回首页'],
     ['← Back to Research', '← 返回研究'],
     ['← Back to Notes', '← 返回笔记'],
+    ['← Back to Lab', '← 返回杂物间'],
     ['Built with Astro · writing stays in Markdown', '使用 Astro 构建 · 写作保持 Markdown'],
     ['Search kaizewang', '搜索 kaizewang'],
     ['No matching pages or notes.', '没有匹配的页面或笔记。'],
@@ -25,17 +26,33 @@
     ['Note', '笔记'],
     ['Paper note', '论文笔记'],
     ['Full-text Search', '全文搜索'],
+    ['Current focus', '当前关注'],
+    ['Research →', '研究 →'],
     ['Recent Notes', '最近笔记'],
     ['View all notes →', '查看全部笔记 →'],
     ['Visitors', '访客'],
-    ['A live, approximate footprint', '实时但近似的访问足迹'],
+    ['Detailed map →', '详细地图 →'],
+    ['Visitor map', '访客地图'],
+    ['The expanded version of the homepage preview', '主页预览的详细版'],
     ['Current work', '当前研究'],
     ['Research areas', '研究方向'],
     ['Notebook', '笔记本'],
     ['All notes', '全部笔记'],
     ['Paper Reading', '论文阅读'],
+    ['Learning', '学习笔记'],
+    ['Essay', '随笔'],
     ['Reading notes', '阅读笔记'],
+    ['Reading desk →', '论文阅读 →'],
     ['Open note →', '打开笔记 →'],
+    ['Tools & curiosities', '工具与新奇玩意'],
+    ['Open only when you want them', '需要时再打开'],
+    ['Knowledge Graph', '知识图谱'],
+    ['Literature Map', '文献图谱'],
+    ['Questions Board', '问题板'],
+    ['Research Sandbox', '研究沙盒'],
+    ['Archive', '归档'],
+    ['A small visual toy', '一个小视觉玩具'],
+    ['No research claim attached', '不承载研究结论'],
     ['Focus', '专注阅读'],
     ['Exit focus', '退出专注阅读'],
     ['Resume where you left off?', '继续上次的阅读位置？'],
@@ -67,6 +84,7 @@
   const zoneSelector = [
     '.site-sidebar', '.context-nav-wrap', '.site-footer', '.command-palette',
     '.page-hero h1', '.page-hero .eyebrow', '.section-head',
+    '.note-shelf-guide', '.current-focus-meta', '.lab-page .explore-grid',
     '.paper-reading-open', '.article-toolbox', '.resume-reading', '.article-contents',
     '.reference-section > h2', '.floating-toc',
     'button', 'summary', '.sidenote-label', '.math-copy-button'
@@ -108,7 +126,7 @@
       if (match) return preserveSpace(value, `${match[1]} sections`);
       match = text.match(/^(\d+) 篇论文$/);
       if (match) return preserveSpace(value, `${match[1]} papers`);
-      match = text.match(/^你上次读到这篇笔记约 (\d+)%。$/);
+      match = text.match(/^你上次读到这篇笔记约 (\d+)% 。?$/);
       if (match) return preserveSpace(value, `You previously reached about ${match[1]}% of this note.`);
     }
     return value;
