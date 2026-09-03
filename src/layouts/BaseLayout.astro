@@ -18,9 +18,7 @@ routePath = routePath.replace(/\/+$/, '') || '/';
 
 const isHome = routePath === '/';
 const isArticle = routePath.startsWith('/notes/');
-const isResearchContext = routePath === '/research' || routePath === '/questions' || routePath === '/sandbox';
-const isNotesBrowse = routePath === '/notes' || isArticle;
-const isExploreContext =
+const legacyNotesRoute =
   routePath === '/explore' ||
   routePath === '/archive' ||
   routePath === '/graph' ||
@@ -28,41 +26,22 @@ const isExploreContext =
   routePath.startsWith('/tags/') ||
   routePath.startsWith('/categories/') ||
   routePath.startsWith('/collections/');
-const isNotesContext = isNotesBrowse || routePath === '/papers' || isExploreContext;
-
-const researchNav = [
-  { label: 'Overview', href: '/research', active: routePath === '/research' },
-  { label: 'Questions', href: '/questions', active: routePath === '/questions' }
-];
-const notesNav = [
-  { label: 'All Notes', href: '/notes', active: isNotesBrowse },
-  { label: 'Paper Reading', href: '/papers', active: routePath === '/papers' },
-  { label: 'Explore', href: '/explore', active: isExploreContext }
-];
-const contextualNav = isResearchContext ? researchNav : isNotesContext ? notesNav : [];
-const contextualLabel = isResearchContext ? 'Research' : isNotesContext ? 'Notes' : '';
 const contextBack = isHome
   ? null
   : isArticle
     ? { label: 'Notes', href: '/notes' }
-    : routePath === '/research' || routePath === '/notes' || routePath === '/about' || routePath === '/search'
-      ? { label: 'Home', href: '/' }
-      : routePath === '/papers' || routePath === '/explore'
-        ? { label: 'Notes', href: '/notes' }
-        : isExploreContext
-          ? { label: 'Explore', href: '/explore' }
-          : isResearchContext
-            ? { label: 'Research', href: '/research' }
-            : isNotesContext
-              ? { label: 'Notes', href: '/notes' }
-              : { label: 'Home', href: '/' };
+    : routePath === '/papers'
+      ? { label: 'Notes', href: '/notes' }
+      : routePath === '/questions' || routePath === '/sandbox'
+        ? { label: 'Research', href: '/research' }
+        : legacyNotesRoute
+          ? { label: 'Notes', href: '/notes' }
+          : { label: 'Home', href: '/' };
 
 const navZh: Record<string, string> = {
   Home: '首页',
   Research: '研究',
-  Notes: '笔记',
-  About: '关于',
-  Search: '搜索'
+  Notes: '笔记'
 };
 const commandNotes = await getPublishedNotes();
 const commandItems = [
@@ -77,68 +56,28 @@ const commandItems = [
     keywords: `${item.label} ${navZh[item.label] || ''}`
   })),
   {
-    type: 'Notes',
-    typeZh: '笔记',
-    title: 'Explore Notes',
-    titleZh: '探索笔记',
-    description: 'Graphs, literature, archive, categories, series, and tags.',
-    descriptionZh: '知识图谱、文献图谱、归档、分类、专栏与标签。',
-    href: withBase('/explore'),
-    keywords: 'explore notes graph literature archive category series tags 探索 笔记 图谱 文献 归档 分类 专栏 标签'
-  },
-  {
-    type: 'Map',
-    typeZh: '图谱',
-    title: 'Knowledge Graph',
-    titleZh: '知识图谱',
-    description: 'Time machine, shortest paths, backlinks, constellation, and serendipity.',
-    descriptionZh: '时间机器、最短路径、反向链接、星图与随机联想。',
-    href: withBase('/graph'),
-    keywords: 'graph knowledge wiki backlinks network notes timeline time machine shortest path constellation serendipity 知识图谱 时间 路径 星图'
-  },
-  {
     type: 'Papers',
     typeZh: '论文',
     title: 'Paper Reading',
     titleZh: '论文阅读',
-    description: 'Literature reading dashboard with local revisit scheduling.',
-    descriptionZh: '论文阅读工作台与本地重读计划。',
+    description: 'Paper-reading notes and source-and-notes workspaces.',
+    descriptionZh: '论文阅读笔记与原文对照阅读工作台。',
     href: withBase('/papers'),
-    keywords: 'papers literature reading dashboard research revisit spaced repetition 论文 阅读 重读'
+    keywords: 'papers literature reading reader 论文 阅读 文献 原文 笔记'
   },
   {
-    type: 'Map',
-    typeZh: '图谱',
-    title: 'Literature Map',
-    titleZh: '文献图谱',
-    description: 'Explore reading notes, papers, and explicitly recorded references.',
-    descriptionZh: '查看阅读笔记、论文与明确记录的参考关系。',
-    href: withBase('/literature'),
-    keywords: 'literature citations references papers map network 文献 图谱 引用'
-  },
-  {
-    type: 'Research',
-    typeZh: '研究',
-    title: 'Questions Board',
-    titleZh: '研究问题',
-    description: 'Track explicitly recorded open, exploring, reframed, and resolved questions.',
-    descriptionZh: '追踪明确记录的开放、探索、重构与已解决问题。',
-    href: withBase('/questions'),
-    keywords: 'research questions open exploring resolved board 研究 问题'
-  },
-  {
-    type: 'Research',
-    typeZh: '研究',
-    title: 'Research Sandbox',
-    titleZh: '研究沙盒',
-    description: 'Open small interactive sketches for mechanism intuition.',
-    descriptionZh: '用于机制直觉的小型交互草图。',
-    href: withBase('/sandbox'),
-    keywords: 'research sandbox intuition interactive toy warranty playground 研究 沙盒 直觉'
+    type: 'Search',
+    typeZh: '搜索',
+    title: 'Full-text Search',
+    titleZh: '全文搜索',
+    description: 'Search note titles, metadata, and full text.',
+    descriptionZh: '搜索笔记标题、元数据与正文。',
+    href: withBase('/search'),
+    keywords: 'search full text notes paper 搜索 全文 笔记 论文'
   },
   ...commandNotes.map(note => ({
-    type: 'Note',
-    typeZh: '笔记',
+    type: note.data.paper ? 'Paper note' : 'Note',
+    typeZh: note.data.paper ? '论文笔记' : '笔记',
     title: note.data.title,
     titleZh: note.data.title,
     description: note.data.description,
@@ -149,10 +88,8 @@ const commandItems = [
       note.data.collection,
       note.data.paper?.title,
       ...(note.data.paper?.authors || []),
-      note.data.readingStatus,
       ...note.data.tags,
-      ...note.data.aliases,
-      ...(note.data.researchQuestions || []).map(question => question.text)
+      ...note.data.aliases
     ].filter(Boolean).join(' ')
   }))
 ];
@@ -199,23 +136,12 @@ const commandItems = [
             ))}
           </nav>
 
-          {contextualNav.length > 0 && (
-            <div class="sidebar-context">
-              <span class="sidebar-context-label">{contextualLabel}</span>
-              <nav class="sidebar-context-nav" aria-label={`${contextualLabel} sections`}>
-                {contextualNav.map(item => (
-                  <a class={item.active ? 'active' : ''} href={withBase(item.href)} aria-current={item.active ? 'page' : undefined}>{item.label}</a>
-                ))}
-              </nav>
-            </div>
-          )}
-
           <button class="sidebar-command" id="command-trigger" type="button" aria-haspopup="dialog" aria-controls="command-palette" aria-expanded="false">
             <span>Quick search</span><kbd id="command-shortcut">⌘K</kbd>
           </button>
 
           <div class="sidebar-bottom">
-            <span class="sidebar-small">Research · Notes · Writing</span>
+            <span class="sidebar-small">Research · Notes</span>
             <div class="sidebar-settings">
               <UiLanguageToggle />
               <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Toggle light and dark theme" title="Toggle light and dark theme">◐</button>
@@ -256,7 +182,7 @@ const commandItems = [
         </div>
         <label class="command-input-wrap" for="command-input">
           <span aria-hidden="true">⌕</span>
-          <input id="command-input" type="search" autocomplete="off" spellcheck="false" placeholder="Search pages, notes, papers, graph…" />
+          <input id="command-input" type="search" autocomplete="off" spellcheck="false" placeholder="Search notes and pages…" />
         </label>
         <nav class="command-results" id="command-results" aria-label="Search results"></nav>
         <div class="command-help"><span>↑ ↓ navigate</span><span>↵ open</span></div>
