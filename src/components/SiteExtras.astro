@@ -37,6 +37,17 @@
           node.setAttribute('r', radius.toFixed(1));
           node.classList.toggle('visible', count > 0);
         });
+        document.querySelectorAll(`[data-region-halo="${code}"]`).forEach(node => {
+          const radius = count ? 11 + 14 * Math.sqrt(count / maxRegion) : 0;
+          node.setAttribute('r', radius.toFixed(1));
+          node.classList.toggle('visible', count > 0);
+        });
+        document.querySelectorAll(`[data-region-count="${code}"]`).forEach(node => {
+          node.textContent = count ? String(count) : '';
+        });
+        document.querySelectorAll(`[data-region-legend="${code}"]`).forEach(node => {
+          node.textContent = count.toLocaleString();
+        });
       });
     };
 
