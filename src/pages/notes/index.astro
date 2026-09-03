@@ -4,58 +4,25 @@ import NoteList from '@/components/NoteList.astro';
 import SiteExtras from '@/components/SiteExtras.astro';
 import '@/styles/scholarly.css';
 import '@/styles/knowledge.css';
-import { getPublishedNotes, noteSlug } from '@/utils/notes';
+import { getPublishedNotes } from '@/utils/notes';
 import { withBase } from '@/utils/url';
 const notes = await getPublishedNotes();
-const categories = ['Research','Reading','Technical','Life'];
-
-const collectionMap = new Map<string, number>();
-const tagMap = new Map<string, number>();
-for (const note of notes) {
-  if (note.data.collection) collectionMap.set(note.data.collection, (collectionMap.get(note.data.collection) ?? 0) + 1);
-  for (const tag of note.data.tags) tagMap.set(tag, (tagMap.get(tag) ?? 0) + 1);
-}
-const collections = [...collectionMap.entries()].sort((a,b) => b[1] - a[1] || a[0].localeCompare(b[0]));
-const tags = [...tagMap.entries()].sort((a,b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0,12);
-const paperReadingNotes = notes.filter(note => note.data.collection === 'Paper Reading');
-const paperReadingStart = paperReadingNotes[0];
 ---
 <BaseLayout title="Notes" active="Notes">
   <main class="site-shell">
     <header class="page-hero">
       <div class="eyebrow">Research · Reading · Technical · Life</div>
       <h1>Notes</h1>
-      <p>A public notebook for ideas worth keeping. Writing lives here; graph, literature, archive, and paper-reading tools are grouped under Notes in the left navigation.</p>
-      <div class="category-nav" aria-label="Browse notes by type">
-        {categories.map(c => <a href={withBase(`/categories/${c.toLowerCase()}/`)}>{c}</a>)}
-      </div>
-      {(collections.length > 0 || tags.length > 0) && (
-        <div class="notes-browse">
-          {collections.length > 0 && (
-            <div><span>Series</span>{collections.map(([name,count]) => <a href={withBase(`/collections/${encodeURIComponent(name.toLowerCase())}/`)}>{name}<small>{count}</small></a>)}</div>
-          )}
-          {tags.length > 0 && (
-            <div><span>Tags</span>{tags.map(([name,count]) => <a href={withBase(`/tags/${encodeURIComponent(name.toLowerCase())}/`)}>#{name}<small>{count}</small></a>)}</div>
-          )}
-        </div>
-      )}
+      <p>A public notebook for ideas worth keeping. Open a note to read; use Paper Reading for literature work and Explore when you want graphs, archives, categories, series, or tags.</p>
     </header>
 
-    {paperReadingStart && (
-      <section class="paper-reading-intro" aria-labelledby="paper-reading-title">
-        <div>
-          <div class="eyebrow">Series · 论文学习</div>
-          <h2 id="paper-reading-title">Paper Reading</h2>
-          <p>精读论文时保留真正改变理解的部分：研究问题、状态与信息、关键结构、证明直觉，以及仍然没有想清楚的问题。正文可以中文或英文，不要求逐篇双语。</p>
-        </div>
-        <div class="knowledge-links" style="margin:0">
-          <a href={withBase('/papers')}>Open dashboard →</a>
-          <a href={withBase(`/notes/${noteSlug(paperReadingStart.id)}/`)}>Example ↗</a>
-        </div>
-      </section>
-    )}
-
-    <section class="section"><NoteList notes={notes} /></section>
+    <section class="section" aria-labelledby="all-notes-title">
+      <div class="section-head">
+        <h2 id="all-notes-title">All Notes</h2>
+        <a class="section-kicker" href={withBase('/explore')}>Explore notes →</a>
+      </div>
+      {notes.length ? <NoteList notes={notes} /> : <p class="muted">No notes yet.</p>}
+    </section>
   </main>
   <SiteExtras />
 </BaseLayout>
