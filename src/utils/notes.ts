@@ -63,6 +63,45 @@ export function backlinksFor(note: Note, notes: Note[]) {
   });
 }
 
+function cleanBacklinkContext(value = '') {
+  return value
+    .replace(/\[\[([^\]|#]+)(?:#[^\]|]+)?(?:\|([^\]]+))?\]\]/g, (_, target, label) => label || target)
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+    .replace(/^\s{0,3}#{1,6}\s+/gm, '')
+    .replace(/^\s*>\s?/gm, '')
+    .replace(/\[![^\]]+\]/g, '')
+    .replace(/[`*_~]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+export function contextualBacklinksFor(note: Note, notes: Note[]) {
+  const results: { note: Note; context: string }[] = [];
+  for (const candidate of notes) {
+    if (candidate.id === note.id) continue;
+    const body = candidate.body || '';
+    const pattern = /\[\[([^\]|]+?)(?:\|([^\]]+))?\]\]/g;
+    let match: RegExpExecArray | null;
+    while ((match = pattern.exec(body))) {
+      const raw = match[1].trim();
+      const target = raw.split('#')[0].trim();
+      if (resolveWikiTarget(target, notes)?.id !== note.id) continue;
+
+      const startBreak = body.lastIndexOf('\n\n', match.index);
+      const endBreak = body.indexOf('\n\n', match.index + match[0].length);
+      const start = startBreak >= 0 ? startBreak + 2 : Math.max(0, match.index - 180);
+      const end = endBreak >= 0 ? endBreak : Math.min(body.length, match.index + match[0].length + 220);
+      let context = cleanBacklinkContext(body.slice(start, end));
+      if (context.length > 300) context = `${context.slice(0, 297).trimEnd()}…`;
+      if (!context) context = candidate.data.description;
+      results.push({ note: candidate, context });
+      break;
+    }
+  }
+  return results;
+}
+
 export function outgoingWikiNotes(note: Note, notes: Note[]) {
   const seen = new Set<string>();
   return wikiLinks(note.body || '')
