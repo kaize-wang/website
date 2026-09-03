@@ -1,7 +1,18 @@
 ---
 import '@/styles/scholarly.css';
 import '@/styles/knowledge.css';
+import PaperReaderWorkspace from '@/components/PaperReaderWorkspace.astro';
 const { wikiNotes = [], wanderUrls = [] } = Astro.props;
+const currentPath = Astro.url.pathname.replace(/\/+$/, '');
+const readerConfig = currentPath.endsWith('/notes/paper-reading-huang-2008')
+  ? {
+      noteId: 'paper-reading-huang-2008',
+      paperTitle: 'Managing the Inventory of an Item with a Replacement Warranty',
+      sourceUrl: 'https://doi.org/10.1287/mnsc.1080.0863',
+      printedPageStart: 1441,
+      pdfPageStart: 2
+    }
+  : null;
 ---
 <div class="citation-popover" id="citation-popover" role="status" hidden>
   <strong id="citation-popover-title"></strong>
@@ -16,6 +27,8 @@ const { wikiNotes = [], wanderUrls = [] } = Astro.props;
     <div class="image-lightbox-caption" id="image-lightbox-caption"></div>
   </div>
 </div>
+
+{readerConfig && <PaperReaderWorkspace {...readerConfig} />}
 
 <script is:inline define:vars={{ wikiNotes, wanderUrls }}>
 (() => {
