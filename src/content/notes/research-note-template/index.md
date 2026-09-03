@@ -2,6 +2,12 @@
 title: "Research note title"
 description: "One-sentence summary of the note."
 publishDate: 2026-09-02
+# Set updatedDate only when the published note changes materially.
+# updatedDate: 2026-09-04
+# Optional public change notes. The section appears only when entries exist.
+# updates:
+#   - date: 2026-09-04
+#     note: "Clarified the state definition and added a numerical example."
 # Pick exactly one primary shelf:
 # Research      = your own model / derivation / experiment / proof / research idea
 # Paper Reading = close reading of a paper or a group of papers
@@ -47,14 +53,14 @@ featured: false
 
 Start with the question you are trying to understand.
 
-Internal note links can use wiki syntax: `[[Exact note title]]`, `[[alias|display text]]`, or `[[note-slug|display text]]`. These links can still power optional knowledge tools in the Lab, but you do not need them for an ordinary note.
+Internal note links can use wiki syntax: `[[Exact note title]]`, `[[alias|display text]]`, or `[[note-slug|display text]]`. When another published note links here, the article can show the surrounding sentence as a contextual backlink. Wiki links also continue to power optional knowledge tools in the Lab.
 
 ## Context
 
 Explain why the question matters and what assumptions are being made.
 
 > [!sidenote]
-> 这一类 blockquote 会自动变成侧注。在足够宽的桌面屏幕上进入页边，在较窄屏幕上自动退化成正文内的注释卡片。
+> 这一类 blockquote 会自动变成正文内的轻量注释，不与 Reader 或侧栏抢空间。
 
 > [!assumption id=independent-demand] Example assumption
 > 用 Assumption block 单独保存真正进入模型的假设。文章右侧的 Assumptions 面板会自动收集它。
@@ -69,7 +75,7 @@ Later, `[[assumption:independent-demand]]` will become an automatic cross-refere
 > [!definition id=value-function] Value function
 > Define \(V_t(s)\) as the optimal expected future cost from state \(s\) at period \(t\).
 
-Put equations close to the text that interprets them. Every display equation is numbered and receives a `Copy TeX` button. Put `:eq[label]` immediately after an equation when you want to reference it later.
+Put equations close to the text that interprets them. Put `:eq[label]` immediately after a display equation only when you want it numbered and referenced later.
 
 $$
 V_t(s)=\min_a\left\{c(s,a)+\mathbb E[V_{t+1}(S_{t+1})\mid s,a]\right\}.
@@ -85,11 +91,16 @@ Then write `[[eq:bellman]]` or `[[def:value-function]]` in ordinary prose to cre
 The sentence `[[thm:policy-structure]]` will link back to that theorem.
 
 > [!proof]
-> Proof blocks become collapsible and end with a square. Keep the argument itself here; do not use this environment merely for commentary.
+> Proof blocks are collapsible and end with a square. Keep the argument itself here; do not use this environment merely for commentary.
+
+Use a generic detail block when information is useful but should not interrupt the main reading path:
+
+> [!details Why this assumption matters]
+> Put a longer derivation, numerical check, implementation note, alternative argument, or other optional detail here. It stays collapsed until the reader asks for it.
 
 If `references` is provided in frontmatter, cite one with ordinary Markdown such as `[Author et al. (2026)](#ref-example2026)`. The hover card is generated automatically.
 
-For a Paper Reading note, add the `paper` block so it appears in the Paper Reading shelf and can use the source-and-notes Reader. Advanced fields such as `paperTakeaways`, `researchQuestions`, wiki links, and graph relations remain supported, but they are optional rather than part of the basic writing workflow.
+For a Paper Reading note, add the `paper` block so it appears in the Paper Reading shelf and can use the source-and-notes Reader. Advanced fields such as `paperTakeaways`, `researchQuestions`, wiki links, graph relations, and update history remain supported, but they are optional rather than part of the basic writing workflow.
 
 ## What I learned
 
