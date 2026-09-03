@@ -2,9 +2,16 @@
 title: "Research note title"
 description: "One-sentence summary of the note."
 publishDate: 2026-09-02
+# Pick exactly one primary shelf:
+# Research      = your own model / derivation / experiment / proof / research idea
+# Paper Reading = close reading of a paper or a group of papers
+# Learning      = course / textbook / method / software / technical learning
+# Essay         = writing / research life / website / nontechnical reflection
 category: Research
+# Tags are optional search metadata, not navigation.
 tags: [inventory, warranty]
-collection: Warranty & Inventory Notes
+# Use collection only when this note is genuinely part of a continuing series.
+# collection: Warranty & Inventory Notes
 aliases: ["Optional short name used by wiki links"]
 lang: zh
 # englishSummary: "Optional 3–5 sentence English summary for a Chinese note."
@@ -15,6 +22,7 @@ lang: zh
 #   year: 2026
 #   venue: "Journal"
 #   doi: "10.xxxx/xxxxx"
+# Optional legacy/advanced metadata. Add it only when it is genuinely useful.
 # readingStatus: Reading # Reading | Read | Revisit | Core
 # paperTakeaways:
 #   story: "What operational problem does the paper explain?"
@@ -39,7 +47,7 @@ featured: false
 
 Start with the question you are trying to understand.
 
-Internal note links can use wiki syntax: `[[Exact note title]]`, `[[alias|display text]]`, or `[[note-slug|display text]]`. These links generate backlinks and strong edges in the Knowledge Graph. A target that does not exist remains visible as an unresolved link instead of silently breaking.
+Internal note links can use wiki syntax: `[[Exact note title]]`, `[[alias|display text]]`, or `[[note-slug|display text]]`. These links can still power optional knowledge tools in the Lab, but you do not need them for an ordinary note.
 
 ## Context
 
@@ -81,7 +89,7 @@ The sentence `[[thm:policy-structure]]` will link back to that theorem.
 
 If `references` is provided in frontmatter, cite one with ordinary Markdown such as `[Author et al. (2026)](#ref-example2026)`. The hover card is generated automatically.
 
-For Paper Reading notes, the optional `readingStatus` and `paperTakeaways` fields feed the Paper Reading Dashboard automatically. `researchQuestions` feeds the Questions Board. Revisit dates are separate and remain local to the browser.
+For a Paper Reading note, add the `paper` block so it appears in the Paper Reading shelf and can use the source-and-notes Reader. Advanced fields such as `paperTakeaways`, `researchQuestions`, wiki links, and graph relations remain supported, but they are optional rather than part of the basic writing workflow.
 
 ## What I learned
 
