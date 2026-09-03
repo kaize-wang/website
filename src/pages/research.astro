@@ -17,7 +17,7 @@ const trailNotes = notes
     <header class="page-hero">
       <div class="eyebrow">Academic</div>
       <h1>Research</h1>
-      <p>My current work is centered on inventory systems with warranty and sequential decisions under uncertainty. This page stays focused on research areas, the public research trail, and formal work as it becomes ready.</p>
+      <p>My current work is centered on inventory systems with warranty and sequential decisions under uncertainty. This page stays focused on research areas and the public trail of ideas as they develop.</p>
     </header>
 
     <section class="section">
@@ -42,13 +42,15 @@ const trailNotes = notes
             </div>
           ))}
         </div>
-        <p class="graph-note">This trail is generated only from published Research and Reading notes. It grows when the notebook grows.</p>
       </section>
     )}
 
-    <section class="section">
-      <div class="section-head"><h2>Working Papers & Publications</h2></div>
-      <p class="muted">Working papers and publications will be added here when the bibliographic information is ready.</p>
+    <section class="section" aria-labelledby="research-tools-title">
+      <div class="section-head"><h2 id="research-tools-title">Research Tools</h2><span class="section-kicker">Use when needed</span></div>
+      <div class="research-tool-links">
+        <a href={withBase('/questions')}><strong>Questions Board</strong><span>Track questions that are explicitly worth carrying forward.</span></a>
+        <a href={withBase('/sandbox')}><strong>Research Sandbox</strong><span>Small interactive sketches for mechanism intuition, separate from formal evidence.</span></a>
+      </div>
     </section>
   </main>
   <SiteExtras />
