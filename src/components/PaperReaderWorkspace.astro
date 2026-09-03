@@ -1,5 +1,6 @@
 ---
 import '@/styles/paper-reader.css';
+import '@/styles/paper-reader-sources.css';
 const {
   noteId,
   paperTitle,
@@ -21,12 +22,27 @@ const {
       <span data-reader-i18n="source">Source</span>
       <strong>{paperTitle}</strong>
     </div>
+
+    <div class="reader-source-tabs" role="tablist" aria-label="Source format">
+      <button class="reader-source-tab active" type="button" role="tab" aria-selected="true" data-source-mode="pdf">PDF</button>
+      <button class="reader-source-tab" type="button" role="tab" aria-selected="false" data-source-mode="markdown">Markdown</button>
+    </div>
+
     <div class="reader-source-actions">
-      <label class="reader-file-button" for="reader-pdf-input">
-        <span id="reader-file-label" data-reader-i18n="load">Load PDF</span>
-        <input id="reader-pdf-input" type="file" accept="application/pdf,.pdf" />
-      </label>
-      <button id="reader-forget-pdf" type="button" hidden data-reader-i18n="forget">Forget PDF</button>
+      <span class="reader-source-action-group" data-pdf-actions>
+        <label class="reader-file-button" for="reader-pdf-input">
+          <span id="reader-pdf-label" data-reader-i18n="loadPdf">Load PDF</span>
+          <input id="reader-pdf-input" type="file" accept="application/pdf,.pdf" />
+        </label>
+        <button id="reader-forget-pdf" type="button" hidden data-reader-i18n="forgetPdf">Forget PDF</button>
+      </span>
+      <span class="reader-source-action-group" data-markdown-actions hidden>
+        <label class="reader-file-button" for="reader-markdown-input">
+          <span id="reader-markdown-label" data-reader-i18n="loadMarkdown">Load Markdown</span>
+          <input id="reader-markdown-input" type="file" accept=".md,.markdown,text/markdown,text/plain" />
+        </label>
+        <button id="reader-forget-markdown" type="button" hidden data-reader-i18n="forgetMarkdown">Forget Markdown</button>
+      </span>
       {sourceUrl && <a href={sourceUrl} target="_blank" rel="noopener" data-reader-i18n="original">Open original ↗</a>}
       <button type="button" data-reader-exit data-reader-i18n="exitReader">Exit Reader</button>
     </div>
@@ -37,16 +53,28 @@ const {
     <span id="reader-page-status">—</span>
   </div>
 
-  <div class="reader-pdf-stage">
-    <div class="reader-empty" id="reader-empty">
+  <div class="reader-pdf-stage" data-source-stage="pdf">
+    <div class="reader-empty" id="reader-pdf-empty">
       <div class="reader-empty-inner">
-        <strong data-reader-i18n="loadLocal">Load your local PDF</strong>
-        <p data-reader-i18n="loadCopy">Choose your own copy of this paper to read it beside the note.</p>
-        <label class="reader-file-button" for="reader-pdf-input" data-reader-i18n="select">Select PDF</label>
+        <strong data-reader-i18n="loadLocalPdf">Load your local PDF</strong>
+        <p data-reader-i18n="pdfCopy">The publisher cover is skipped; reading begins at the article itself.</p>
+        <label class="reader-file-button" for="reader-pdf-input" data-reader-i18n="selectPdf">Select PDF</label>
         <p class="reader-privacy" data-reader-i18n="privacy">The file stays in this browser and is never uploaded to the site.</p>
       </div>
     </div>
     <iframe class="reader-pdf-frame" id="reader-pdf-frame" title="Local paper PDF" hidden></iframe>
+  </div>
+
+  <div class="reader-markdown-stage" data-source-stage="markdown" hidden>
+    <div class="reader-empty" id="reader-markdown-empty">
+      <div class="reader-empty-inner">
+        <strong data-reader-i18n="loadLocalMarkdown">Load your local Markdown</strong>
+        <p data-reader-i18n="markdownCopy">The extracted publisher cover is removed automatically before rendering.</p>
+        <label class="reader-file-button" for="reader-markdown-input" data-reader-i18n="selectMarkdown">Select Markdown</label>
+        <p class="reader-privacy" data-reader-i18n="privacy">The file stays in this browser and is never uploaded to the site.</p>
+      </div>
+    </div>
+    <article class="reader-markdown-content" id="reader-markdown-content" hidden></article>
   </div>
 </aside>
 
@@ -65,37 +93,40 @@ const {
   const DB_NAME = 'kaize-paper-reader-v1';
   const STORE_NAME = 'pdfs';
   const SPLIT_KEY = `kaize-reader-split:${noteId}`;
+  const MODE_KEY = `kaize-reader-source-mode:${noteId}`;
+
   const source = document.getElementById('paper-reader-source');
   const divider = document.getElementById('paper-reader-divider');
   const frame = document.getElementById('reader-pdf-frame');
-  const empty = document.getElementById('reader-empty');
-  const input = document.getElementById('reader-pdf-input');
-  const forget = document.getElementById('reader-forget-pdf');
+  const pdfEmpty = document.getElementById('reader-pdf-empty');
+  const pdfInput = document.getElementById('reader-pdf-input');
+  const pdfForget = document.getElementById('reader-forget-pdf');
+  const pdfLabel = document.getElementById('reader-pdf-label');
+  const mdStage = document.querySelector('[data-source-stage="markdown"]');
+  const mdEmpty = document.getElementById('reader-markdown-empty');
+  const mdContent = document.getElementById('reader-markdown-content');
+  const mdInput = document.getElementById('reader-markdown-input');
+  const mdForget = document.getElementById('reader-forget-markdown');
+  const mdLabel = document.getElementById('reader-markdown-label');
   const status = document.getElementById('reader-source-status');
   const pageStatus = document.getElementById('reader-page-status');
-  const fileLabel = document.getElementById('reader-file-label');
   const articleWrap = document.querySelector('.article-wrap');
   const layout = document.querySelector('.article-page-layout');
   const toolbox = document.querySelector('.article-toolbox');
-  if (!source || !divider || !frame || !empty || !input || !articleWrap || !layout || !toolbox) return;
+  if (!source || !divider || !frame || !pdfEmpty || !pdfInput || !mdStage || !mdEmpty || !mdContent || !mdInput || !articleWrap || !layout || !toolbox) return;
 
   const firstArticleChild = layout.firstElementChild;
   layout.insertBefore(source, firstArticleChild);
   layout.insertBefore(divider, firstArticleChild);
 
   const i18n = {
-    reader: ['Reader', '阅读器'],
-    exitReader: ['Exit Reader', '退出阅读器'],
-    notes: ['Notes', '笔记'],
-    source: ['Source', '原文'],
-    exit: ['Exit', '退出'],
-    load: ['Load PDF', '载入 PDF'],
-    replace: ['Replace PDF', '更换 PDF'],
-    forget: ['Forget PDF', '移除 PDF'],
-    original: ['Open original ↗', '打开原文 ↗'],
-    loadLocal: ['Load your local PDF', '载入本地 PDF'],
-    loadCopy: ['Choose your own copy of this paper to read it beside the note.', '选择你电脑里的论文 PDF，与右侧笔记对照阅读。'],
-    select: ['Select PDF', '选择 PDF'],
+    reader: ['Reader', '阅读器'], exitReader: ['Exit Reader', '退出阅读器'], notes: ['Notes', '笔记'], source: ['Source', '原文'], exit: ['Exit', '退出'],
+    loadPdf: ['Load PDF', '载入 PDF'], replacePdf: ['Replace PDF', '更换 PDF'], forgetPdf: ['Forget PDF', '移除 PDF'],
+    loadMarkdown: ['Load Markdown', '载入 Markdown'], replaceMarkdown: ['Replace Markdown', '更换 Markdown'], forgetMarkdown: ['Forget Markdown', '移除 Markdown'],
+    original: ['Open original ↗', '打开原文 ↗'], loadLocalPdf: ['Load your local PDF', '载入本地 PDF'],
+    loadLocalMarkdown: ['Load your local Markdown', '载入本地 Markdown'], selectPdf: ['Select PDF', '选择 PDF'], selectMarkdown: ['Select Markdown', '选择 Markdown'],
+    pdfCopy: ['The publisher cover is skipped; reading begins at the article itself.', '阅读器会跳过出版社封面，直接从论文正文开始。'],
+    markdownCopy: ['The extracted publisher cover is removed automatically before rendering.', '渲染前会自动删除 Markdown 中的出版社封面内容。'],
     privacy: ['The file stays in this browser and is never uploaded to the site.', '文件只保存在这个浏览器里，不会上传到网站。']
   };
   const lang = () => window.__kaizeUi?.language === 'zh' ? 'zh' : 'en';
@@ -104,12 +135,17 @@ const {
     return lang() === 'zh' ? value[1] : value[0];
   };
 
-  let currentBlobUrl = '';
-  let currentName = '';
+  let pdfUrl = '';
+  let pdfName = '';
+  let pdfTrimmed = false;
+  let mdName = '';
+  let mdText = '';
   let restored = false;
   let restorePromise = null;
   let pendingPrintedPage = null;
   let savedWindowY = 0;
+  let activeMode = 'pdf';
+  try { activeMode = localStorage.getItem(MODE_KEY) === 'markdown' ? 'markdown' : 'pdf'; } catch {}
 
   const openDb = () => new Promise((resolve, reject) => {
     if (!('indexedDB' in window)) return reject(new Error('IndexedDB unavailable'));
@@ -119,107 +155,211 @@ const {
       if (!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME, { keyPath: 'id' });
     };
     request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error || new Error('Could not open local PDF store'));
+    request.onerror = () => reject(request.error || new Error('Could not open local source store'));
   });
-  const dbRead = async () => {
+  const dbGet = async id => {
     const db = await openDb();
     return new Promise((resolve, reject) => {
       const tx = db.transaction(STORE_NAME, 'readonly');
-      const request = tx.objectStore(STORE_NAME).get(noteId);
-      request.onsuccess = () => resolve(request.result || null);
-      request.onerror = () => reject(request.error || new Error('Could not read local PDF'));
+      const req = tx.objectStore(STORE_NAME).get(id);
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror = () => reject(req.error || new Error('Could not read local source'));
       tx.oncomplete = () => db.close();
     });
   };
-  const dbWrite = async record => {
+  const dbPut = async record => {
     const db = await openDb();
     return new Promise((resolve, reject) => {
       const tx = db.transaction(STORE_NAME, 'readwrite');
       tx.objectStore(STORE_NAME).put(record);
       tx.oncomplete = () => { db.close(); resolve(true); };
-      tx.onerror = () => { db.close(); reject(tx.error || new Error('Could not store local PDF')); };
+      tx.onerror = () => { db.close(); reject(tx.error || new Error('Could not store local source')); };
     });
   };
-  const dbDelete = async () => {
+  const dbRemove = async ids => {
     const db = await openDb();
     return new Promise((resolve, reject) => {
       const tx = db.transaction(STORE_NAME, 'readwrite');
-      tx.objectStore(STORE_NAME).delete(noteId);
+      ids.forEach(id => tx.objectStore(STORE_NAME).delete(id));
       tx.oncomplete = () => { db.close(); resolve(true); };
-      tx.onerror = () => { db.close(); reject(tx.error || new Error('Could not remove local PDF')); };
+      tx.onerror = () => { db.close(); reject(tx.error || new Error('Could not remove local source')); };
     });
   };
 
-  const sourceStatus = (en, zh) => {
-    if (status) status.textContent = lang() === 'zh' ? zh : en;
+  const sourceStatus = (en, zh) => { if (status) status.textContent = lang() === 'zh' ? zh : en; };
+  const isTrimmedName = name => /(?:reader|clean|trim|no[-_ ]?cover)/i.test(String(name || ''));
+  const currentPdfStart = () => Math.max(1, Number(pdfPageStart) - (pdfTrimmed ? 1 : 0));
+  const pdfPageForPrinted = printed => Math.max(1, currentPdfStart() + (Number(printed) - Number(printedPageStart)));
+
+  const cleanMarkdown = raw => {
+    const text = String(raw || '').replace(/^\uFEFF/, '');
+    const marker = 'MANAGEMENT SCIENCE Vol. 54, No. 8, August 2008, pp. 1441–1452';
+    const exact = text.indexOf(marker);
+    if (exact >= 0) return text.slice(exact).trim();
+    const title = '# Managing the Inventory of an Item with a Replacement Warranty';
+    const first = text.indexOf(title);
+    const second = first >= 0 ? text.indexOf(title, first + title.length) : -1;
+    return (second >= 0 ? text.slice(second) : text).trim();
   };
-  const syncFileLabel = () => {
-    if (fileLabel) fileLabel.textContent = currentBlobUrl ? tr('replace') : tr('load');
-    if (forget) forget.hidden = !currentBlobUrl;
+
+  const escapeHtml = value => String(value).replace(/[&<>"']/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch]));
+  const inlineMarkdown = raw => {
+    let text = escapeHtml(raw);
+    text = text.replace(/!\[([^\]]*)\]\((https?:\/\/[^\s)]+)\)/g, '<a class="reader-md-figure-link" href="$2" target="_blank" rel="noopener">Figure: $1 ↗</a>');
+    text = text.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+    text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+    text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    text = text.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+    return text;
+  };
+  const renderMarkdown = raw => {
+    const lines = cleanMarkdown(raw).split(/\r?\n/);
+    const out = [`<span class="reader-md-page-anchor" data-reader-md-page="${Number(printedPageStart)}"></span>`];
+    let paragraph = [];
+    let math = [];
+    let inMath = false;
+    let code = [];
+    let inCode = false;
+    const flushParagraph = () => {
+      if (!paragraph.length) return;
+      out.push(`<p>${inlineMarkdown(paragraph.join(' '))}</p>`);
+      paragraph = [];
+    };
+    lines.forEach(line => {
+      const trimmed = line.trim();
+      if (/^```/.test(trimmed)) {
+        flushParagraph();
+        if (inCode) { out.push(`<pre><code>${escapeHtml(code.join('\n'))}</code></pre>`); code = []; inCode = false; }
+        else inCode = true;
+        return;
+      }
+      if (inCode) { code.push(line); return; }
+      if (trimmed === '$$') {
+        flushParagraph();
+        if (inMath) { out.push(`<pre class="reader-md-math">${escapeHtml(math.join('\n'))}</pre>`); math = []; inMath = false; }
+        else inMath = true;
+        return;
+      }
+      if (inMath) { math.push(line); return; }
+      if (!trimmed) { flushParagraph(); return; }
+      const page = trimmed.match(/^(14(?:4[1-9]|5[0-2]))$/)?.[1];
+      if (page) { flushParagraph(); out.push(`<span class="reader-md-page-anchor" data-reader-md-page="${page}">p. ${page}</span>`); return; }
+      const heading = trimmed.match(/^(#{1,4})\s+(.+)$/);
+      if (heading) { flushParagraph(); const level = Math.min(4, heading[1].length + 1); out.push(`<h${level}>${inlineMarkdown(heading[2])}</h${level}>`); return; }
+      if (/^>\s?/.test(trimmed)) { flushParagraph(); out.push(`<blockquote>${inlineMarkdown(trimmed.replace(/^>\s?/, ''))}</blockquote>`); return; }
+      if (/^[-*+]\s+/.test(trimmed)) { flushParagraph(); out.push(`<div class="reader-md-list-item">• ${inlineMarkdown(trimmed.replace(/^[-*+]\s+/, ''))}</div>`); return; }
+      if (/^\d+[.)]\s+/.test(trimmed)) { flushParagraph(); out.push(`<div class="reader-md-list-item">${inlineMarkdown(trimmed)}</div>`); return; }
+      paragraph.push(trimmed);
+    });
+    flushParagraph();
+    if (math.length) out.push(`<pre class="reader-md-math">${escapeHtml(math.join('\n'))}</pre>`);
+    if (code.length) out.push(`<pre><code>${escapeHtml(code.join('\n'))}</code></pre>`);
+    return out.join('');
+  };
+
+  const syncLabels = () => {
+    if (pdfLabel) pdfLabel.textContent = pdfUrl ? tr('replacePdf') : tr('loadPdf');
+    if (pdfForget) pdfForget.hidden = !pdfUrl;
+    if (mdLabel) mdLabel.textContent = mdText ? tr('replaceMarkdown') : tr('loadMarkdown');
+    if (mdForget) mdForget.hidden = !mdText;
+  };
+  const syncStatus = () => {
+    if (activeMode === 'markdown') {
+      if (mdName) sourceStatus(`${mdName} · cleaned locally · stored only in this browser`, `${mdName} · 已本地清理 · 仅保存在此浏览器`);
+      else sourceStatus('No Markdown loaded · choose your local extraction', '尚未载入 Markdown · 请选择本地解析稿');
+    } else if (pdfName) {
+      sourceStatus(`${pdfName} · publisher cover skipped · stored only in this browser`, `${pdfName} · 已跳过出版社封面 · 仅保存在此浏览器`);
+    } else sourceStatus('No PDF loaded · choose your local copy', '尚未载入 PDF · 请选择本地文件');
   };
   const syncLanguage = () => {
     document.querySelectorAll('[data-reader-i18n]').forEach(node => {
       const key = node.dataset.readerI18n;
       if (key && i18n[key]) node.textContent = tr(key);
     });
-    syncFileLabel();
+    syncLabels();
+    syncStatus();
     const toggle = document.getElementById('paper-reader-toggle');
     if (toggle) toggle.textContent = document.body.classList.contains('paper-reader-active') ? tr('exitReader') : tr('reader');
-    if (currentName) sourceStatus(
-      `${currentName} · stored only in this browser`,
-      `${currentName} · 仅保存在此浏览器`
-    );
-    else sourceStatus(
-      'No PDF loaded · choose your local copy',
-      '尚未载入 PDF · 请选择本地文件'
-    );
   };
 
-  const releaseBlobUrl = () => {
-    if (currentBlobUrl) URL.revokeObjectURL(currentBlobUrl);
-    currentBlobUrl = '';
+  const setSourceMode = mode => {
+    activeMode = mode === 'markdown' ? 'markdown' : 'pdf';
+    try { localStorage.setItem(MODE_KEY, activeMode); } catch {}
+    document.querySelectorAll('[data-source-mode]').forEach(button => {
+      const active = button.dataset.sourceMode === activeMode;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+    document.querySelector('[data-source-stage="pdf"]')?.toggleAttribute('hidden', activeMode !== 'pdf');
+    mdStage.toggleAttribute('hidden', activeMode !== 'markdown');
+    document.querySelector('[data-pdf-actions]')?.toggleAttribute('hidden', activeMode !== 'pdf');
+    document.querySelector('[data-markdown-actions]')?.toggleAttribute('hidden', activeMode !== 'markdown');
+    if (pageStatus && activeMode === 'markdown') pageStatus.textContent = mdText ? 'Markdown' : '—';
+    syncStatus();
   };
-  const showPdf = (blob, name = 'paper.pdf') => {
-    releaseBlobUrl();
-    currentBlobUrl = URL.createObjectURL(blob);
-    currentName = name;
-    empty.hidden = true;
+
+  const releasePdfUrl = () => {
+    if (pdfUrl) URL.revokeObjectURL(pdfUrl);
+    pdfUrl = '';
+  };
+  const showPdf = (blob, name = 'paper.pdf', trimmed = false) => {
+    releasePdfUrl();
+    pdfUrl = URL.createObjectURL(blob);
+    pdfName = name;
+    pdfTrimmed = Boolean(trimmed);
+    pdfEmpty.hidden = true;
     frame.hidden = false;
-    syncFileLabel();
-    sourceStatus(
-      `${name} · stored only in this browser`,
-      `${name} · 仅保存在此浏览器`
-    );
-    if (pendingPrintedPage != null) jumpToPrintedPage(pendingPrintedPage);
-    else frame.src = `${currentBlobUrl}#view=FitH`;
+    syncLabels();
+    if (pendingPrintedPage != null) jumpToPrintedPage(pendingPrintedPage, 'pdf');
+    else frame.src = `${pdfUrl}#page=${currentPdfStart()}&view=FitH`;
+    syncStatus();
+  };
+  const showMarkdown = (text, name = 'paper.md') => {
+    mdText = cleanMarkdown(text);
+    mdName = name;
+    mdContent.innerHTML = renderMarkdown(mdText);
+    mdEmpty.hidden = true;
+    mdContent.hidden = false;
+    syncLabels();
+    syncStatus();
   };
 
-  const restorePdf = async () => {
-    if (restored) return Boolean(currentBlobUrl);
+  const restoreSources = async () => {
+    if (restored) return;
     if (restorePromise) return restorePromise;
     restorePromise = (async () => {
       try {
-        const record = await dbRead();
-        if (record?.blob) showPdf(record.blob, record.name || 'paper.pdf');
+        const pdf = await dbGet(`${noteId}:pdf`) || await dbGet(noteId);
+        if (pdf?.blob) showPdf(pdf.blob, pdf.name || 'paper.pdf', Boolean(pdf.trimmed) || isTrimmedName(pdf.name));
+      } catch {}
+      try {
+        const md = await dbGet(`${noteId}:markdown`);
+        if (md?.text) showMarkdown(md.text, md.name || 'paper.md');
       } catch {}
       restored = true;
       restorePromise = null;
+      setSourceMode(activeMode);
       syncLanguage();
-      return Boolean(currentBlobUrl);
     })();
     return restorePromise;
   };
 
-  const pdfPageForPrinted = printed => Math.max(1, Number(pdfPageStart) + (Number(printed) - Number(printedPageStart)));
-  function jumpToPrintedPage(printed) {
+  function jumpToPrintedPage(printed, preferredMode = activeMode) {
     const printedPage = Number(printed);
     if (!Number.isFinite(printedPage)) return;
     pendingPrintedPage = printedPage;
+    document.querySelectorAll('.source-page-marker').forEach(marker => marker.classList.toggle('is-active', Number(marker.dataset.sourcePage) === printedPage));
+    if (preferredMode === 'markdown' && mdText) {
+      setSourceMode('markdown');
+      const target = mdContent.querySelector(`[data-reader-md-page="${printedPage}"]`);
+      if (pageStatus) pageStatus.textContent = `p. ${printedPage} · Markdown`;
+      target?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+      return;
+    }
+    setSourceMode('pdf');
     const pdfPage = pdfPageForPrinted(printedPage);
     if (pageStatus) pageStatus.textContent = `p. ${printedPage} · PDF ${pdfPage}`;
-    document.querySelectorAll('.source-page-marker').forEach(marker => marker.classList.toggle('is-active', Number(marker.dataset.sourcePage) === printedPage));
-    if (!currentBlobUrl) return;
-    frame.src = `${currentBlobUrl}#page=${pdfPage}&view=FitH`;
+    if (pdfUrl) frame.src = `${pdfUrl}#page=${pdfPage}&view=FitH`;
   }
 
   const applySavedSplit = () => {
@@ -231,9 +371,7 @@ const {
   const setPane = pane => {
     const next = pane === 'source' ? 'source' : 'notes';
     document.body.dataset.readerPane = next;
-    document.querySelectorAll('[data-reader-pane-button]').forEach(button => {
-      button.classList.toggle('active', button.dataset.readerPaneButton === next);
-    });
+    document.querySelectorAll('[data-reader-pane-button]').forEach(button => button.classList.toggle('active', button.dataset.readerPaneButton === next));
   };
   const openReader = async (pane = 'notes', marker = null) => {
     if (!document.body.classList.contains('paper-reader-active')) savedWindowY = window.scrollY;
@@ -243,11 +381,9 @@ const {
     divider.hidden = false;
     applySavedSplit();
     setPane(pane);
+    await restoreSources();
     syncLanguage();
-    await restorePdf();
-    if (marker) requestAnimationFrame(() => {
-      articleWrap.scrollTop = Math.max(0, marker.offsetTop - 120);
-    });
+    if (marker) requestAnimationFrame(() => { articleWrap.scrollTop = Math.max(0, marker.offsetTop - 120); });
   };
   const closeReader = () => {
     document.body.classList.remove('paper-reader-active', 'reader-resizing');
@@ -267,47 +403,63 @@ const {
   const focusButton = document.getElementById('focus-reading');
   toolbox.insertBefore(readerButton, focusButton || null);
   readerButton.addEventListener('click', async () => {
-    const active = document.body.classList.contains('paper-reader-active');
-    if (active) closeReader();
+    if (document.body.classList.contains('paper-reader-active')) closeReader();
     else await openReader('notes');
     readerButton.setAttribute('aria-pressed', document.body.classList.contains('paper-reader-active') ? 'true' : 'false');
   });
 
-  input.addEventListener('change', async () => {
-    const file = input.files?.[0];
+  pdfInput.addEventListener('change', async () => {
+    const file = pdfInput.files?.[0];
     if (!file) return;
     if (!(file.type === 'application/pdf' || /\.pdf$/i.test(file.name))) {
       sourceStatus('Please choose a PDF file.', '请选择 PDF 文件。');
-      input.value = '';
+      pdfInput.value = '';
       return;
     }
-    showPdf(file, file.name);
-    try {
-      await dbWrite({ id: noteId, blob: file, name: file.name, updatedAt: Date.now() });
-      sourceStatus(
-        `${file.name} · stored only in this browser`,
-        `${file.name} · 仅保存在此浏览器`
-      );
-    } catch {
-      sourceStatus(
-        `${file.name} · available for this session only`,
-        `${file.name} · 本次会话可用`
-      );
-    }
-    if (pendingPrintedPage != null) jumpToPrintedPage(pendingPrintedPage);
-    input.value = '';
+    const trimmed = isTrimmedName(file.name);
+    showPdf(file, file.name, trimmed);
+    try { await dbPut({ id: `${noteId}:pdf`, blob: file, name: file.name, trimmed, updatedAt: Date.now() }); }
+    catch { sourceStatus(`${file.name} · available for this session only`, `${file.name} · 本次会话可用`); }
+    if (pendingPrintedPage != null) jumpToPrintedPage(pendingPrintedPage, 'pdf');
+    pdfInput.value = '';
   });
-
-  forget?.addEventListener('click', async () => {
-    try { await dbDelete(); } catch {}
-    releaseBlobUrl();
-    currentName = '';
-    pendingPrintedPage = null;
+  mdInput.addEventListener('change', async () => {
+    const file = mdInput.files?.[0];
+    if (!file) return;
+    if (!/\.(?:md|markdown|txt)$/i.test(file.name) && !/^text\//.test(file.type || '')) {
+      sourceStatus('Please choose a Markdown or text file.', '请选择 Markdown 或文本文件。');
+      mdInput.value = '';
+      return;
+    }
+    const text = await file.text();
+    showMarkdown(text, file.name);
+    setSourceMode('markdown');
+    try { await dbPut({ id: `${noteId}:markdown`, text: cleanMarkdown(text), name: file.name, updatedAt: Date.now() }); }
+    catch { sourceStatus(`${file.name} · available for this session only`, `${file.name} · 本次会话可用`); }
+    mdInput.value = '';
+  });
+  pdfForget?.addEventListener('click', async () => {
+    try { await dbRemove([`${noteId}:pdf`, noteId]); } catch {}
+    releasePdfUrl();
+    pdfName = '';
+    pdfTrimmed = false;
     frame.removeAttribute('src');
     frame.hidden = true;
-    empty.hidden = false;
+    pdfEmpty.hidden = false;
     if (pageStatus) pageStatus.textContent = '—';
-    syncLanguage();
+    syncLabels();
+    syncStatus();
+  });
+  mdForget?.addEventListener('click', async () => {
+    try { await dbRemove([`${noteId}:markdown`]); } catch {}
+    mdName = '';
+    mdText = '';
+    mdContent.innerHTML = '';
+    mdContent.hidden = true;
+    mdEmpty.hidden = false;
+    if (pageStatus) pageStatus.textContent = '—';
+    syncLabels();
+    syncStatus();
   });
 
   const prose = document.querySelector('.prose');
@@ -337,13 +489,13 @@ const {
         button.title = `Open source at p. ${printed}`;
         button.addEventListener('click', async () => {
           await openReader('source', button);
-          jumpToPrintedPage(printed);
-          if (!currentBlobUrl) {
-            sourceStatus(
-              `Load your local PDF to open p. ${printed}.`,
-              `载入本地 PDF 后跳到第 ${printed} 页。`
-            );
-            input.click();
+          if (activeMode === 'markdown' && mdText) jumpToPrintedPage(printed, 'markdown');
+          else {
+            jumpToPrintedPage(printed, 'pdf');
+            if (!pdfUrl) {
+              sourceStatus(`Load your local PDF to open p. ${printed}.`, `载入本地 PDF 后跳到第 ${printed} 页。`);
+              pdfInput.click();
+            }
           }
         });
         fragment.append(button);
@@ -354,6 +506,7 @@ const {
     });
   }
 
+  document.querySelectorAll('[data-source-mode]').forEach(button => button.addEventListener('click', () => setSourceMode(button.dataset.sourceMode)));
   document.querySelectorAll('[data-reader-pane-button]').forEach(button => button.addEventListener('click', () => setPane(button.dataset.readerPaneButton)));
   document.querySelectorAll('[data-reader-exit]').forEach(button => button.addEventListener('click', closeReader));
 
@@ -369,9 +522,7 @@ const {
     document.body.classList.add('reader-resizing');
     divider.setPointerCapture?.(event.pointerId);
   });
-  divider.addEventListener('pointermove', event => {
-    if (resizing) setSplitFromX(event.clientX);
-  });
+  divider.addEventListener('pointermove', event => { if (resizing) setSplitFromX(event.clientX); });
   const endResize = event => {
     if (!resizing) return;
     resizing = false;
@@ -383,10 +534,8 @@ const {
   divider.addEventListener('keydown', event => {
     if (!['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
     event.preventDefault();
-    const raw = getComputedStyle(layout).getPropertyValue('--reader-left').trim();
-    const current = Number.parseFloat(raw) || 48;
-    const next = current + (event.key === 'ArrowRight' ? 2 : -2);
-    const pct = Math.min(68, Math.max(32, next));
+    const current = Number.parseFloat(getComputedStyle(layout).getPropertyValue('--reader-left').trim()) || 48;
+    const pct = Math.min(68, Math.max(32, current + (event.key === 'ArrowRight' ? 2 : -2)));
     layout.style.setProperty('--reader-left', `${pct}vw`);
     try { localStorage.setItem(SPLIT_KEY, String(pct)); } catch {}
   });
@@ -395,7 +544,8 @@ const {
   document.addEventListener('keydown', event => {
     if (event.key === 'Escape' && document.body.classList.contains('paper-reader-active')) closeReader();
   });
-  window.addEventListener('pagehide', releaseBlobUrl, { once: true });
+  window.addEventListener('pagehide', releasePdfUrl, { once: true });
+  setSourceMode(activeMode);
   syncLanguage();
 })();
 </script>
