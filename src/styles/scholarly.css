@@ -139,65 +139,27 @@
 .citation-popover p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.55; }
 .citation-popover .citation-doi { margin-top: 6px; color: var(--accent); }
 
+/* Sidenotes stay in the reading flow. Floating them into the left margin
+   competes with the site's sidebar and makes long research notes harder to scan. */
 .prose blockquote.sidenote {
   position: relative;
-  margin: 1.8em 0;
-  padding: 13px 15px 12px;
-  border: 1px solid var(--line);
-  border-left: 2px solid var(--accent);
-  background: var(--paper);
+  margin: 1.6em 0;
+  padding: 11px 0 11px 15px;
+  border: 0;
+  border-left: 2px solid var(--line);
+  background: transparent;
   color: var(--muted);
-  font-family: Inter, ui-sans-serif, sans-serif;
-  font-size: 12px;
-  line-height: 1.65;
+  font-family: inherit;
+  font-size: .94em;
+  line-height: 1.7;
 }
 .prose blockquote.sidenote p { margin: 0; }
-.sidenote-label {
-  display: block;
-  margin-bottom: 5px;
-  color: var(--accent);
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: .09em;
-  text-transform: uppercase;
-}
-@media (min-width: 1380px) {
-  .prose blockquote.sidenote {
-    float: left;
-    clear: left;
-    width: 210px;
-    margin: .35em 24px 1.2em -250px;
-  }
-}
+.sidenote-label { display: none; }
 
-.prose .katex-display.math-copy-ready { position: relative; padding-top: 8px; }
-.math-copy-button {
-  position: absolute;
-  top: 2px;
-  right: 0;
-  min-height: 24px;
-  padding: 3px 7px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: var(--paper);
-  color: var(--muted);
-  cursor: pointer;
-  font: 9px/1.2 Inter, ui-sans-serif, sans-serif;
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  transform: translateY(-2px);
-  transition: opacity .14s ease, visibility .14s ease, transform .14s ease, color .14s ease, border-color .14s ease;
-}
-.math-copy-ready:hover .math-copy-button,
-.math-copy-ready:focus-within .math-copy-button,
-.math-copy-button:focus-visible {
-  opacity: 1;
-  visibility: visible;
-  pointer-events: auto;
-  transform: translateY(0);
-}
-.math-copy-button:hover { color: var(--accent); border-color: var(--accent); }
+/* Copy TeX is intentionally retired. Keep legacy buttons invisible so old
+   cached pages do not expose the control. */
+.prose .katex-display.math-copy-ready { position: relative; padding-top: 0; }
+.math-copy-button { display: none !important; }
 
 .prose img.zoomable-figure { cursor: zoom-in; }
 .image-lightbox {
@@ -244,7 +206,4 @@ body.focus-reading .focus-reading-button { color: var(--accent); border-color: v
   .paper-reading-intro { grid-template-columns: 1fr; gap: 11px; }
   .related-note { grid-template-columns: 1fr; gap: 3px; }
   .image-lightbox { padding: 18px; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .math-copy-button { transition: none; }
 }
