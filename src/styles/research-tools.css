@@ -22,21 +22,28 @@
 .scholarly-proposition,
 .scholarly-assumption,
 .scholarly-notation { background: transparent; }
-.scholarly-proof {
+.scholarly-proof,
+.scholarly-details {
   margin: 1.7em 0;
   padding: 0;
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
 }
-.scholarly-proof summary {
+.scholarly-proof summary,
+.scholarly-details summary {
   cursor: pointer;
   padding: 11px 0;
   color: var(--text);
   font: 600 12px/1.3 Inter, ui-sans-serif, sans-serif;
   letter-spacing: .02em;
 }
-.scholarly-proof-body { padding: 2px 0 14px; }
+.scholarly-details summary { color: var(--muted); }
+.scholarly-details[open] summary { color: var(--text); }
+.scholarly-proof-body,
+.scholarly-details-body { padding: 2px 0 14px; }
 .scholarly-proof-body::after { content: '□'; float: right; color: var(--muted); }
+.scholarly-details-body > :first-child { margin-top: 0; }
+.scholarly-details-body > :last-child { margin-bottom: 0; }
 .crossref-link { color: var(--accent); text-decoration-style: dotted !important; }
 .crossref-unresolved { color: var(--muted); text-decoration: underline dashed; text-underline-offset: 3px; cursor: help; }
 .equation-number {
@@ -108,7 +115,7 @@ body.academic-view .article-wrap { padding-top: 48px; }
   .article-wrap { width: 100% !important; max-width: 760px !important; margin: 0 auto !important; padding: 0 !important; }
   .prose, .article-desc { color: #111 !important; }
   a { color: inherit !important; text-decoration: none !important; }
-  .scholarly-block, .paper-meta-card, .bilingual-summary { break-inside: avoid; border-color: #aaa !important; background: transparent !important; }
+  .scholarly-block, .paper-meta-card, .bilingual-summary, .scholarly-details { break-inside: avoid; border-color: #aaa !important; background: transparent !important; }
 }
 
 @media (max-width: 620px) {
