@@ -4,15 +4,11 @@ import NoteList from '@/components/NoteList.astro';
 import SiteExtras from '@/components/SiteExtras.astro';
 import VisitorAnalytics from '@/components/VisitorAnalytics.astro';
 import { site } from '@/site.config';
-import { getPublishedNotes, textUnits, noteSlug } from '@/utils/notes';
+import { getPublishedNotes, noteSlug } from '@/utils/notes';
 import { withBase } from '@/utils/url';
 const notes = await getPublishedNotes();
 const recent = notes.slice(0,4);
 const noteUrls = notes.map(note => withBase(`/notes/${noteSlug(note.id)}/`));
-const days = Math.max(1, Math.floor((Date.now() - new Date(site.startedAt).getTime()) / 86400000) + 1);
-const words = notes.reduce((n, note) => n + textUnits(note.body ?? ''), 0);
-const githubUsername = site.github?.split('/').filter(Boolean).pop() || 'kaize-wang';
-const buildDate = new Date().toISOString().slice(0,10);
 ---
 <BaseLayout title={site.title} active="Home">
   <main class="site-shell">
@@ -43,15 +39,8 @@ const buildDate = new Date().toISOString().slice(0,10);
       <div class="now-grid">
         <div class="now-item"><span class="now-label">Research</span><div class="now-value">Inventory systems with replacement warranty</div></div>
         <div class="now-item"><span class="now-label">Methods</span><div class="now-value">Stochastic optimization and sequential decisions</div></div>
-        <div class="now-item"><span class="now-label">This site</span><div class="now-value">Research notes, reading records, and small experiments</div></div>
-        <div class="now-item"><span class="now-label">Last build</span><div class="now-value">{buildDate}</div></div>
-      </div>
-    </section>
-
-    <section class="section">
-      <div class="section-head"><h2>Education</h2></div>
-      <div class="education-list">
-        {site.education.map(item => <div class="education-item"><div><strong>{item.school}</strong><small>{item.degree}</small></div>{item.period && <time>{item.period}</time>}</div>)}
+        <div class="now-item"><span class="now-label">Notebook</span><div class="now-value">Research notes, paper reading, and durable working records</div></div>
+        <div class="now-item"><span class="now-label">Writing</span><div class="now-value">Chinese-first notes with English summaries when useful</div></div>
       </div>
     </section>
 
@@ -66,30 +55,7 @@ const buildDate = new Date().toISOString().slice(0,10);
       {recent.length ? <NoteList notes={recent} /> : <p class="muted">No notes yet.</p>}
     </section>
 
-    {site.github && (
-      <section class="section">
-        <div class="section-head"><h2>GitHub Activity</h2><a class="section-kicker" href={site.github}>View profile →</a></div>
-        <a class="github-activity-link" href={site.github} aria-label={`View ${site.fullName}'s GitHub profile`}>
-          <div class="github-chart-scroll">
-            <img class="github-chart github-chart-light" src={`https://ghchart.xqsit94.in/light:7d2f2f/${githubUsername}`} alt={`${site.fullName}'s GitHub contribution chart`} loading="lazy" />
-            <img class="github-chart github-chart-dark" src={`https://ghchart.xqsit94.in/dark:d4938d/${githubUsername}`} alt={`${site.fullName}'s GitHub contribution chart in dark mode`} loading="lazy" />
-          </div>
-          <span class="github-activity-note">Public contribution activity over the past year.</span>
-        </a>
-        <div class="repo-metrics" id="repo-metrics" aria-live="polite">Loading repository metrics…</div>
-      </section>
-    )}
-
     <VisitorAnalytics compact />
-
-    <section class="section">
-      <div class="section-head"><h2>Site Notes</h2></div>
-      <div class="stats">
-        <div class="stat"><div class="stat-number">{notes.length}</div><div class="stat-label">Published notes</div></div>
-        <div class="stat"><div class="stat-number">{words.toLocaleString()}</div><div class="stat-label">Approx. words / chars</div></div>
-        <div class="stat"><div class="stat-number">{days}</div><div class="stat-label">Days since this site started</div></div>
-      </div>
-    </section>
   </main>
   <SiteExtras />
   <script is:inline define:vars={{ noteUrls }}>
@@ -98,14 +64,5 @@ const buildDate = new Date().toISOString().slice(0,10);
       const target = noteUrls[Math.floor(Math.random() * noteUrls.length)];
       window.location.assign(target);
     });
-    const metrics = document.getElementById('repo-metrics');
-    if (metrics) {
-      fetch('https://api.github.com/repos/kaize-wang/website', { headers: { Accept: 'application/vnd.github+json' } })
-        .then(response => response.ok ? response.json() : Promise.reject(new Error('GitHub API unavailable')))
-        .then(repo => {
-          metrics.innerHTML = `<span><strong>★ ${repo.stargazers_count}</strong> stars</span><span><strong>${repo.forks_count}</strong> forks</span><span><strong>${repo.open_issues_count}</strong> open issues</span><span>live from GitHub</span>`;
-        })
-        .catch(() => { metrics.textContent = 'Live repository metrics are temporarily unavailable.'; });
-    }
   </script>
 </BaseLayout>
