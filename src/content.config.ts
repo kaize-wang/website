@@ -35,6 +35,15 @@ const researchQuestionSchema = z.object({
   note: z.string().optional()
 });
 
+const categorySchema = z
+  .enum(['Research', 'Paper Reading', 'Learning', 'Essay', 'Reading', 'Technical', 'Life'])
+  .transform(value => {
+    if (value === 'Reading') return 'Paper Reading' as const;
+    if (value === 'Technical') return 'Learning' as const;
+    if (value === 'Life') return 'Essay' as const;
+    return value;
+  });
+
 const notes = defineCollection({
   loader: glob({
     base: './src/content/notes',
@@ -46,7 +55,7 @@ const notes = defineCollection({
     description: z.string(),
     publishDate: z.coerce.date(),
     updatedDate: z.coerce.date().optional(),
-    category: z.enum(['Research', 'Reading', 'Technical', 'Life']).default('Research'),
+    category: categorySchema.default('Research'),
     tags: z.array(z.string()).default([]),
     collection: z.string().optional(),
     aliases: z.array(z.string()).default([]),
