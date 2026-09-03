@@ -19,30 +19,25 @@ routePath = routePath.replace(/\/+$/, '') || '/';
 const isHome = routePath === '/';
 const isArticle = routePath.startsWith('/notes/');
 const isResearchContext = routePath === '/research' || routePath === '/questions' || routePath === '/sandbox';
-const isNotesBrowse =
-  routePath === '/notes' ||
-  isArticle ||
+const isNotesBrowse = routePath === '/notes' || isArticle;
+const isExploreContext =
+  routePath === '/explore' ||
+  routePath === '/archive' ||
+  routePath === '/graph' ||
+  routePath === '/literature' ||
   routePath.startsWith('/tags/') ||
   routePath.startsWith('/categories/') ||
   routePath.startsWith('/collections/');
-const isNotesContext =
-  isNotesBrowse ||
-  routePath === '/archive' ||
-  routePath === '/graph' ||
-  routePath === '/papers' ||
-  routePath === '/literature';
+const isNotesContext = isNotesBrowse || routePath === '/papers' || isExploreContext;
 
 const researchNav = [
   { label: 'Overview', href: '/research', active: routePath === '/research' },
-  { label: 'Questions', href: '/questions', active: routePath === '/questions' },
-  { label: 'Sandbox', href: '/sandbox', active: routePath === '/sandbox' }
+  { label: 'Questions', href: '/questions', active: routePath === '/questions' }
 ];
 const notesNav = [
   { label: 'All Notes', href: '/notes', active: isNotesBrowse },
   { label: 'Paper Reading', href: '/papers', active: routePath === '/papers' },
-  { label: 'Knowledge Graph', href: '/graph', active: routePath === '/graph' },
-  { label: 'Literature Map', href: '/literature', active: routePath === '/literature' },
-  { label: 'Archive', href: '/archive', active: routePath === '/archive' }
+  { label: 'Explore', href: '/explore', active: isExploreContext }
 ];
 const contextualNav = isResearchContext ? researchNav : isNotesContext ? notesNav : [];
 const contextualLabel = isResearchContext ? 'Research' : isNotesContext ? 'Notes' : '';
@@ -52,11 +47,15 @@ const contextBack = isHome
     ? { label: 'Notes', href: '/notes' }
     : routePath === '/research' || routePath === '/notes' || routePath === '/about' || routePath === '/search'
       ? { label: 'Home', href: '/' }
-      : isResearchContext
-        ? { label: 'Research', href: '/research' }
-        : isNotesContext
-          ? { label: 'Notes', href: '/notes' }
-          : { label: 'Home', href: '/' };
+      : routePath === '/papers' || routePath === '/explore'
+        ? { label: 'Notes', href: '/notes' }
+        : isExploreContext
+          ? { label: 'Explore', href: '/explore' }
+          : isResearchContext
+            ? { label: 'Research', href: '/research' }
+            : isNotesContext
+              ? { label: 'Notes', href: '/notes' }
+              : { label: 'Home', href: '/' };
 
 const navZh: Record<string, string> = {
   Home: '首页',
@@ -77,6 +76,16 @@ const commandItems = [
     href: withBase(item.href),
     keywords: `${item.label} ${navZh[item.label] || ''}`
   })),
+  {
+    type: 'Notes',
+    typeZh: '笔记',
+    title: 'Explore Notes',
+    titleZh: '探索笔记',
+    description: 'Graphs, literature, archive, categories, series, and tags.',
+    descriptionZh: '知识图谱、文献图谱、归档、分类、专栏与标签。',
+    href: withBase('/explore'),
+    keywords: 'explore notes graph literature archive category series tags 探索 笔记 图谱 文献 归档 分类 专栏 标签'
+  },
   {
     type: 'Map',
     typeZh: '图谱',
