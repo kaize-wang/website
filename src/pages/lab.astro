@@ -1,0 +1,48 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import VisitorAnalytics from '@/components/VisitorAnalytics.astro';
+import BoidsPlayground from '@/components/BoidsPlayground.astro';
+import SiteExtras from '@/components/SiteExtras.astro';
+import { withBase } from '@/utils/url';
+---
+<BaseLayout title="Lab">
+  <main class="site-shell lab-page">
+    <header class="page-hero">
+      <div class="eyebrow">Optional · experimental</div>
+      <h1>Lab</h1>
+      <p>A small attic for things that are interesting, beautiful, or occasionally useful, but not important enough to complicate the main navigation.</p>
+    </header>
+
+    <section class="section" aria-labelledby="lab-tools-title">
+      <div class="section-head">
+        <h2 id="lab-tools-title">Tools & curiosities</h2>
+        <span class="section-kicker">Open only when you want them</span>
+      </div>
+      <div class="explore-grid lab-grid">
+        <a class="explore-card" href={withBase('/graph')}>
+          <span>Notes</span><strong>Knowledge Graph</strong><p>Relationships, wiki links, paths, and the constellation view.</p>
+        </a>
+        <a class="explore-card" href={withBase('/literature')}>
+          <span>Papers</span><strong>Literature Map</strong><p>A visual map between paper-reading notes and recorded references.</p>
+        </a>
+        <a class="explore-card" href={withBase('/questions')}>
+          <span>Research</span><strong>Questions Board</strong><p>An experimental place for questions worth carrying forward.</p>
+        </a>
+        <a class="explore-card" href={withBase('/sandbox')}>
+          <span>Play</span><strong>Research Sandbox</strong><p>Interactive sketches for mechanism intuition, separate from formal evidence.</p>
+        </a>
+        <a class="explore-card" href={withBase('/archive')}>
+          <span>History</span><strong>Archive</strong><p>A chronological view for when the notebook becomes larger.</p>
+        </a>
+      </div>
+    </section>
+
+    <VisitorAnalytics detailed />
+
+    <section class="section" aria-labelledby="flocking-title">
+      <div class="section-head"><h2 id="flocking-title">A small visual toy</h2><span class="section-kicker">No research claim attached</span></div>
+      <BoidsPlayground />
+    </section>
+  </main>
+  <SiteExtras />
+</BaseLayout>
