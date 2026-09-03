@@ -32,32 +32,11 @@ const readerConfig = currentPath.endsWith('/notes/paper-reading-huang-2008')
 
 <script is:inline define:vars={{ wikiNotes, wanderUrls }}>
 (() => {
-  const copyText = async (text) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      return true;
-    } catch {
-      const area = document.createElement('textarea');
-      area.value = text;
-      area.style.position = 'fixed';
-      area.style.opacity = '0';
-      document.body.appendChild(area);
-      area.select();
-      const ok = document.execCommand('copy');
-      area.remove();
-      return ok;
-    }
-  };
-
   document.querySelectorAll('.prose blockquote').forEach((quote) => {
     const first = quote.querySelector('p');
     if (!first || !/^\s*\[!sidenote\]/i.test(first.textContent || '')) return;
     first.innerHTML = first.innerHTML.replace(/^\s*\[!sidenote\]\s*/i, '');
     quote.classList.add('sidenote');
-    const label = document.createElement('span');
-    label.className = 'sidenote-label';
-    label.textContent = 'Side note';
-    quote.prepend(label);
   });
 
   const normalizeWiki = value => String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
@@ -66,10 +45,7 @@ const readerConfig = currentPath.endsWith('/notes/paper-reading-huang-2008')
     [note.id, note.title, ...(note.aliases || [])].forEach(key => wikiMap.set(normalizeWiki(key), note));
   });
   const slugFragment = value => String(value || '')
-    .trim()
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}\s-]/gu, '')
-    .replace(/\s+/g, '-');
+    .trim().toLowerCase().replace(/[^\p{L}\p{N}\s-]/gu, '').replace(/\s+/g, '-');
 
   const prose = document.querySelector('.prose');
   if (prose && wikiMap.size) {
@@ -78,16 +54,13 @@ const readerConfig = currentPath.endsWith('/notes/paper-reading-huang-2008')
     let current;
     while ((current = walker.nextNode())) {
       const parent = current.parentElement;
-      if (!parent) continue;
-      if (parent.closest('a, code, pre, script, style, .katex, .math-copy-button')) continue;
+      if (!parent || parent.closest('a, code, pre, script, style, .katex')) continue;
       if (/\[\[[^\]]+\]\]/.test(current.nodeValue || '')) textNodes.push(current);
     }
-
     textNodes.forEach(textNode => {
       const text = textNode.nodeValue || '';
       const pattern = /\[\[([^\]|]+?)(?:\|([^\]]+))?\]\]/g;
-      let match;
-      let last = 0;
+      let match; let last = 0;
       const fragment = document.createDocumentFragment();
       while ((match = pattern.exec(text))) {
         if (match.index > last) fragment.append(document.createTextNode(text.slice(last, match.index)));
@@ -99,15 +72,13 @@ const readerConfig = currentPath.endsWith('/notes/paper-reading-huang-2008')
         const resolved = wikiMap.get(normalizeWiki(target));
         if (resolved) {
           const link = document.createElement('a');
-          link.className = 'wiki-link';
-          link.textContent = label;
+          link.className = 'wiki-link'; link.textContent = label;
           link.href = `${resolved.href}${section ? `#${slugFragment(section)}` : ''}`;
           link.title = `Wiki link → ${resolved.title}`;
           fragment.append(link);
         } else {
           const unresolved = document.createElement('span');
-          unresolved.className = 'wiki-unresolved';
-          unresolved.textContent = label;
+          unresolved.className = 'wiki-unresolved'; unresolved.textContent = label;
           unresolved.title = `Unresolved wiki link: ${target}`;
           fragment.append(unresolved);
         }
@@ -119,42 +90,27 @@ const readerConfig = currentPath.endsWith('/notes/paper-reading-huang-2008')
   }
 
   const referenceNodes = new Map();
-  document.querySelectorAll('[data-reference-id]').forEach((node) => {
-    referenceNodes.set(node.dataset.referenceId, node);
-  });
+  document.querySelectorAll('[data-reference-id]').forEach(node => referenceNodes.set(node.dataset.referenceId, node));
   const popover = document.getElementById('citation-popover');
   const popoverTitle = document.getElementById('citation-popover-title');
   const popoverMeta = document.getElementById('citation-popover-meta');
   const popoverDoi = document.getElementById('citation-popover-doi');
-
   const hideCitation = () => { if (popover) popover.hidden = true; };
   const showCitation = (link, reference) => {
     if (!popover || !popoverTitle || !popoverMeta || !popoverDoi) return;
     popoverTitle.textContent = reference.dataset.referenceTitle || '';
-    popoverMeta.textContent = [
-      reference.dataset.referenceAuthors,
-      reference.dataset.referenceVenue,
-      reference.dataset.referenceYear
-    ].filter(Boolean).join(' · ');
+    popoverMeta.textContent = [reference.dataset.referenceAuthors, reference.dataset.referenceVenue, reference.dataset.referenceYear].filter(Boolean).join(' · ');
     popoverDoi.textContent = reference.dataset.referenceDoi ? `DOI ${reference.dataset.referenceDoi}` : '';
     popover.hidden = false;
     const rect = link.getBoundingClientRect();
-    const width = popover.offsetWidth || 350;
-    const height = popover.offsetHeight || 110;
-    const left = Math.min(window.innerWidth - width - 12, Math.max(12, rect.left));
+    const width = popover.offsetWidth || 350; const height = popover.offsetHeight || 110;
+    popover.style.left = `${Math.min(window.innerWidth - width - 12, Math.max(12, rect.left))}px`;
     const preferredTop = rect.bottom + 9;
-    const top = preferredTop + height < window.innerHeight - 10
-      ? preferredTop
-      : Math.max(10, rect.top - height - 9);
-    popover.style.left = `${left}px`;
-    popover.style.top = `${top}px`;
+    popover.style.top = `${preferredTop + height < window.innerHeight - 10 ? preferredTop : Math.max(10, rect.top - height - 9)}px`;
   };
-
-  document.querySelectorAll('.prose a[href^="#ref-"]').forEach((link) => {
-    const href = link.getAttribute('href') || '';
-    const id = href.replace('#ref-', '');
-    const reference = referenceNodes.get(id);
-    if (!reference) return;
+  document.querySelectorAll('.prose a[href^="#ref-"]').forEach(link => {
+    const id = (link.getAttribute('href') || '').replace('#ref-', '');
+    const reference = referenceNodes.get(id); if (!reference) return;
     link.classList.add('citation-link');
     link.addEventListener('mouseenter', () => showCitation(link, reference));
     link.addEventListener('mouseleave', hideCitation);
@@ -164,57 +120,25 @@ const readerConfig = currentPath.endsWith('/notes/paper-reading-huang-2008')
   window.addEventListener('scroll', hideCitation, { passive: true });
   window.addEventListener('resize', hideCitation);
 
-  document.querySelectorAll('.prose .katex-display').forEach((display) => {
-    if (display.querySelector('.math-copy-button')) return;
-    const annotation = display.querySelector('annotation[encoding="application/x-tex"]');
-    const tex = annotation?.textContent?.trim();
-    if (!tex) return;
-    display.classList.add('math-copy-ready');
-    const button = document.createElement('button');
-    button.className = 'math-copy-button';
-    button.type = 'button';
-    button.textContent = 'Copy TeX';
-    button.addEventListener('click', async () => {
-      const ok = await copyText(tex);
-      button.textContent = ok ? 'Copied' : 'Failed';
-      window.setTimeout(() => { button.textContent = 'Copy TeX'; }, 1300);
-    });
-    display.appendChild(button);
-  });
-
   const lightbox = document.getElementById('image-lightbox');
   const lightboxImage = document.getElementById('image-lightbox-image');
   const lightboxCaption = document.getElementById('image-lightbox-caption');
   const lightboxClose = document.getElementById('image-lightbox-close');
-  const closeLightbox = () => {
-    if (!lightbox) return;
-    lightbox.hidden = true;
-    document.body.style.overflow = '';
-  };
-  const openLightbox = (image) => {
+  const closeLightbox = () => { if (!lightbox) return; lightbox.hidden = true; document.body.style.overflow = ''; };
+  const openLightbox = image => {
     if (!lightbox || !lightboxImage || !lightboxCaption) return;
-    lightboxImage.src = image.currentSrc || image.src;
-    lightboxImage.alt = image.alt || '';
-    lightboxCaption.textContent = image.alt || '';
-    lightbox.hidden = false;
-    document.body.style.overflow = 'hidden';
-    lightboxClose?.focus();
+    lightboxImage.src = image.currentSrc || image.src; lightboxImage.alt = image.alt || '';
+    lightboxCaption.textContent = image.alt || ''; lightbox.hidden = false;
+    document.body.style.overflow = ''; lightboxClose?.focus();
   };
-  document.querySelectorAll('.prose img').forEach((image) => {
-    image.classList.add('zoomable-figure');
-    image.tabIndex = 0;
-    image.setAttribute('role', 'button');
+  document.querySelectorAll('.prose img').forEach(image => {
+    image.classList.add('zoomable-figure'); image.tabIndex = 0; image.setAttribute('role', 'button');
     image.setAttribute('aria-label', image.alt ? `Expand figure: ${image.alt}` : 'Expand figure');
     image.addEventListener('click', () => openLightbox(image));
-    image.addEventListener('keydown', (event) => {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
-        openLightbox(image);
-      }
-    });
+    image.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openLightbox(image); } });
   });
   lightboxClose?.addEventListener('click', closeLightbox);
-  lightbox?.addEventListener('click', (event) => { if (event.target === lightbox) closeLightbox(); });
+  lightbox?.addEventListener('click', event => { if (event.target === lightbox) closeLightbox(); });
 
   const focusButton = document.getElementById('focus-reading');
   const syncFocusButton = () => {
@@ -223,26 +147,18 @@ const readerConfig = currentPath.endsWith('/notes/paper-reading-huang-2008')
     focusButton.textContent = focused ? 'Exit focus' : 'Focus';
     focusButton.setAttribute('aria-pressed', focused ? 'true' : 'false');
   };
-  focusButton?.addEventListener('click', () => {
-    document.body.classList.toggle('focus-reading');
-    syncFocusButton();
-  });
+  focusButton?.addEventListener('click', () => { document.body.classList.toggle('focus-reading'); syncFocusButton(); });
   syncFocusButton();
 
   const wanderButton = document.getElementById('wander-note');
   wanderButton?.addEventListener('click', () => {
     if (!Array.isArray(wanderUrls) || !wanderUrls.length) return;
-    const target = wanderUrls[Math.floor(Math.random() * wanderUrls.length)];
-    if (target) window.location.assign(target);
+    const target = wanderUrls[Math.floor(Math.random() * wanderUrls.length)]; if (target) window.location.assign(target);
   });
-
-  document.addEventListener('keydown', (event) => {
+  document.addEventListener('keydown', event => {
     if (event.key !== 'Escape') return;
     if (lightbox && !lightbox.hidden) closeLightbox();
-    else if (document.body.classList.contains('focus-reading')) {
-      document.body.classList.remove('focus-reading');
-      syncFocusButton();
-    }
+    else if (document.body.classList.contains('focus-reading')) { document.body.classList.remove('focus-reading'); syncFocusButton(); }
   });
 })();
 </script>
