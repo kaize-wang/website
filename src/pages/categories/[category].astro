@@ -4,15 +4,14 @@ import NoteList from '@/components/NoteList.astro';
 import SiteExtras from '@/components/SiteExtras.astro';
 import { getPublishedNotes } from '@/utils/notes';
 
-const categories = [
-  { slug: 'research', label: 'Research' },
-  { slug: 'paper-reading', label: 'Paper Reading' },
-  { slug: 'learning', label: 'Learning' },
-  { slug: 'essay', label: 'Essay' }
-];
-
 export async function getStaticPaths() {
   const all = await getPublishedNotes();
+  const categories = [
+    { slug: 'research', label: 'Research' },
+    { slug: 'paper-reading', label: 'Paper Reading' },
+    { slug: 'learning', label: 'Learning' },
+    { slug: 'essay', label: 'Essay' }
+  ] as const;
   return categories.map(category => ({
     params: { category: category.slug },
     props: {
