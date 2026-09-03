@@ -4,24 +4,72 @@ import NoteList from '@/components/NoteList.astro';
 import SiteExtras from '@/components/SiteExtras.astro';
 import { getPublishedNotes } from '@/utils/notes';
 import { withBase } from '@/utils/url';
+
 const notes = await getPublishedNotes();
-const paperCount = notes.filter(note => note.data.paper).length;
+const shelves = [
+  {
+    key: 'Research',
+    label: 'Research',
+    description: 'Your own models, derivations, experiments, proofs, and research questions.'
+  },
+  {
+    key: 'Paper Reading',
+    label: 'Paper Reading',
+    description: 'Close reading of papers, including source-and-notes Reader workspaces.'
+  },
+  {
+    key: 'Learning',
+    label: 'Learning',
+    description: 'Courses, textbooks, methods, software, and technical concepts you are learning.'
+  },
+  {
+    key: 'Essay',
+    label: 'Essay',
+    description: 'Writing, research life, website notes, and ideas that are not technical research records.'
+  }
+] as const;
+const shelfData = shelves.map(shelf => ({
+  ...shelf,
+  notes: notes.filter(note => note.data.category === shelf.key)
+}));
 ---
 <BaseLayout title="Notes" active="Notes">
   <main class="site-shell">
     <header class="page-hero">
       <div class="eyebrow">Notebook</div>
       <h1>Notes</h1>
-      <p>Research notes and paper-reading records, kept in one chronological notebook. Tags remain lightweight metadata rather than a second navigation system.</p>
+      <p>One primary shelf per note. Tags stay optional search metadata; a series is only for a genuinely continuous project.</p>
     </header>
 
-    <section class="section" aria-labelledby="all-notes-title">
-      <div class="section-head">
-        <h2 id="all-notes-title">All notes</h2>
-        {paperCount > 0 && <a class="section-kicker" href={withBase('/papers')}>Paper Reading →</a>}
-      </div>
-      {notes.length ? <NoteList notes={notes} /> : <p class="muted">No notes yet.</p>}
+    <section class="note-shelf-guide" aria-label="Note types">
+      {shelfData.map(shelf => (
+        shelf.key === 'Paper Reading' && shelf.notes.length > 0 ? (
+          <a class="note-shelf-card" href={withBase('/papers')}>
+            <span>{shelf.notes.length}</span>
+            <strong>{shelf.label}</strong>
+            <p>{shelf.description}</p>
+          </a>
+        ) : (
+          <a class={`note-shelf-card${shelf.notes.length ? '' : ' is-empty'}`} href={shelf.notes.length ? `#shelf-${shelf.key.toLowerCase().replace(/\s+/g, '-')}` : undefined}>
+            <span>{shelf.notes.length}</span>
+            <strong>{shelf.label}</strong>
+            <p>{shelf.description}</p>
+          </a>
+        )
+      ))}
     </section>
+
+    {shelfData.filter(shelf => shelf.notes.length > 0).map(shelf => (
+      <section class="section note-shelf-section" id={`shelf-${shelf.key.toLowerCase().replace(/\s+/g, '-')}`}>
+        <div class="section-head">
+          <h2>{shelf.label}</h2>
+          {shelf.key === 'Paper Reading' && <a class="section-kicker" href={withBase('/papers')}>Reading desk →</a>}
+        </div>
+        <NoteList notes={shelf.notes} />
+      </section>
+    ))}
+
+    {notes.length === 0 && <p class="muted">No notes yet.</p>}
   </main>
   <SiteExtras />
 </BaseLayout>
