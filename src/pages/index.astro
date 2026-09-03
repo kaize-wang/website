@@ -8,6 +8,7 @@ import { getPublishedNotes } from '@/utils/notes';
 import { withBase } from '@/utils/url';
 const notes = await getPublishedNotes();
 const recent = notes.slice(0,4);
+const githubUsername = site.github?.split('/').filter(Boolean).pop() || 'kaize-wang';
 ---
 <BaseLayout title={site.title} active="Home">
   <main class="site-shell">
@@ -52,6 +53,22 @@ const recent = notes.slice(0,4);
       </div>
       {recent.length ? <NoteList notes={recent} /> : <p class="muted">No notes yet.</p>}
     </section>
+
+    {site.github && (
+      <section class="section github-activity-section" aria-labelledby="github-activity-title">
+        <div class="section-head">
+          <h2 id="github-activity-title"><span class="ui-copy-en">GitHub Activity</span><span class="ui-copy-zh">GitHub 更新热图</span></h2>
+          <a class="section-kicker" href={site.github}><span class="ui-copy-en">View profile →</span><span class="ui-copy-zh">查看主页 →</span></a>
+        </div>
+        <a class="github-activity-card" href={site.github} aria-label={`View ${site.fullName}'s GitHub profile`}>
+          <div class="github-activity-chart-scroll">
+            <img class="github-activity-chart github-activity-chart-light" src={`https://ghchart.xqsit94.in/light:7d2f2f/${githubUsername}`} alt={`${site.fullName}'s GitHub contribution chart`} loading="lazy" />
+            <img class="github-activity-chart github-activity-chart-dark" src={`https://ghchart.xqsit94.in/dark:d4938d/${githubUsername}`} alt={`${site.fullName}'s GitHub contribution chart in dark mode`} loading="lazy" />
+          </div>
+          <span class="github-activity-note"><span class="ui-copy-en">Public contribution activity over the past year.</span><span class="ui-copy-zh">过去一年的公开 GitHub 贡献活动。</span></span>
+        </a>
+      </section>
+    )}
 
     <VisitorAnalytics compact />
   </main>
