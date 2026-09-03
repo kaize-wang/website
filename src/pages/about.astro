@@ -20,8 +20,15 @@ import { site } from '@/site.config';
       </div>
     </section>
 
+    <section class="section" aria-labelledby="education-title">
+      <div class="section-head"><h2 id="education-title">Education</h2></div>
+      <div class="education-list">
+        {site.education.map(item => <div class="education-item"><div><strong>{item.school}</strong><small>{item.degree}</small></div>{item.period && <time>{item.period}</time>}</div>)}
+      </div>
+    </section>
+
     <section class="section">
-      <div class="section-head"><h2>Playground</h2><span class="section-kicker">Small things that make the site feel alive</span></div>
+      <div class="section-head"><h2>Playground</h2><span class="section-kicker">A small personal corner</span></div>
       <BoidsPlayground />
     </section>
 
