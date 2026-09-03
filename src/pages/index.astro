@@ -4,11 +4,10 @@ import NoteList from '@/components/NoteList.astro';
 import SiteExtras from '@/components/SiteExtras.astro';
 import VisitorAnalytics from '@/components/VisitorAnalytics.astro';
 import { site } from '@/site.config';
-import { getPublishedNotes, noteSlug } from '@/utils/notes';
+import { getPublishedNotes } from '@/utils/notes';
 import { withBase } from '@/utils/url';
 const notes = await getPublishedNotes();
 const recent = notes.slice(0,4);
-const noteUrls = notes.map(note => withBase(`/notes/${noteSlug(note.id)}/`));
 ---
 <BaseLayout title={site.title} active="Home">
   <main class="site-shell">
@@ -20,7 +19,7 @@ const noteUrls = notes.map(note => withBase(`/notes/${noteSlug(note.id)}/`));
     <section class="profile-grid">
       <div><img class="avatar avatar-reactive" data-avatar-reactive src={site.avatar} alt={`${site.fullName} profile photo`} /></div>
       <div>
-        <div class="eyebrow">Academic homepage · personal notes</div>
+        <div class="eyebrow">Academic homepage · research notes</div>
         <h1>{site.fullName}</h1>
         <p class="role">{site.role}</p>
         <p class="affiliation">{site.affiliation} · {site.location}</p>
@@ -35,22 +34,9 @@ const noteUrls = notes.map(note => withBase(`/notes/${noteSlug(note.id)}/`));
     </section>
 
     <section class="section">
-      <div class="section-head"><h2>Now</h2><span class="section-kicker">A small live snapshot</span></div>
-      <div class="now-grid">
-        <div class="now-item"><span class="now-label">Research</span><div class="now-value">Inventory systems with replacement warranty</div></div>
-        <div class="now-item"><span class="now-label">Methods</span><div class="now-value">Stochastic optimization and sequential decisions</div></div>
-        <div class="now-item"><span class="now-label">Notebook</span><div class="now-value">Research notes, paper reading, and durable working records</div></div>
-        <div class="now-item"><span class="now-label">Writing</span><div class="now-value">Chinese-first notes with English summaries when useful</div></div>
-      </div>
-    </section>
-
-    <section class="section">
       <div class="section-head">
         <h2>Recent Notes</h2>
-        <div class="section-actions">
-          {noteUrls.length > 0 && <button class="section-kicker section-button" id="random-note" type="button">Surprise me ↗</button>}
-          <a class="section-kicker" href={withBase('/notes')}>View all notes →</a>
-        </div>
+        <a class="section-kicker" href={withBase('/notes')}>View all notes →</a>
       </div>
       {recent.length ? <NoteList notes={recent} /> : <p class="muted">No notes yet.</p>}
     </section>
@@ -58,11 +44,4 @@ const noteUrls = notes.map(note => withBase(`/notes/${noteSlug(note.id)}/`));
     <VisitorAnalytics compact />
   </main>
   <SiteExtras />
-  <script is:inline define:vars={{ noteUrls }}>
-    document.getElementById('random-note')?.addEventListener('click', () => {
-      if (!noteUrls.length) return;
-      const target = noteUrls[Math.floor(Math.random() * noteUrls.length)];
-      window.location.assign(target);
-    });
-  </script>
 </BaseLayout>
