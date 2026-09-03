@@ -15,13 +15,14 @@ const questions = notes.flatMap(note => (note.data.researchQuestions || []).map(
   sourceCategory: note.data.category,
   sourceLang: note.data.lang
 })));
+const activeStatuses = statuses.filter(status => questions.some(question => question.status === status));
 ---
 <BaseLayout title="Research Questions" active="Research">
   <main class="site-shell">
     <header class="page-hero">
       <div class="eyebrow">Research · Questions</div>
       <h1>Questions Board</h1>
-      <p>A board for questions explicitly recorded in public notes. Nothing is inferred from tags or browsing history: a question appears here only when it is written into note metadata.</p>
+      <p>A board for questions explicitly recorded in public notes. Empty states stay out of the way until a question actually reaches them.</p>
       <div class="knowledge-links" aria-label="Question summary">
         <span class="knowledge-link">{questions.length} questions</span>
       </div>
@@ -30,21 +31,21 @@ const questions = notes.flatMap(note => (note.data.researchQuestions || []).map(
     <section class="section" aria-labelledby="questions-board-title">
       <div class="section-head"><h2 id="questions-board-title">Question states</h2><span class="section-kicker">Open → Exploring → Reframed / Resolved</span></div>
       {questions.length > 0 ? (
-        <div class="questions-board">
-          {statuses.map(status => {
+        <div class="questions-board" data-active-columns={activeStatuses.length}>
+          {activeStatuses.map(status => {
             const items = questions.filter(question => question.status === status);
             return (
               <section class="question-column" aria-label={`${status} questions`}>
                 <header><h3>{status}</h3><span>{items.length}</span></header>
                 <div class="question-stack">
-                  {items.length > 0 ? items.map(question => (
+                  {items.map(question => (
                     <article class="question-card">
                       <div class="question-kind">{question.kind}</div>
                       <p>{question.text}</p>
                       <a href={question.sourceHref}>{question.sourceTitle}</a>
                       <small>{question.sourceCategory} · {question.sourceLang === 'zh' ? '中文' : 'EN'}</small>
                     </article>
-                  )) : <p class="question-empty">Nothing recorded here yet.</p>}
+                  ))}
                 </div>
               </section>
             );
