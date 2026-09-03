@@ -138,6 +138,7 @@ body.paper-reader-active .prose blockquote.sidenote {
 .reader-source-actions #reader-forget-markdown {
   display: none !important;
 }
+.reader-empty .reader-file-button { display: none !important; }
 .reader-source-head {
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
