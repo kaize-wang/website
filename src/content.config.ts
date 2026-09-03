@@ -35,6 +35,11 @@ const researchQuestionSchema = z.object({
   note: z.string().optional()
 });
 
+const updateSchema = z.object({
+  date: z.coerce.date(),
+  note: z.string()
+});
+
 const categorySchema = z
   .enum(['Research', 'Paper Reading', 'Learning', 'Essay', 'Reading', 'Technical', 'Life'])
   .transform(value => {
@@ -55,6 +60,7 @@ const notes = defineCollection({
     description: z.string(),
     publishDate: z.coerce.date(),
     updatedDate: z.coerce.date().optional(),
+    updates: z.array(updateSchema).default([]),
     category: categorySchema.default('Research'),
     tags: z.array(z.string()).default([]),
     collection: z.string().optional(),
