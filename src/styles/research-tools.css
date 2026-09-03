@@ -1,30 +1,27 @@
 .scholarly-block {
-  margin: 2em 0;
-  padding: 15px 17px;
-  border: 1px solid var(--line);
-  border-left: 3px solid var(--accent);
-  background: color-mix(in srgb, var(--paper) 96%, var(--accent) 4%);
+  margin: 1.8em 0;
+  padding: 0 0 0 15px;
+  border: 0;
+  border-left: 2px solid var(--line);
+  background: transparent;
   color: var(--text);
 }
 .scholarly-block p:first-of-type { margin-top: 0; }
 .scholarly-block p:last-child { margin-bottom: 0; }
 .scholarly-label {
   display: block;
-  margin-bottom: 8px;
-  color: var(--accent);
-  font: 600 10px/1.2 Inter, ui-sans-serif, sans-serif;
-  letter-spacing: .08em;
-  text-transform: uppercase;
+  margin-bottom: 7px;
+  color: var(--muted);
+  font: 600 12px/1.35 Inter, ui-sans-serif, sans-serif;
+  letter-spacing: .02em;
+  text-transform: none;
 }
-.scholarly-definition { border-left-style: solid; }
+.scholarly-definition,
 .scholarly-theorem,
 .scholarly-lemma,
-.scholarly-proposition { background: color-mix(in srgb, var(--paper) 93%, var(--accent) 7%); }
+.scholarly-proposition,
 .scholarly-assumption,
-.scholarly-notation {
-  border-left-width: 2px;
-  background: var(--paper);
-}
+.scholarly-notation { background: transparent; }
 .scholarly-proof {
   margin: 1.7em 0;
   padding: 0;
@@ -35,8 +32,8 @@
   cursor: pointer;
   padding: 11px 0;
   color: var(--text);
-  font: 600 11px/1.2 Inter, ui-sans-serif, sans-serif;
-  letter-spacing: .05em;
+  font: 600 12px/1.3 Inter, ui-sans-serif, sans-serif;
+  letter-spacing: .02em;
 }
 .scholarly-proof-body { padding: 2px 0 14px; }
 .scholarly-proof-body::after { content: '□'; float: right; color: var(--muted); }
@@ -48,10 +45,9 @@
   top: 50%;
   transform: translateY(-50%);
   color: var(--muted);
-  font: 11px/1 Georgia, 'Times New Roman', serif;
+  font: 16px/1.1 Georgia, 'Times New Roman', serif;
 }
-.prose .katex-display.numbered-equation { position: relative; padding-right: 44px; }
-.prose .katex-display.numbered-equation.math-copy-ready { padding-top: 28px; }
+.prose .katex-display.numbered-equation { position: relative; padding-right: 50px; }
 .equation-marker { display: none; }
 
 .article-aside-tabs {
@@ -120,9 +116,6 @@ body.academic-view .resume-reading { display: none !important; }
 body.academic-view .site-frame { grid-template-columns: minmax(0,1fr); }
 body.academic-view .article-page-layout { width: min(calc(100% - 38px), var(--reading)); grid-template-columns: minmax(0,var(--reading)); }
 body.academic-view .article-wrap { padding-top: 48px; }
-
-/* Focus is the single on-screen distraction-free mode. Academic mode is retired;
-   Print remains the clean academic-output path. */
 #academic-view { display: none !important; }
 
 @media print {
@@ -149,4 +142,5 @@ body.academic-view .article-wrap { padding-top: 48px; }
 @media (max-width: 620px) {
   .cite-option { grid-template-columns: 1fr; }
   .cite-option > span { padding-top: 0; }
+  .equation-number { font-size: 14px; }
 }
