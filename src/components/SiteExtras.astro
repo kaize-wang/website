@@ -1,95 +1,13 @@
----
-import '@/styles/experiments.css';
----
-<div class="site-toast" id="site-toast" role="status" aria-live="polite"></div>
-<script is:inline src="https://cdn.busuanzi.cc/busuanzi/3.6.9/busuanzi.min.js" defer></script>
 <script is:inline>
 (() => {
   const init = () => {
-    const toast = document.getElementById('site-toast');
-    let toastTimer = 0;
-    const showToast = (message) => {
-      if (!toast) return;
-      toast.textContent = message;
-      toast.classList.add('visible');
-      window.clearTimeout(toastTimer);
-      toastTimer = window.setTimeout(() => toast.classList.remove('visible'), 2200);
-    };
-
-    const favicon = document.createElement('link');
-    favicon.rel = 'icon';
-    document.head.appendChild(favicon);
-    const drawFavicon = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = 32;
-      canvas.height = 32;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-      const dark = document.documentElement.dataset.theme === 'dark';
-      ctx.fillStyle = dark ? '#1d1f1c' : '#fbfaf6';
-      ctx.fillRect(0, 0, 32, 32);
-      ctx.strokeStyle = dark ? '#373a35' : '#d9d6cf';
-      ctx.strokeRect(.5, .5, 31, 31);
-      ctx.fillStyle = dark ? '#eceae3' : '#1e211f';
-      ctx.font = 'bold 20px Georgia';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('K', 16, 17);
-      ctx.beginPath();
-      ctx.fillStyle = document.hidden ? (dark ? '#777' : '#999') : (dark ? '#d4938d' : '#7d2f2f');
-      ctx.arc(25.5, 6.5, 3, 0, Math.PI * 2);
-      ctx.fill();
-      favicon.href = canvas.toDataURL('image/png');
-    };
-    drawFavicon();
-    document.addEventListener('visibilitychange', drawFavicon);
-    new MutationObserver(drawFavicon).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-
-    document.querySelectorAll('[data-avatar-reactive]').forEach((avatar) => {
-      avatar.addEventListener('pointermove', (event) => {
-        if (event.pointerType === 'touch') return;
-        const rect = avatar.getBoundingClientRect();
-        const x = (event.clientX - rect.left) / rect.width - .5;
-        const y = (event.clientY - rect.top) / rect.height - .5;
-        avatar.style.setProperty('--avatar-ry', `${x * 9}deg`);
-        avatar.style.setProperty('--avatar-rx', `${y * -9}deg`);
-      });
-      avatar.addEventListener('pointerleave', () => {
-        avatar.style.setProperty('--avatar-ry', '0deg');
-        avatar.style.setProperty('--avatar-rx', '0deg');
-      });
-    });
-
-    let keyBuffer = '';
-    document.addEventListener('keydown', (event) => {
-      const target = event.target;
-      if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement || event.metaKey || event.ctrlKey || event.altKey) return;
-      if (event.key.length !== 1) return;
-      keyBuffer = (keyBuffer + event.key.toLowerCase()).slice(-5);
-      if (keyBuffer === 'kaize') {
-        showToast('You found the quiet corner.');
-        document.querySelector('.brand')?.animate(
-          [{ letterSpacing: '-.015em' }, { letterSpacing: '.08em' }, { letterSpacing: '-.015em' }],
-          { duration: 650, easing: 'ease-out' }
-        );
-        keyBuffer = '';
-      }
-    });
+    if (!document.querySelector('[data-visitor-analytics]')) return;
 
     const COUNTER_BASE = 'https://countapi.mileshilliard.com/api/v1';
     const COUNTER_PREFIX = 'kaizewang-site-20260902-v1';
     const GEO_COUNTED_KEY = 'kaizewang:geo-counted:v1';
     const GEO_CACHE_KEY = 'kaizewang:geo-cache:v1';
     const REGION_CODES = ['NA', 'SA', 'EU', 'AF', 'AS', 'OC'];
-
-    const hashString = (value) => {
-      let hash = 2166136261;
-      for (let i = 0; i < value.length; i += 1) {
-        hash ^= value.charCodeAt(i);
-        hash = Math.imul(hash, 16777619);
-      }
-      return (hash >>> 0).toString(16);
-    };
 
     const counterRequest = async (action, key) => {
       try {
@@ -102,52 +20,24 @@ import '@/styles/experiments.css';
         return 0;
       }
     };
-    const hitCounter = (key) => counterRequest('hit', key);
-    const getCounter = (key) => counterRequest('get', key);
+    const hitCounter = key => counterRequest('hit', key);
+    const getCounter = key => counterRequest('get', key);
 
-    const geoStats = {
-      countriesReached: 0,
-      citiesReached: 0,
-      regions: {},
-      location: null
-    };
-
+    const geoStats = { countriesReached: 0, regions: {} };
     const renderGeoStats = () => {
-      document.querySelectorAll('[data-kaize-geo-stat]').forEach((node) => {
-        const key = node.dataset.kaizeGeoStat;
-        const value = Number(geoStats[key] || 0);
-        node.textContent = value > 0 ? value.toLocaleString() : '—';
+      document.querySelectorAll('[data-kaize-geo-stat="countriesReached"]').forEach(node => {
+        node.textContent = geoStats.countriesReached > 0 ? geoStats.countriesReached.toLocaleString() : '—';
       });
-
       const values = REGION_CODES.map(code => Number(geoStats.regions?.[code] || 0));
       const maxRegion = Math.max(1, ...values);
-      REGION_CODES.forEach((code) => {
+      REGION_CODES.forEach(code => {
         const count = Number(geoStats.regions?.[code] || 0);
-        document.querySelectorAll(`[data-region-count="${code}"]`).forEach(node => { node.textContent = count ? String(count) : ''; });
-        document.querySelectorAll(`[data-region-legend="${code}"]`).forEach(node => { node.textContent = count.toLocaleString(); });
         document.querySelectorAll(`[data-region-dot="${code}"]`).forEach(node => {
           const radius = count ? 5 + 8 * Math.sqrt(count / maxRegion) : 0;
           node.setAttribute('r', radius.toFixed(1));
           node.classList.toggle('visible', count > 0);
         });
-        document.querySelectorAll(`[data-region-halo="${code}"]`).forEach(node => {
-          const radius = count ? 11 + 14 * Math.sqrt(count / maxRegion) : 0;
-          node.setAttribute('r', radius.toFixed(1));
-          node.classList.toggle('visible', count > 0);
-        });
       });
-
-      const location = geoStats.location;
-      if (location) {
-        const locationText = [location.city, location.country].filter(Boolean).join(', ') || 'Approximate location unavailable';
-        document.querySelectorAll('[data-current-location]').forEach(node => { node.textContent = locationText; });
-        document.querySelectorAll('[data-current-region]').forEach(node => {
-          node.textContent = [location.region, location.countryCode].filter(Boolean).join(' · ') || 'Coarse network location';
-        });
-        document.querySelectorAll('[data-current-timezone]').forEach(node => {
-          node.textContent = location.timezone ? `Timezone: ${location.timezone}` : '';
-        });
-      }
     };
 
     const readCachedGeo = () => {
@@ -169,12 +59,8 @@ import '@/styles/experiments.css';
         const data = await response.json();
         if (data?.success === false) return null;
         const geo = {
-          city: data.city || '',
-          region: data.region || '',
-          country: data.country || '',
           countryCode: String(data.country_code || '').toUpperCase(),
           continentCode: String(data.continent_code || '').toUpperCase(),
-          timezone: data.timezone?.id || data.timezone || '',
           savedAt: Date.now()
         };
         try { localStorage.setItem(GEO_CACHE_KEY, JSON.stringify(geo)); } catch {}
@@ -184,24 +70,18 @@ import '@/styles/experiments.css';
       }
     };
 
-    const countGeoOnce = async (geo) => {
+    const countGeoOnce = async geo => {
+      if (!geo) return;
       let alreadyCounted = false;
       try { alreadyCounted = localStorage.getItem(GEO_COUNTED_KEY) === '1'; } catch {}
-      if (alreadyCounted || !geo) return;
+      if (alreadyCounted) return;
 
       const regionCode = REGION_CODES.includes(geo.continentCode) ? geo.continentCode : '';
       if (regionCode) await hitCounter(`region-${regionCode.toLowerCase()}`);
-
       if (geo.countryCode) {
         const countryValue = await hitCounter(`country-${geo.countryCode.toLowerCase()}`);
         if (countryValue === 1) await hitCounter('countries-reached');
       }
-
-      if (geo.city && geo.countryCode) {
-        const cityValue = await hitCounter(`city-${hashString(`${geo.countryCode}:${geo.city.toLowerCase()}`)}`);
-        if (cityValue === 1) await hitCounter('cities-reached');
-      }
-
       try { localStorage.setItem(GEO_COUNTED_KEY, '1'); } catch {}
     };
 
@@ -209,32 +89,18 @@ import '@/styles/experiments.css';
       const regionPairs = await Promise.all(REGION_CODES.map(async code => [code, await getCounter(`region-${code.toLowerCase()}`)]));
       geoStats.regions = Object.fromEntries(regionPairs);
       geoStats.countriesReached = await getCounter('countries-reached');
-      geoStats.citiesReached = await getCounter('cities-reached');
       renderGeoStats();
     };
 
-    const loadGeoFootprint = async () => {
-      const analyticsVisible = Boolean(document.querySelector('[data-visitor-analytics]'));
-      const wantsCurrentLocation = Boolean(document.querySelector('[data-current-location-request]'));
-      let geoCounted = false;
-      try { geoCounted = localStorage.getItem(GEO_COUNTED_KEY) === '1'; } catch {}
-
-      let geo = readCachedGeo();
-      if ((!geoCounted || wantsCurrentLocation) && !geo) geo = await fetchGeo();
-      if (geo) {
-        geoStats.location = geo;
-        if (!geoCounted) await countGeoOnce(geo);
-        renderGeoStats();
-      } else if (wantsCurrentLocation) {
-        document.querySelectorAll('[data-current-location]').forEach(node => { node.textContent = 'Coarse location unavailable'; });
-        document.querySelectorAll('[data-current-region]').forEach(node => { node.textContent = 'The geolocation service may be blocked by this browser or network.'; });
-      }
-
-      if (analyticsVisible) await loadRegionStats();
+    const load = async () => {
+      let counted = false;
+      try { counted = localStorage.getItem(GEO_COUNTED_KEY) === '1'; } catch {}
+      if (!counted) await countGeoOnce(await fetchGeo());
+      await loadRegionStats();
     };
-
-    loadGeoFootprint();
+    load();
   };
+
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true });
   else init();
 })();
