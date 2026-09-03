@@ -121,6 +121,10 @@ body.academic-view .site-frame { grid-template-columns: minmax(0,1fr); }
 body.academic-view .article-page-layout { width: min(calc(100% - 38px), var(--reading)); grid-template-columns: minmax(0,var(--reading)); }
 body.academic-view .article-wrap { padding-top: 48px; }
 
+/* Focus is the single on-screen distraction-free mode. Academic mode is retired;
+   Print remains the clean academic-output path. */
+#academic-view { display: none !important; }
+
 @media print {
   .site-sidebar,
   .context-nav-wrap,
