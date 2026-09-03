@@ -17,6 +17,7 @@ for (const note of notes) {
 const categories = [...categoryMap.entries()].sort((a,b) => b[1] - a[1] || a[0].localeCompare(b[0]));
 const collections = [...collectionMap.entries()].sort((a,b) => b[1] - a[1] || a[0].localeCompare(b[0]));
 const tags = [...tagMap.entries()].sort((a,b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0,18);
+const categorySlug = (name: string) => name.toLowerCase().replace(/\s+/g, '-');
 ---
 <BaseLayout title="Explore Notes" active="Notes">
   <main class="site-shell">
@@ -46,7 +47,7 @@ const tags = [...tagMap.entries()].sort((a,b) => b[1] - a[1] || a[0].localeCompa
         <div class="section-head"><h2 id="explore-browse-title">Browse</h2><span class="section-kicker">Metadata views</span></div>
         <div class="explore-browse">
           {categories.length > 0 && (
-            <div><span>Categories</span>{categories.map(([name,count]) => <a href={withBase(`/categories/${encodeURIComponent(name.toLowerCase())}/`)}>{name}<small>{count}</small></a>)}</div>
+            <div><span>Categories</span>{categories.map(([name,count]) => <a href={withBase(`/categories/${categorySlug(name)}/`)}>{name}<small>{count}</small></a>)}</div>
           )}
           {collections.length > 0 && (
             <div><span>Series</span>{collections.map(([name,count]) => <a href={withBase(`/collections/${encodeURIComponent(name.toLowerCase())}/`)}>{name}<small>{count}</small></a>)}</div>
