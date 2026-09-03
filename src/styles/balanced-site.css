@@ -94,24 +94,27 @@
   text-align: left;
 }
 .lab-surprise-button:hover { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
-.lab-github-card {
+
+.github-activity-section { max-width: 920px; }
+.github-activity-card {
   display: block;
   padding: 18px;
   border: 1px solid var(--line);
   background: var(--paper);
 }
-.lab-github-chart-scroll { overflow-x: auto; scrollbar-width: thin; }
-.lab-github-chart { display: block; width: 100%; min-width: 720px; height: auto; }
-.lab-github-chart-dark { display: none; }
-:root[data-theme='dark'] .lab-github-chart-light { display: none; }
-:root[data-theme='dark'] .lab-github-chart-dark { display: block; }
-.lab-github-note {
+.github-activity-chart-scroll { overflow-x: auto; scrollbar-width: thin; }
+.github-activity-chart { display: block; width: 100%; min-width: 720px; height: auto; }
+.github-activity-chart-dark { display: none; }
+:root[data-theme='dark'] .github-activity-chart-light { display: none; }
+:root[data-theme='dark'] .github-activity-chart-dark { display: block; }
+.github-activity-note {
   display: block;
   margin-top: 9px;
   color: var(--muted);
   font-size: 10px;
   line-height: 1.5;
 }
+
 .visitor-detail-card {
   padding: 20px;
   border: 1px solid var(--line);
@@ -171,5 +174,5 @@
   .visitor-detail-card { padding: 13px; }
   .visitor-detail-card .visitor-live-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .article-update-list li { grid-template-columns: 1fr; gap: 4px; }
-  .lab-github-card { padding: 12px; }
+  .github-activity-card { padding: 12px; }
 }
