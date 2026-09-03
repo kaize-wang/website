@@ -106,8 +106,81 @@
 }
 .reader-md-figure-link { font-family: Inter, ui-sans-serif, sans-serif; font-size: 12px; }
 
+/* Reader v2: keep the workspace deliberately small. */
+body.paper-reader-active .article-meta,
+body.paper-reader-active .article-desc,
+body.paper-reader-active .article-head > .tags,
+body.paper-reader-active .paper-meta-card,
+body.paper-reader-active .bilingual-summary,
+body.paper-reader-active .article-toolbox,
+body.paper-reader-active .resume-reading,
+body.paper-reader-active .article-contents,
+body.paper-reader-active .comments-section,
+body.paper-reader-active .backlinks-section,
+body.paper-reader-active .related-notes-section,
+body.paper-reader-active .backline {
+  display: none !important;
+}
+body.paper-reader-active .article-head { margin-bottom: 28px; }
+body.paper-reader-active .article-head h1 { font-size: clamp(28px, 3.2vw, 42px); }
+
+/* Margin sidenotes cannot float into the source pane in split view. */
+body.paper-reader-active .prose blockquote.sidenote {
+  float: none !important;
+  clear: none !important;
+  width: auto !important;
+  margin: 1.8em 0 !important;
+}
+
+/* Only the active source loader and a close affordance stay visible. */
+.reader-source-actions > a,
+.reader-source-actions #reader-forget-pdf,
+.reader-source-actions #reader-forget-markdown {
+  display: none !important;
+}
+.reader-source-head {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 11px 13px 10px;
+}
+.reader-source-title { grid-column: 1 / -1; }
+.reader-source-tabs { grid-column: 1; }
+.reader-source-actions {
+  grid-column: 2;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+}
+.reader-source-actions [data-reader-exit] {
+  width: 29px;
+  min-width: 29px;
+  height: 29px;
+  padding: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  color: transparent;
+  font-size: 0;
+}
+.reader-source-actions [data-reader-exit]::before {
+  content: '×';
+  color: var(--muted);
+  font-size: 17px;
+  line-height: 1;
+}
+.reader-source-actions [data-reader-exit]:hover::before { color: var(--accent); }
+.reader-source-status {
+  min-height: 27px;
+  justify-content: flex-end;
+  padding: 5px 12px;
+}
+.reader-source-status span:first-child { display: none; }
+
 @media (max-width: 800px) {
   .reader-markdown-content { padding: 74px 20px 90px; }
   .reader-source-tabs { width: 100%; }
   .reader-source-tab { flex: 1 1 0; }
+  .reader-source-head {
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding-top: 58px;
+  }
 }
