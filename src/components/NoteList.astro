@@ -7,22 +7,19 @@ type Note = CollectionEntry<'notes'>;
 const { notes } = Astro.props as { notes: Note[] };
 ---
 <div class="note-list">
-  {notes.map(note => {
-    const kind = note.data.paper ? 'Paper reading' : note.data.category;
-    return (
-      <article class="note-row" data-note-lang={note.data.lang}>
-        <div class="note-date">{formatDate(note.data.publishDate)}</div>
-        <div>
-          <a class="note-main-link" href={withBase(`/notes/${noteSlug(note.id)}/`)} aria-label={`Read ${note.data.title}`}>
-            <h3 class="note-title">{note.data.title}</h3>
-            <p class="note-desc">{note.data.description}</p>
-          </a>
-        </div>
-        <div class="note-meta">
-          <span>{kind}</span>
-          <span>{note.data.lang === 'zh' ? '中文' : 'EN'} · {readingTime(note.body ?? '')} min</span>
-        </div>
-      </article>
-    );
-  })}
+  {notes.map(note => (
+    <article class="note-row" data-note-lang={note.data.lang}>
+      <div class="note-date">{formatDate(note.data.publishDate)}</div>
+      <div>
+        <a class="note-main-link" href={withBase(`/notes/${noteSlug(note.id)}/`)} aria-label={`Read ${note.data.title}`}>
+          <h3 class="note-title">{note.data.title}</h3>
+          <p class="note-desc">{note.data.description}</p>
+        </a>
+      </div>
+      <div class="note-meta">
+        <span>{note.data.category}</span>
+        <span>{note.data.lang === 'zh' ? '中文' : 'EN'} · {readingTime(note.body ?? '')} min</span>
+      </div>
+    </article>
+  ))}
 </div>
