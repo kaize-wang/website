@@ -1,0 +1,42 @@
+---
+import { contextualBacklinksFor, formatDate, getPublishedNotes, noteSlug } from '@/utils/notes';
+import { withBase } from '@/utils/url';
+
+const { noteId } = Astro.props as { noteId: string };
+const allNotes = await getPublishedNotes();
+const note = allNotes.find(item => item.id === noteId);
+const contextualBacklinks = note ? contextualBacklinksFor(note, allNotes) : [];
+const updates = [...(note?.data.updates || [])].sort((a, b) => b.date.valueOf() - a.date.valueOf());
+---
+{updates.length > 0 && (
+  <section class="article-update-history" aria-labelledby="updates-title">
+    <h2 id="updates-title"><span class="ui-copy-en">Updates</span><span class="ui-copy-zh">更新记录</span></h2>
+    <ul class="article-update-list">
+      {updates.map(update => (
+        <li>
+          <time datetime={update.date.toISOString()}>{formatDate(update.date)}</time>
+          <span>{update.note}</span>
+        </li>
+      ))}
+    </ul>
+  </section>
+)}
+
+{contextualBacklinks.length > 0 && (
+  <section class="contextual-backlinks-section" aria-labelledby="contextual-backlinks-title">
+    <h2 id="contextual-backlinks-title"><span class="ui-copy-en">Mentioned in</span><span class="ui-copy-zh">在这些笔记中被提及</span></h2>
+    <p class="contextual-backlinks-note">
+      <span class="ui-copy-en">Only explicit wiki links are shown, together with the surrounding context.</span>
+      <span class="ui-copy-zh">这里只显示明确的 Wiki 链接，并保留链接出现时的上下文。</span>
+    </p>
+    <div class="contextual-backlinks-list">
+      {contextualBacklinks.map(({ note: source, context }) => (
+        <a class="contextual-backlink-item" href={withBase(`/notes/${noteSlug(source.id)}/`)}>
+          <strong>{source.data.title}</strong>
+          <p>{context}</p>
+          <small>{formatDate(source.data.publishDate)} · {source.data.lang === 'zh' ? '中文' : 'EN'}</small>
+        </a>
+      ))}
+    </div>
+  </section>
+)}
