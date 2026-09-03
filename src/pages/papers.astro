@@ -9,6 +9,8 @@ import { withBase } from '@/utils/url';
 const notes = await getPublishedNotes();
 const paperNotes = notes.filter(note => note.data.paper);
 const statuses = ['All', 'Due', 'Reading', 'Read', 'Revisit', 'Core'];
+const distinctStatuses = new Set(paperNotes.map(note => note.data.readingStatus).filter(Boolean));
+const showFilters = paperNotes.length >= 4 || distinctStatuses.size > 1;
 ---
 <BaseLayout title="Paper Reading" active="Notes">
   <main class="site-shell">
@@ -25,9 +27,11 @@ const statuses = ['All', 'Due', 'Reading', 'Read', 'Revisit', 'Core'];
     <section class="section" aria-labelledby="paper-dashboard-title">
       <div class="paper-dashboard-head">
         <div class="section-head" style="margin:0"><h2 id="paper-dashboard-title">Reading desk</h2></div>
-        <div class="paper-status-filter" aria-label="Filter papers by reading status">
-          {statuses.map(status => <button class={`paper-filter${status === 'All' ? ' active' : ''}`} type="button" data-paper-filter={status}>{status}</button>)}
-        </div>
+        {showFilters && (
+          <div class="paper-status-filter" aria-label="Filter papers by reading status">
+            {statuses.map(status => <button class={`paper-filter${status === 'All' ? ' active' : ''}`} type="button" data-paper-filter={status}>{status}</button>)}
+          </div>
+        )}
       </div>
 
       <div class="paper-dashboard" id="paper-dashboard">
@@ -44,13 +48,16 @@ const statuses = ['All', 'Due', 'Reading', 'Read', 'Revisit', 'Core'];
                 {status && <span class="paper-status">{status}</span>}
                 <div class="revisit-panel">
                   <div class="revisit-state" data-revisit-state>No local revisit schedule.</div>
-                  <div class="revisit-actions">
-                    <button type="button" data-reviewed-days="30">Reviewed today · +30d</button>
-                    <button type="button" data-revisit-days="7">7d</button>
-                    <button type="button" data-revisit-days="30">30d</button>
-                    <button type="button" data-revisit-days="90">90d</button>
-                    <button type="button" data-revisit-clear>Clear</button>
-                  </div>
+                  <details class="revisit-details">
+                    <summary>Schedule revisit</summary>
+                    <div class="revisit-actions">
+                      <button type="button" data-reviewed-days="30">Reviewed today · +30d</button>
+                      <button type="button" data-revisit-days="7">7d</button>
+                      <button type="button" data-revisit-days="30">30d</button>
+                      <button type="button" data-revisit-days="90">90d</button>
+                      <button type="button" data-revisit-clear>Clear</button>
+                    </div>
+                  </details>
                 </div>
               </div>
               <div class="paper-dashboard-body">
