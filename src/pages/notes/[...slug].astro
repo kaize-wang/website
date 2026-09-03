@@ -5,6 +5,7 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
 import SiteExtras from '@/components/SiteExtras.astro';
 import ResearchArticleTools from '@/components/ResearchArticleTools.astro';
 import ArticleEnhancements from '@/components/ArticleEnhancements.astro';
+import ArticleContextExtras from '@/components/ArticleContextExtras.astro';
 import '@/styles/experiments.css';
 import '@/styles/scholarly.css';
 import '@/styles/knowledge.css';
@@ -71,7 +72,11 @@ const citation = {
         <h1>{note.data.title}</h1>
         <div class="article-meta">
           <span>{formatDate(note.data.publishDate)}</span>
-          {note.data.updatedDate && <span>Updated {formatDate(note.data.updatedDate)}</span>}
+          {note.data.updatedDate && (
+            <span class="article-last-updated">
+              <span class="ui-copy-en">Last updated</span><span class="ui-copy-zh">最后更新</span>{' '}{formatDate(note.data.updatedDate)}
+            </span>
+          )}
           <span>{readingTime(note.body)} min read</span>
           <span class="lang-chip">{note.data.lang === 'zh' ? '中文' : 'EN'}</span>
           {translation && <a class="translation-link" href={withBase(`/notes/${noteSlug(translation.id)}/`)}>{translationLabel}</a>}
@@ -127,6 +132,8 @@ const citation = {
       )}
       <div class="prose"><Content /></div>
 
+      <ArticleContextExtras noteId={note.id} />
+
       {note.data.references.length > 0 && (
         <section class="reference-section" aria-labelledby="references-title">
           <h2 id="references-title">References</h2>
@@ -151,21 +158,6 @@ const citation = {
               </li>
             ))}
           </ol>
-        </section>
-      )}
-
-      {backlinks.length > 0 && (
-        <section class="backlinks-section" aria-labelledby="backlinks-title">
-          <h2 id="backlinks-title">Referenced by</h2>
-          <p class="backlinks-note">Notes that explicitly link here with <code>[[wiki links]]</code>.</p>
-          <div class="backlinks-list">
-            {backlinks.map(item => (
-              <a class="backlink-item" href={withBase(`/notes/${noteSlug(item.id)}/`)}>
-                <strong>{item.data.title}</strong>
-                <span>{item.data.lang === 'zh' ? '中文' : 'EN'} · {item.data.collection || item.data.category}</span>
-              </a>
-            ))}
-          </div>
         </section>
       )}
 
