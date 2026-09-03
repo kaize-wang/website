@@ -2,24 +2,23 @@
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import NoteList from '@/components/NoteList.astro';
 import SiteExtras from '@/components/SiteExtras.astro';
-import '@/styles/scholarly.css';
-import '@/styles/knowledge.css';
 import { getPublishedNotes } from '@/utils/notes';
 import { withBase } from '@/utils/url';
 const notes = await getPublishedNotes();
+const paperCount = notes.filter(note => note.data.paper).length;
 ---
 <BaseLayout title="Notes" active="Notes">
   <main class="site-shell">
     <header class="page-hero">
-      <div class="eyebrow">Research · Reading · Technical · Life</div>
+      <div class="eyebrow">Notebook</div>
       <h1>Notes</h1>
-      <p>A public notebook for ideas worth keeping. Open a note to read; use Paper Reading for literature work and Explore when you want graphs, archives, categories, series, or tags.</p>
+      <p>Research notes and paper-reading records, kept in one chronological notebook. Tags remain lightweight metadata rather than a second navigation system.</p>
     </header>
 
     <section class="section" aria-labelledby="all-notes-title">
       <div class="section-head">
-        <h2 id="all-notes-title">All Notes</h2>
-        <a class="section-kicker" href={withBase('/explore')}>Explore notes →</a>
+        <h2 id="all-notes-title">All notes</h2>
+        {paperCount > 0 && <a class="section-kicker" href={withBase('/papers')}>Paper Reading →</a>}
       </div>
       {notes.length ? <NoteList notes={notes} /> : <p class="muted">No notes yet.</p>}
     </section>
