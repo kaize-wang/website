@@ -32,17 +32,11 @@ export const site = {
     {
       name: 'Operations Research',
       description: 'Models and algorithms for sequential decision making, inventory control, and related operational systems.'
-    },
-    {
-      name: 'Supply Chain Decisions',
-      description: 'Broader questions in inventory, service operations, and data-informed decision making.'
     }
   ],
   nav: [
     { label: 'Home', href: '/' },
     { label: 'Research', href: '/research' },
-    { label: 'Notes', href: '/notes' },
-    { label: 'About', href: '/about' },
-    { label: 'Search', href: '/search' }
+    { label: 'Notes', href: '/notes' }
   ]
 };
