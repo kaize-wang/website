@@ -1,8 +1,6 @@
 ---
 import '@/styles/experiments.css';
 import '@/styles/visitor-analytics.css';
-import { withBase } from '@/utils/url';
-const { compact = false } = Astro.props as { compact?: boolean };
 const regions = [
   { code: 'NA', name: 'North America', x: 118, y: 103 },
   { code: 'SA', name: 'South America', x: 185, y: 194 },
@@ -12,78 +10,26 @@ const regions = [
   { code: 'OC', name: 'Oceania', x: 548, y: 205 }
 ];
 ---
-{compact ? (
-  <section class="section visitor-summary-section" id="visitors" data-visitor-analytics>
-    <div class="section-head">
-      <h2>Visitors</h2>
-      <a class="section-kicker" href={withBase('/about#visitors')}>Explore visitor map →</a>
-    </div>
-    <div class="visitor-summary-card">
-      <div class="visitor-summary-stats" aria-label="Website visit statistics">
-        <div><strong id="busuanzi_site_pv">—</strong><span>page views</span></div>
-        <div><strong id="busuanzi_site_uv">—</strong><span>visitors</span></div>
-        <div><strong data-kaize-geo-stat="countriesReached">—</strong><span>countries</span></div>
-        <div><strong id="busuanzi_today_pv">—</strong><span>today views</span></div>
-      </div>
-      <svg class="visitor-map visitor-map-mini" viewBox="0 0 640 280" role="img" aria-label="Approximate visitor footprint by world region">
-        <path class="visitor-land" d="M55 76 L118 48 168 60 188 96 156 118 128 108 102 137 70 126 47 101 Z" />
-        <path class="visitor-land" d="M165 151 L205 151 219 183 203 226 181 251 166 216 171 184 151 169 Z" />
-        <path class="visitor-land" d="M279 72 L323 58 354 71 368 94 348 111 315 104 296 121 276 102 Z" />
-        <path class="visitor-land" d="M320 122 L365 117 397 148 389 198 361 238 331 211 317 161 Z" />
-        <path class="visitor-land" d="M361 70 L435 52 520 63 581 90 560 119 502 118 468 139 421 125 388 107 Z" />
-        <path class="visitor-land" d="M503 190 L553 178 584 199 565 226 520 222 495 205 Z" />
-        {regions.map(region => <circle class="visitor-region-dot" data-region-dot={region.code} cx={region.x} cy={region.y} r="0" aria-label={region.name} />)}
-      </svg>
-    </div>
-    <p class="visitor-summary-note">Visit totals use Busuanzi; the map keeps only coarse aggregate regions and never displays visitor IP addresses.</p>
-  </section>
-) : (
-  <div class="experiment-card visitor-analytics-card" id="visitors" data-visitor-analytics data-current-location-request>
-    <div class="experiment-kicker">Live visitor footprint</div>
-    <h3>Where this site is being read</h3>
-    <p class="experiment-intro">The map is drawn locally in the site's own visual style. Busuanzi supplies the simple PV/UV totals; a lightweight coarse geolocation layer only accumulates region, country, and city coverage for the footprint.</p>
-
-    <div class="visitor-live-stats" aria-label="Website visit statistics">
-      <div><strong id="busuanzi_site_pv">—</strong><span>Page views</span></div>
-      <div><strong id="busuanzi_site_uv">—</strong><span>Visitors</span></div>
-      <div><strong id="busuanzi_today_pv">—</strong><span>Today views</span></div>
-      <div><strong data-kaize-geo-stat="countriesReached">—</strong><span>Countries reached</span></div>
-      <div><strong data-kaize-geo-stat="citiesReached">—</strong><span>Cities reached</span></div>
-    </div>
-
-    <div class="visitor-demo visitor-demo-live">
-      <div>
-        <svg class="visitor-map" viewBox="0 0 640 280" role="img" aria-label="Accumulated visitor footprint by world region">
-          <path class="visitor-land" d="M55 76 L118 48 168 60 188 96 156 118 128 108 102 137 70 126 47 101 Z" />
-          <path class="visitor-land" d="M165 151 L205 151 219 183 203 226 181 251 166 216 171 184 151 169 Z" />
-          <path class="visitor-land" d="M279 72 L323 58 354 71 368 94 348 111 315 104 296 121 276 102 Z" />
-          <path class="visitor-land" d="M320 122 L365 117 397 148 389 198 361 238 331 211 317 161 Z" />
-          <path class="visitor-land" d="M361 70 L435 52 520 63 581 90 560 119 502 118 468 139 421 125 388 107 Z" />
-          <path class="visitor-land" d="M503 190 L553 178 584 199 565 226 520 222 495 205 Z" />
-          {regions.map(region => (
-            <g class="visitor-region-group">
-              <circle class="visitor-region-halo" data-region-halo={region.code} cx={region.x} cy={region.y} r="0" />
-              <circle class="visitor-region-dot" data-region-dot={region.code} cx={region.x} cy={region.y} r="0" />
-              <text class="visitor-region-count" data-region-count={region.code} x={region.x + 11} y={region.y - 10}></text>
-            </g>
-          ))}
-        </svg>
-        <div class="visitor-region-legend">
-          {regions.map(region => <span><i></i>{region.name}: <strong data-region-legend={region.code}>0</strong></span>)}
-        </div>
-      </div>
-      <div class="visitor-copy visitor-current-card">
-        <span class="now-label">This visit, approximately</span>
-        <strong data-current-location>Detecting coarse location…</strong>
-        <p data-current-region>Country / region information is resolved only for this browser.</p>
-        <p class="visitor-time" data-current-timezone></p>
-        <p>City-level geolocation can be wrong when a visitor uses a VPN, mobile carrier, campus network, or proxy.</p>
-      </div>
-    </div>
-
-    <div class="visitor-privacy-note">
-      <strong>Simple underneath.</strong>
-      <span>No account or analytics dashboard is required. PV/UV comes from Busuanzi. The map stores only coarse aggregate counters for regions and coverage; the page never publishes IP addresses or a visitor log.</span>
-    </div>
+<section class="section visitor-summary-section" id="visitors" data-visitor-analytics>
+  <div class="section-head">
+    <h2>Visitors</h2>
+    <span class="section-kicker">A small, approximate footprint</span>
   </div>
-)}
+  <div class="visitor-summary-card">
+    <div class="visitor-summary-stats" aria-label="Website visit statistics">
+      <div><strong id="busuanzi_site_pv">—</strong><span>page views</span></div>
+      <div><strong id="busuanzi_site_uv">—</strong><span>visitors</span></div>
+      <div><strong data-kaize-geo-stat="countriesReached">—</strong><span>countries</span></div>
+    </div>
+    <svg class="visitor-map visitor-map-mini" viewBox="0 0 640 280" role="img" aria-label="Approximate visitor footprint by world region">
+      <path class="visitor-land" d="M55 76 L118 48 168 60 188 96 156 118 128 108 102 137 70 126 47 101 Z" />
+      <path class="visitor-land" d="M165 151 L205 151 219 183 203 226 181 251 166 216 171 184 151 169 Z" />
+      <path class="visitor-land" d="M279 72 L323 58 354 71 368 94 348 111 315 104 296 121 276 102 Z" />
+      <path class="visitor-land" d="M320 122 L365 117 397 148 389 198 361 238 331 211 317 161 Z" />
+      <path class="visitor-land" d="M361 70 L435 52 520 63 581 90 560 119 502 118 468 139 421 125 388 107 Z" />
+      <path class="visitor-land" d="M503 190 L553 178 584 199 565 226 520 222 495 205 Z" />
+      {regions.map(region => <circle class="visitor-region-dot" data-region-dot={region.code} cx={region.x} cy={region.y} r="0" aria-label={region.name} />)}
+    </svg>
+  </div>
+  <p class="visitor-summary-note">Simple page-view totals plus coarse regional aggregates. No visitor IP address is displayed.</p>
+</section>
