@@ -35,12 +35,30 @@ const { citation = { plain: '', markdown: '', bibtex: '' } } = Astro.props;
     return value;
   };
 
+  const detailsPattern = /^\s*\[!details(?:\s+([^\]]+))?\]\s*/i;
   const blockPattern = /^\s*\[!(definition|theorem|lemma|proposition|proof|assumption|notation)(?:\s+id=([^\]\s]+))?\]\s*/i;
   [...prose.querySelectorAll('blockquote')].forEach(quote => {
     const first = quote.querySelector('p');
     const text = first?.textContent || '';
+    if (!first) return;
+
+    const detailsMatch = text.match(detailsPattern);
+    if (detailsMatch) {
+      first.innerHTML = first.innerHTML.replace(detailsPattern, '');
+      const details = document.createElement('details');
+      details.className = 'scholarly-details';
+      const summary = document.createElement('summary');
+      summary.textContent = (detailsMatch[1] || '').trim() || 'Details';
+      const body = document.createElement('div');
+      body.className = 'scholarly-details-body';
+      while (quote.firstChild) body.appendChild(quote.firstChild);
+      details.append(summary, body);
+      quote.replaceWith(details);
+      return;
+    }
+
     const match = text.match(blockPattern);
-    if (!match || !first) return;
+    if (!match) return;
     const kind = match[1].toLowerCase();
     const id = (match[2] || '').trim();
     first.innerHTML = first.innerHTML.replace(blockPattern, '');
