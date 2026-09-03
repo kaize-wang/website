@@ -1,6 +1,4 @@
 ---
-import '@/styles/experiments.css';
-import '@/styles/scholarly.css';
 import type { CollectionEntry } from 'astro:content';
 import { formatDate, noteSlug, readingTime } from '@/utils/notes';
 import { withBase } from '@/utils/url';
@@ -9,21 +7,22 @@ type Note = CollectionEntry<'notes'>;
 const { notes } = Astro.props as { notes: Note[] };
 ---
 <div class="note-list">
-  {notes.map(note => (
-    <article class="note-row" data-note-lang={note.data.lang}>
-      <div class="note-date">{formatDate(note.data.publishDate)}</div>
-      <div>
-        <a class="note-main-link" href={withBase(`/notes/${noteSlug(note.id)}/`)} aria-label={`Read ${note.data.title}`}>
-          <h3 class="note-title">{note.data.title}</h3>
-          <p class="note-desc">{note.data.description}</p>
-          <span class="note-hover-card" aria-hidden="true"><strong>{note.data.title}</strong><span>{readingTime(note.body ?? '')} min read · {note.data.category} · {note.data.tags.slice(0,3).join(' / ')}</span></span>
-        </a>
-        <div class="tags">
-          <a class="tag tag-link" data-preview={`Browse ${note.data.category} notes`} href={withBase(`/categories/${note.data.category.toLowerCase()}/`)}>{note.data.category}</a>
-          {note.data.tags.slice(0,3).map(tag => <a class="tag tag-link" data-preview={`Browse notes tagged ${tag}`} href={withBase(`/tags/${encodeURIComponent(tag.toLowerCase())}/`)}>{tag}</a>)}
+  {notes.map(note => {
+    const kind = note.data.paper ? 'Paper reading' : note.data.category;
+    return (
+      <article class="note-row" data-note-lang={note.data.lang}>
+        <div class="note-date">{formatDate(note.data.publishDate)}</div>
+        <div>
+          <a class="note-main-link" href={withBase(`/notes/${noteSlug(note.id)}/`)} aria-label={`Read ${note.data.title}`}>
+            <h3 class="note-title">{note.data.title}</h3>
+            <p class="note-desc">{note.data.description}</p>
+          </a>
         </div>
-      </div>
-      <div class="note-meta"><span class="note-lang">{note.data.lang === 'zh' ? '中文' : 'EN'}</span>{readingTime(note.body ?? '')} min read</div>
-    </article>
-  ))}
+        <div class="note-meta">
+          <span>{kind}</span>
+          <span>{note.data.lang === 'zh' ? '中文' : 'EN'} · {readingTime(note.body ?? '')} min</span>
+        </div>
+      </article>
+    );
+  })}
 </div>
