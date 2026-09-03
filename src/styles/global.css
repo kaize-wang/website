@@ -157,12 +157,13 @@ h3 { font-size:18px; }
 .education-item time { color:var(--muted); font-size:13px; white-space:nowrap; }
 
 .note-list { display:grid; }
-.note-row { display:grid; grid-template-columns: 112px minmax(0,1fr) auto; gap:20px; align-items:start; padding:20px 0; border-bottom:1px solid var(--line); }
+.note-row { display:grid; grid-template-columns: 112px minmax(0,1fr) 150px; gap:20px; align-items:start; padding:20px 0; border-bottom:1px solid var(--line); }
 .note-row:first-child { border-top:1px solid var(--line); }
 .note-date { color:var(--muted); font-size:13px; padding-top:4px; }
 .note-title { font-family:Georgia, 'Times New Roman', serif; font-size:21px; line-height:1.35; margin:0; }
 .note-desc { color:var(--muted); margin:5px 0 0; font-size:14px; }
-.note-meta { text-align:right; color:var(--muted); font-size:12px; white-space:nowrap; }
+.note-meta { display:grid; gap:3px; text-align:right; color:var(--muted); font-size:11px; line-height:1.4; }
+.note-meta span:first-child { color:var(--text); }
 .tags { display:flex; flex-wrap:wrap; gap:7px; margin-top:10px; }
 .tag { font-size:11px; padding:2px 8px; border-radius:999px; background:var(--soft); color:var(--muted); }
 
@@ -178,11 +179,30 @@ h3 { font-size:18px; }
 .category-nav { display:flex; gap:8px; flex-wrap:wrap; margin-top:24px; }
 .category-nav a { border:1px solid var(--line); background:var(--paper); border-radius:999px; padding:6px 12px; font-size:13px; }
 
-.research-grid { display:grid; grid-template-columns: 1fr 1fr; gap:20px; }
-.research-card { border:1px solid var(--line); background:var(--paper); padding:25px; min-height:190px; }
+.research-grid { display:grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap:16px; }
+.research-card { border:1px solid var(--line); background:var(--paper); padding:23px; min-height:185px; }
 .research-card .num { font-family:Georgia,serif; color:var(--accent); font-size:14px; }
-.research-card h3 { font-family:Georgia,serif; font-size:24px; font-weight:500; margin:35px 0 8px; }
-.research-card p { color:var(--muted); margin:0; font-size:14px; }
+.research-card h3 { font-family:Georgia,serif; font-size:22px; font-weight:500; margin:32px 0 8px; }
+.research-card p { color:var(--muted); margin:0; font-size:13px; }
+
+.paper-reading-list { display:grid; }
+.paper-reading-row {
+  display:grid;
+  grid-template-columns:72px minmax(0,1fr) auto;
+  gap:22px;
+  align-items:start;
+  padding:24px 0;
+  border-bottom:1px solid var(--line);
+}
+.paper-reading-row:first-child { border-top:1px solid var(--line); }
+.paper-reading-year { color:var(--muted); font-size:13px; padding-top:5px; }
+.paper-reading-main h2 { margin:0; font-size:22px; line-height:1.35; }
+.paper-reading-authors,
+.paper-reading-venue,
+.paper-reading-desc { margin:5px 0 0; color:var(--muted); font-size:13px; line-height:1.55; }
+.paper-reading-desc { max-width:720px; margin-top:10px; }
+.paper-reading-open { color:var(--muted); font-size:12px; white-space:nowrap; padding-top:5px; }
+.paper-reading-open:hover { color:var(--accent); }
 
 .article-wrap { width:min(calc(100% - 40px), var(--reading)); margin:0 auto; padding:72px 0 100px; }
 .article-head { margin-bottom:48px; }
@@ -201,6 +221,25 @@ h3 { font-size:18px; }
 .prose .katex-display { overflow-x:auto; overflow-y:hidden; padding:8px 0; }
 .backline { border-top:1px solid var(--line); padding-top:25px; margin-top:55px; display:flex; justify-content:space-between; gap:20px; color:var(--muted); font-size:13px; }
 
+/* Keep the reading surface quiet. Capabilities remain in code until they are actually needed. */
+.article-head > .tags,
+.article-toolbox > #copy-page-link,
+.article-toolbox > #cite-note,
+.article-toolbox > #academic-view,
+.article-toolbox > #print-note,
+.article-toolbox > #wander-note,
+.article-toolbox > .article-local-visits,
+.backlinks-section,
+.related-notes-section,
+.comments-section,
+.article-reactions { display:none !important; }
+
+/* The outline shows major sections by default; deeper sections appear only while inspecting it. */
+.floating-toc nav a.depth-3 { display:none; }
+.floating-toc nav:hover a.depth-3,
+.floating-toc nav:focus-within a.depth-3,
+.floating-toc nav a.depth-3.active { display:block; }
+
 .site-footer { border-top:1px solid var(--line); padding:28px 0 50px; color:var(--muted); font-size:12px; }
 .footer-inner { display:flex; justify-content:space-between; gap:20px; }
 
@@ -210,7 +249,8 @@ h3 { font-size:18px; }
   .site-shell { width: min(calc(100% - 44px), var(--content)); }
   .profile-grid { grid-template-columns: 180px 1fr; gap: 36px; }
   .avatar { width: 160px; }
-  .note-row { grid-template-columns: 96px minmax(0,1fr) auto; gap: 14px; }
+  .note-row { grid-template-columns: 96px minmax(0,1fr) 130px; gap: 14px; }
+  .research-grid { grid-template-columns:1fr; }
 }
 
 @media (max-width: 760px) {
@@ -225,14 +265,16 @@ h3 { font-size:18px; }
   .profile-grid { grid-template-columns: 1fr; gap: 28px; margin-top: 38px; }
   .avatar { width: 145px; }
   .note-row { grid-template-columns: 1fr; gap: 4px; }
-  .note-meta { text-align: left; }
-  .research-grid { grid-template-columns: 1fr; }
+  .note-meta { text-align: left; margin-top:5px; }
   .stats { grid-template-columns: 1fr; }
   .stat { border-right: none; border-bottom: 1px solid var(--line); }
   .stat:last-child { border-bottom: none; }
   .education-item { grid-template-columns: 1fr; gap: 3px; }
   .page-hero { padding-top: 52px; }
   .footer-inner { flex-direction: column; }
+  .paper-reading-row { grid-template-columns:1fr; gap:6px; }
+  .paper-reading-year { padding-top:0; }
+  .paper-reading-open { padding-top:4px; }
 }
 
 @media (max-width: 560px) {
@@ -286,7 +328,7 @@ h3 { font-size:18px; }
   .site-shell { width: min(calc(100% - 28px), var(--content)); }
 }
 
-/* v5: blog organization stays useful but visually quiet. */
+/* Legacy organization styles are kept for old direct URLs, not primary navigation. */
 .notes-browse {
   margin-top: 24px;
   padding-top: 17px;
