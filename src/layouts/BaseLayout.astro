@@ -18,11 +18,9 @@ routePath = routePath.replace(/\/+$/, '') || '/';
 
 const isHome = routePath === '/';
 const isArticle = routePath.startsWith('/notes/');
-const legacyNotesRoute =
-  routePath === '/explore' ||
+const labRoute = ['/graph', '/literature', '/questions', '/sandbox', '/explore'].includes(routePath);
+const noteUtilityRoute =
   routePath === '/archive' ||
-  routePath === '/graph' ||
-  routePath === '/literature' ||
   routePath.startsWith('/tags/') ||
   routePath.startsWith('/categories/') ||
   routePath.startsWith('/collections/');
@@ -32,9 +30,9 @@ const contextBack = isHome
     ? { label: 'Notes', href: '/notes' }
     : routePath === '/papers'
       ? { label: 'Notes', href: '/notes' }
-      : routePath === '/questions' || routePath === '/sandbox'
-        ? { label: 'Research', href: '/research' }
-        : legacyNotesRoute
+      : labRoute
+        ? { label: 'Lab', href: '/lab' }
+        : noteUtilityRoute
           ? { label: 'Notes', href: '/notes' }
           : { label: 'Home', href: '/' };
 
@@ -55,6 +53,16 @@ const commandItems = [
     href: withBase(item.href),
     keywords: `${item.label} ${navZh[item.label] || ''}`
   })),
+  {
+    type: 'Page',
+    typeZh: '页面',
+    title: 'Lab',
+    titleZh: '杂物间',
+    description: 'Optional experiments, visual toys, maps, and ideas kept away from the main navigation.',
+    descriptionZh: '收纳实验、可视化、小工具和不必占据主导航的新奇想法。',
+    href: withBase('/lab'),
+    keywords: 'lab attic experiments graph map sandbox visitor 杂物间 实验 图谱 地图 沙盒'
+  },
   {
     type: 'Papers',
     typeZh: '论文',
@@ -141,7 +149,7 @@ const commandItems = [
           </button>
 
           <div class="sidebar-bottom">
-            <span class="sidebar-small">Research · Notes</span>
+            <a class="sidebar-lab-link" href={withBase('/lab')}>Lab</a>
             <div class="sidebar-settings">
               <UiLanguageToggle />
               <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Toggle light and dark theme" title="Toggle light and dark theme">◐</button>
