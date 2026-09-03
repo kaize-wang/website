@@ -79,6 +79,10 @@ const {
   const toolbox = document.querySelector('.article-toolbox');
   if (!source || !divider || !frame || !empty || !input || !articleWrap || !layout || !toolbox) return;
 
+  const firstArticleChild = layout.firstElementChild;
+  layout.insertBefore(source, firstArticleChild);
+  layout.insertBefore(divider, firstArticleChild);
+
   const i18n = {
     reader: ['Reader', '阅读器'],
     exitReader: ['Exit Reader', '退出阅读器'],
@@ -105,7 +109,6 @@ const {
   let restored = false;
   let restorePromise = null;
   let pendingPrintedPage = null;
-  let lastMarker = null;
   let savedWindowY = 0;
 
   const openDb = () => new Promise((resolve, reject) => {
@@ -333,7 +336,6 @@ const {
         button.textContent = `p. ${printed}`;
         button.title = `Open source at p. ${printed}`;
         button.addEventListener('click', async () => {
-          lastMarker = button;
           await openReader('source', button);
           jumpToPrintedPage(printed);
           if (!currentBlobUrl) {
