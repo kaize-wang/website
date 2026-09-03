@@ -40,7 +40,7 @@ featured: true
 
 ## 为什么这篇论文值得反复读
 
-这篇文章面对的核心情形很直接：企业既要满足新产品需求，又要为保修期内失效的产品提供 replacement。后者并不是一个与历史无关的外生需求，因为它取决于当前仍处于保修期内的产品数量及其年龄结构。[Huang et al. (2008)](#ref-huang2008)
+这篇文章面对的核心情形很直接：企业既要满足新产品需求，又要为保修期内失效的产品提供 replacement。后者并不是一个与历史无关的外生需求，因为它取决于当前仍处于保修期内的产品数量及其年龄结构。[Huang et al. (2008)](#ref-huang2008) :source[1441]
 
 这件事对我真正重要的地方，不只是“多了一类需求”，而是：**过去卖出去的东西，会通过 warranty population 继续影响未来库存决策。** 因此，信息结构本身就是模型的一部分。
 
@@ -52,7 +52,7 @@ featured: true
 > [!notation id=warranty-state] Reading notation
 > 在这篇示例笔记里，我用 \(w_t\) 表示第 \(t\) 期不同 warranty ages 上仍在保的产品数量。它是为了组织阅读而采用的记法，不是在改写论文的原始符号系统。
 
-论文用向量 \(w\) 表示不同 warranty ages 上仍在保的产品数量。为了阅读时更直观，我会把某一期的状态示意性地写成
+论文用向量 \(w\) 表示不同 warranty ages 上仍在保的产品数量。为了阅读时更直观，我会把某一期的状态示意性地写成 :source[1443]
 
 $$
 w_t=(w_{t,1},w_{t,2},\ldots,w_{t,L}).
@@ -79,7 +79,7 @@ $$
 ## 结构性结果应该怎样记
 
 > [!theorem id=w-dependent-base-stock] Structural result reported in Huang et al. (2008)
-> 论文证明了一个 \(w\)-dependent base-stock ordering policy：补货目标并不是固定常数，而是当前 warranty-age vector \(w\) 的函数。
+> 论文证明了一个 \(w\)-dependent base-stock ordering policy：补货目标并不是固定常数，而是当前 warranty-age vector \(w\) 的函数。 :source[1446]
 
 [[thm:w-dependent-base-stock]] 是这里最值得带走的结构性结论。换句话说，在保产品的年龄结构会进入补货目标。[Huang et al. (2008)](#ref-huang2008)
 
@@ -87,7 +87,7 @@ $$
 
 > **状态信息改变了目标库存位置，因此 inventory policy 与 warranty information 不能完全分开设计。**
 
-论文进一步讨论了新产品需求同分布的特殊情形，并给出相应 stationary policy 的结果。数值研究中，作者还报告：与忽略 warranty demand 的策略相比，\(w\)-dependent policy 的期望成本平均改善约 69%；拥有 warranty-age information 平均带来约 4% 的进一步改善。这里的数字属于论文给定实验设定下的 computational findings，不应脱离论文环境单独外推。
+论文进一步讨论了新产品需求同分布的特殊情形，并给出相应 stationary policy 的结果。数值研究中，作者还报告：与忽略 warranty demand 的策略相比，\(w\)-dependent policy 的期望成本平均改善约 69%；拥有 warranty-age information 平均带来约 4% 的进一步改善。这里的数字属于论文给定实验设定下的 computational findings，不应脱离论文环境单独外推。 :source[1442]
 
 ## 我希望 Paper Reading 固定回答的四个问题
 
@@ -99,7 +99,7 @@ $$
 4. **Open question**：如果把某个关键假设拿掉，最先坏掉的是什么？
 
 > [!assumption id=independent-failures] Paper assumption highlighted for reading
-> 论文的 warranty failure 机制采用独立 Bernoulli trials。这里把它单独标成 Assumption，是为了提醒自己：这是一个会直接影响 replacement-demand dependence structure 的建模选择。
+> 论文的 warranty failure 机制采用独立 Bernoulli trials。这里把它单独标成 Assumption，是为了提醒自己：这是一个会直接影响 replacement-demand dependence structure 的建模选择。 :source[1452]
 
 对这篇文章而言，第四问尤其值得继续保留。作者自己指出，现实中可能出现由装配缺陷或零部件问题导致的批量相关失效；这会要求更一般的 warranty returns model。[Huang et al. (2008)](#ref-huang2008) 因此，[[assumption:independent-failures]] 正是一个很自然的“如果拿掉会怎样”的入口。
 
