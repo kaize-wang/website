@@ -23,11 +23,9 @@ const ideas = (await getCollection('ideas', ({ data }) => !data.draft))
 const areaZh: Record<string, string> = { Research:'研究', Build:'构建', Life:'生活', Writing:'写作', Learning:'学习' };
 const stageZh: Record<string, string> = { Spark:'灵感', Exploring:'酝酿中', Active:'推进中', Realized:'已落地', Parked:'已搁置' };
 const githubUsername = site.github?.split('/').filter(Boolean).pop() || 'kaize-wang';
-const githubHeatmapLight = `https://ghchart.xqsit94.in/light:7d2f2f/${githubUsername}`;
-const githubHeatmapDark = `https://ghchart.xqsit94.in/dark:d4938d/${githubUsername}`;
 ---
 <BaseLayout title={site.title} active="Home">
-  <main class="site-shell">
+  <main class="site-shell home-page">
     <div class="hero-banner">
       <img src={withBase('/banner-placeholder.svg')} alt="Website banner" />
       <div class="banner-caption">{site.bannerCaption}</div>
@@ -101,12 +99,33 @@ const githubHeatmapDark = `https://ghchart.xqsit94.in/dark:d4938d/${githubUserna
           <h2 id="github-activity-title"><span class="ui-copy-en">GitHub Activity</span><span class="ui-copy-zh">GitHub 更新热图</span></h2>
           <a class="section-kicker" href={site.github}><span class="ui-copy-en">View profile →</span><span class="ui-copy-zh">查看主页 →</span></a>
         </div>
-        <a class="github-activity-card" href={site.github} aria-label={`View ${site.fullName}'s GitHub profile`}>
-          <div class="github-activity-chart-scroll">
-            <img class="github-activity-chart github-activity-chart-light" data-github-heatmap data-github-heatmap-base={githubHeatmapLight} src={githubHeatmapLight} alt={`${site.fullName}'s GitHub contribution chart`} loading="lazy" />
-            <img class="github-activity-chart github-activity-chart-dark" data-github-heatmap data-github-heatmap-base={githubHeatmapDark} src={githubHeatmapDark} alt={`${site.fullName}'s GitHub contribution chart in dark mode`} loading="lazy" />
+        <a class="github-activity-card github-calendar-card" href={site.github} aria-label={`View ${site.fullName}'s GitHub profile`}>
+          <div class="github-calendar" data-github-calendar data-github-username={githubUsername}>
+            <div class="github-calendar-head">
+              <span data-github-calendar-total><span class="ui-copy-en">Loading contribution data…</span><span class="ui-copy-zh">正在读取贡献数据……</span></span>
+              <small><span class="ui-copy-en">GitHub profile data · site-styled</span><span class="ui-copy-zh">GitHub 主页数据 · 本站样式</span></small>
+            </div>
+            <div class="github-calendar-scroll">
+              <div class="github-calendar-canvas" data-github-calendar-canvas aria-label="GitHub contribution calendar">
+                <div class="github-calendar-months" data-github-calendar-months></div>
+                <div class="github-calendar-weekdays" aria-hidden="true">
+                  <span style="grid-row:2">Mon</span>
+                  <span style="grid-row:4">Wed</span>
+                  <span style="grid-row:6">Fri</span>
+                </div>
+                <div class="github-calendar-grid" data-github-calendar-grid></div>
+              </div>
+            </div>
+            <div class="github-calendar-foot">
+              <span data-github-calendar-freshness><span class="ui-copy-en">Contribution levels follow GitHub's public profile data.</span><span class="ui-copy-zh">贡献等级跟随 GitHub 公开主页数据。</span></span>
+              <span class="github-calendar-legend" aria-label="Contribution intensity legend">
+                <small><span class="ui-copy-en">Less</span><span class="ui-copy-zh">少</span></small>
+                <i data-level="0"></i><i data-level="1"></i><i data-level="2"></i><i data-level="3"></i><i data-level="4"></i>
+                <small><span class="ui-copy-en">More</span><span class="ui-copy-zh">多</span></small>
+              </span>
+            </div>
           </div>
-          <span class="github-activity-note"><span class="ui-copy-en">Public contribution activity over the past year · refreshed hourly.</span><span class="ui-copy-zh">过去一年的公开 GitHub 贡献活动 · 每小时刷新。</span></span>
+          <span class="github-activity-note"><span class="ui-copy-en">Past-year public contributions · source refreshed about hourly.</span><span class="ui-copy-zh">过去一年的公开贡献 · 数据源约每小时刷新。</span></span>
         </a>
       </section>
     )}
@@ -117,28 +136,86 @@ const githubHeatmapDark = `https://ghchart.xqsit94.in/dark:d4938d/${githubUserna
 
   <script is:inline>
     (() => {
-      const heatmaps = [...document.querySelectorAll('[data-github-heatmap]')];
-      if (!heatmaps.length) return;
-      let lastBucket = '';
-      const refresh = () => {
-        const now = new Date();
-        const bucket = [
-          now.getUTCFullYear(),
-          String(now.getUTCMonth() + 1).padStart(2, '0'),
-          String(now.getUTCDate()).padStart(2, '0'),
-          String(now.getUTCHours()).padStart(2, '0')
-        ].join('');
-        if (bucket === lastBucket) return;
-        lastBucket = bucket;
-        heatmaps.forEach(image => {
-          const base = image.dataset.githubHeatmapBase;
-          if (!base) return;
-          image.src = `${base}?v=${bucket}`;
+      const calendar = document.querySelector('[data-github-calendar]');
+      if (!calendar) return;
+      const username = calendar.dataset.githubUsername;
+      const grid = calendar.querySelector('[data-github-calendar-grid]');
+      const months = calendar.querySelector('[data-github-calendar-months]');
+      const totalNode = calendar.querySelector('[data-github-calendar-total]');
+      const freshness = calendar.querySelector('[data-github-calendar-freshness]');
+      let contributions = null;
+      let total = 0;
+
+      const language = () => window.__kaizeUi?.language === 'zh' ? 'zh' : 'en';
+      const t = (en, zh) => language() === 'zh' ? zh : en;
+      const parseDate = value => new Date(`${value}T00:00:00Z`);
+
+      const render = () => {
+        if (!contributions?.length || !grid || !months) return;
+        grid.replaceChildren();
+        months.replaceChildren();
+
+        const first = parseDate(contributions[0].date);
+        const offset = first.getUTCDay();
+        const weeks = Math.ceil((offset + contributions.length) / 7);
+        calendar.style.setProperty('--github-weeks', String(weeks));
+        calendar.style.setProperty('--github-grid-width', `${Math.max(680, weeks * 13 - 3)}px`);
+        grid.style.gridTemplateColumns = `repeat(${weeks}, 10px)`;
+        months.style.gridTemplateColumns = `repeat(${weeks}, 10px)`;
+
+        let lastMonth = -1;
+        contributions.forEach((entry, index) => {
+          const date = parseDate(entry.date);
+          const absolute = offset + index;
+          const column = Math.floor(absolute / 7) + 1;
+          const row = (absolute % 7) + 1;
+          const cell = document.createElement('span');
+          const count = Number(entry.count || 0);
+          const level = Math.max(0, Math.min(4, Number(entry.level || 0)));
+          cell.className = 'github-calendar-cell';
+          cell.dataset.level = String(level);
+          cell.style.gridColumn = String(column);
+          cell.style.gridRow = String(row);
+          cell.title = t(`${count} contribution${count === 1 ? '' : 's'} on ${entry.date}`, `${entry.date} · ${count} 次贡献`);
+          cell.setAttribute('aria-label', cell.title);
+          grid.appendChild(cell);
+
+          const month = date.getUTCMonth();
+          if (month !== lastMonth && (index === 0 || date.getUTCDate() <= 7)) {
+            lastMonth = month;
+            const label = document.createElement('span');
+            label.style.gridColumn = `${column} / span 4`;
+            label.textContent = new Intl.DateTimeFormat(language() === 'zh' ? 'zh-CN' : 'en', { month: 'short', timeZone: 'UTC' }).format(date);
+            months.appendChild(label);
+          }
         });
+
+        if (totalNode) totalNode.textContent = t(`${total.toLocaleString()} contributions in the past year`, `过去一年 ${total.toLocaleString()} 次贡献`);
+        if (freshness) freshness.textContent = t('Contribution levels follow GitHub public profile data · refreshed about hourly.', '贡献等级跟随 GitHub 公开主页数据 · 约每小时刷新。');
+        calendar.classList.add('is-ready');
+        calendar.classList.remove('is-error');
       };
-      refresh();
-      document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
-      window.setInterval(refresh, 5 * 60 * 1000);
+
+      const load = async () => {
+        try {
+          const response = await fetch(`https://github-contributions-api.jogruber.de/v4/${encodeURIComponent(username)}?y=last`, { cache: 'no-store' });
+          if (!response.ok) throw new Error(`GitHub contribution data ${response.status}`);
+          const data = await response.json();
+          contributions = Array.isArray(data?.contributions) ? data.contributions : [];
+          total = Number(data?.total?.lastYear);
+          if (!Number.isFinite(total)) total = contributions.reduce((sum, item) => sum + Number(item.count || 0), 0);
+          if (!contributions.length) throw new Error('No contribution data');
+          render();
+        } catch (error) {
+          calendar.classList.add('is-error');
+          if (totalNode) totalNode.textContent = t('GitHub calendar temporarily unavailable', 'GitHub 热图暂时无法读取');
+          if (freshness) freshness.textContent = t('Open the GitHub profile to see the current contribution graph.', '可以点击打开 GitHub 主页查看当前贡献图。');
+          console.warn('[github-calendar]', error);
+        }
+      };
+
+      document.addEventListener('kaize:ui-language', render);
+      load();
     })();
   </script>
 </BaseLayout>
