@@ -1,0 +1,337 @@
+/* Surface polish v2 — carry the Ideas Studio paper, hairline and light language across the public site. */
+
+.home-page,
+.research-overview-page,
+.notes-overview-page,
+.lab-page {
+  --surface-glow: color-mix(in srgb, var(--accent) 6%, transparent);
+  --surface-glow-strong: color-mix(in srgb, var(--accent) 11%, transparent);
+  --surface-hairline: color-mix(in srgb, var(--line) 84%, transparent);
+}
+
+/* One visual frame on Home. Section content should land on the same left and right edges. */
+.home-page > .hero-banner,
+.home-page > .profile-grid,
+.home-page > .section,
+.home-page > [data-visitor-analytics] {
+  width: 100%;
+  min-width: 0;
+}
+.home-page > .section > * { min-width: 0; }
+.home-page .section-head {
+  position: relative;
+  min-height: 38px;
+  margin-bottom: 25px;
+}
+.home-page .section-head h2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.home-page .section-head h2::before {
+  content: '';
+  display: inline-block;
+  width: 18px;
+  height: 1px;
+  background: color-mix(in srgb, var(--accent) 46%, var(--line));
+}
+.home-page .current-focus-card,
+.home-page .github-activity-card,
+.home-page .visitor-summary-card {
+  width: 100%;
+  max-width: none;
+  margin-right: 0;
+  margin-left: 0;
+}
+.home-page .current-focus-card {
+  padding: 24px 25px 23px;
+  background:
+    radial-gradient(ellipse 260px 125px at 100% 0%, var(--surface-glow), transparent 76%),
+    var(--paper);
+}
+.home-page .current-focus-card > strong {
+  font-size: 23px;
+  letter-spacing: -.018em;
+}
+.home-page .home-ideas-preview {
+  border-top-color: var(--surface-hairline);
+  border-bottom-color: var(--surface-hairline);
+}
+.home-page .home-idea-row {
+  padding-top: 21px;
+  padding-bottom: 21px;
+}
+.home-page .home-idea-row strong { letter-spacing: -.012em; }
+.home-page .note-list {
+  border-top: 1px solid var(--surface-hairline);
+}
+.home-page .note-row:first-child { border-top: 0; }
+
+/* Contribution calendar: the outer frame and the grid now share the Home width. */
+.github-activity-section,
+.github-calendar-card,
+.github-calendar,
+.github-calendar-scroll {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+}
+.github-calendar-card {
+  padding: 23px 24px 17px;
+  border-color: var(--surface-hairline);
+  background:
+    radial-gradient(ellipse 360px 155px at 100% 0%, var(--surface-glow-strong), transparent 78%),
+    var(--paper);
+}
+.github-calendar-scroll {
+  overflow-x: auto;
+  padding: 5px 0 7px;
+}
+.github-calendar-canvas {
+  width: max(100%, calc(var(--github-grid-width, 680px) + 34px));
+  min-width: calc(var(--github-grid-width, 680px) + 34px);
+}
+.github-calendar-grid,
+.github-calendar-months {
+  width: var(--github-grid-width, 680px);
+}
+.github-calendar-grid {
+  grid-template-rows: repeat(7, var(--github-cell-size, 10px));
+  column-gap: var(--github-cell-gap, 3px);
+  row-gap: var(--github-cell-gap, 3px);
+  min-height: calc(7 * var(--github-cell-size, 10px) + 6 * var(--github-cell-gap, 3px));
+}
+.github-calendar-months {
+  column-gap: var(--github-cell-gap, 3px);
+}
+.github-calendar-cell {
+  width: var(--github-cell-size, 10px);
+  height: var(--github-cell-size, 10px);
+  border-radius: max(1.5px, calc(var(--github-cell-size, 10px) * .12));
+}
+.github-calendar-weekdays {
+  grid-template-rows: repeat(7, var(--github-cell-size, 10px));
+  row-gap: var(--github-cell-gap, 3px);
+}
+.github-calendar-head {
+  margin-bottom: 16px;
+  padding-bottom: 11px;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 62%, transparent);
+}
+.github-calendar-head > span { font-size: 16px; }
+.github-calendar-head small {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.github-calendar-head small::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border: 1px solid color-mix(in srgb, var(--accent) 54%, var(--line));
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+}
+.github-activity-note {
+  margin-top: 11px;
+  padding-top: 1px;
+}
+
+/* Research overview: three navigational objects rather than three generic boxes. */
+.research-overview-page .research-grid {
+  gap: 1px;
+  border: 1px solid var(--line);
+  background: var(--line);
+}
+.research-overview-page .research-area-card {
+  min-height: 292px;
+  border: 0;
+  padding: 25px 24px 22px;
+  isolation: isolate;
+}
+.research-overview-page .research-area-card::after {
+  content: '';
+  position: absolute;
+  right: -26px;
+  bottom: -48px;
+  z-index: -1;
+  width: 190px;
+  height: 120px;
+  opacity: 0;
+  background: radial-gradient(circle at center, color-mix(in srgb, var(--accent) 19%, transparent) 0 1px, transparent 1.4px) 0 0 / 16px 16px;
+  mask-image: linear-gradient(90deg, transparent, #000 40%);
+  transition: opacity .18s ease;
+}
+.research-overview-page .research-area-card:hover::after { opacity: .42; }
+.research-overview-page .research-area-card:hover {
+  z-index: 2;
+  transform: translateY(-2px);
+  border-color: transparent;
+  box-shadow: 0 15px 34px rgba(38, 33, 29, .06);
+}
+.research-overview-page .research-card-kicker > span {
+  display: inline-grid;
+  place-items: center;
+  width: 29px;
+  height: 29px;
+  border: 1px solid var(--surface-hairline);
+  background: color-mix(in srgb, var(--paper) 82%, transparent);
+  color: color-mix(in srgb, var(--muted) 75%, var(--text));
+  font: 650 9px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.research-overview-page .research-area-card:hover .research-card-kicker > span {
+  border-color: color-mix(in srgb, var(--accent) 46%, var(--line));
+  color: var(--accent);
+}
+.research-overview-page .research-card.research-area-card h3 {
+  margin-top: 34px;
+  font-size: 27px;
+}
+.research-overview-page .research-card.research-area-card p {
+  font-size: 12px;
+  line-height: 1.72;
+}
+.research-overview-page .research-card-open {
+  align-items: flex-end;
+  padding-top: 25px;
+  border-top: 1px solid color-mix(in srgb, var(--line) 68%, transparent);
+}
+.research-overview-page .research-card-open > span:first-child {
+  max-width: 210px;
+  line-height: 1.5;
+}
+.research-overview-page .research-card-open b {
+  flex: none;
+  color: var(--text);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .04em;
+}
+.research-overview-page .research-area-card:hover .research-card-open b { color: var(--accent); }
+.research-overview-page .research-constellation {
+  width: min(820px, 100%);
+  margin-top: 36px;
+}
+
+/* Primer pages: make long explanatory pages feel like one continuous research atlas. */
+.research-primer-page .primer-flow {
+  margin-bottom: 5px;
+}
+.research-primer-page .primer-section {
+  isolation: isolate;
+}
+.research-primer-page .primer-section:nth-of-type(even)::after {
+  right: auto;
+  left: -5%;
+  background: radial-gradient(ellipse at top left, var(--research-glow), transparent 73%);
+}
+.research-primer-page .primer-section-index {
+  box-shadow: 0 0 0 5px var(--bg), 0 0 0 6px color-mix(in srgb, var(--accent) 5%, transparent);
+}
+.research-primer-page .primer-concept,
+.research-primer-page .primer-equation {
+  transition: background .16s ease, border-color .16s ease;
+}
+.research-primer-page .primer-concept:hover,
+.research-primer-page .primer-equation:hover {
+  background:
+    radial-gradient(ellipse 190px 105px at 100% 0%, var(--research-glow-strong), transparent 75%),
+    var(--paper);
+}
+.research-primer-page .primer-related a {
+  position: relative;
+  overflow: hidden;
+}
+.research-primer-page .primer-related a::after {
+  content: '↗';
+  position: absolute;
+  right: 17px;
+  top: 16px;
+  color: color-mix(in srgb, var(--muted) 38%, transparent);
+  transition: color .16s ease, transform .16s ease;
+}
+.research-primer-page .primer-related a:hover::after {
+  color: var(--accent);
+  transform: translate(2px, -2px);
+}
+
+/* Notes: same index language, less dashboard feeling. */
+.notes-overview-page .note-shelf-guide {
+  gap: 1px;
+  margin-top: 3px;
+  border-color: var(--surface-hairline);
+}
+.notes-overview-page .note-shelf-card {
+  min-height: 176px;
+  padding: 49px 20px 20px;
+  background:
+    radial-gradient(ellipse 170px 90px at 100% 0%, var(--surface-glow), transparent 76%),
+    var(--paper);
+}
+.notes-overview-page .note-shelf-card:hover {
+  background:
+    radial-gradient(ellipse 210px 112px at 100% 0%, var(--surface-glow-strong), transparent 76%),
+    var(--paper);
+}
+.notes-overview-page .note-shelf-card > strong {
+  font-size: 17px;
+  letter-spacing: -.012em;
+}
+.notes-overview-page .note-shelf-card > p {
+  max-width: 235px;
+  font-size: 11px;
+  line-height: 1.62;
+}
+.notes-overview-page .note-shelf-section .note-list {
+  border-top: 1px solid var(--surface-hairline);
+}
+.notes-overview-page .note-shelf-section .note-row:first-child { border-top: 0; }
+
+/* Lab: a slightly brighter attic, still clearly part of the same site. */
+.lab-page .lab-grid {
+  box-shadow: 0 18px 45px rgba(38, 33, 29, .03);
+}
+.lab-page .lab-grid .explore-card {
+  min-height: 202px;
+  padding: 26px 23px 23px;
+  background:
+    radial-gradient(ellipse 200px 115px at 100% 0%, var(--surface-glow), transparent 76%),
+    var(--paper);
+}
+.lab-page .lab-grid .explore-card:hover {
+  background:
+    radial-gradient(ellipse 245px 135px at 100% 0%, var(--surface-glow-strong), transparent 77%),
+    var(--paper);
+}
+.lab-page .lab-grid .explore-card strong {
+  font-size: 24px;
+  line-height: 1.25;
+}
+.lab-page .lab-grid .explore-card p {
+  font-size: 11px;
+  line-height: 1.65;
+}
+
+@media (max-width: 1040px) {
+  .research-overview-page .research-grid { grid-template-columns: 1fr; }
+  .research-overview-page .research-area-card { min-height: 225px; }
+}
+
+@media (max-width: 760px) {
+  .home-page .section-head h2::before { width: 13px; }
+  .github-calendar-card { padding: 18px 17px 14px; }
+  .research-overview-page .research-area-card { min-height: 0; }
+  .research-overview-page .research-card-open { align-items: center; }
+}
+
+@media (max-width: 560px) {
+  .github-calendar-head small { display: none; }
+  .notes-overview-page .note-shelf-card { min-height: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .research-overview-page .research-area-card,
+  .research-primer-page .primer-concept,
+  .research-primer-page .primer-equation,
+  .lab-page .lab-grid .explore-card { transition: none; }
+}
