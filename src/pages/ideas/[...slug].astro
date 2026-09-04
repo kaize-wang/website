@@ -13,53 +13,71 @@ export async function getStaticPaths() {
 const { idea } = Astro.props;
 const { Content } = await render(idea);
 const updated = idea.data.updatedDate ?? idea.data.createdDate;
-const formatDate = (date: Date) => new Intl.DateTimeFormat('en', { year: 'numeric', month: 'short', day: 'numeric' }).format(date);
+const formatDateEn = (date: Date) => new Intl.DateTimeFormat('en', { year: 'numeric', month: 'short', day: 'numeric' }).format(date);
+const formatDateZh = (date: Date) => new Intl.DateTimeFormat('zh-CN', { year: 'numeric', month: 'numeric', day: 'numeric' }).format(date);
 const total = idea.data.milestones.length;
 const done = idea.data.milestones.filter(item => item.done).length;
 const pct = total ? Math.round(done / total * 100) : 0;
+const stageZh: Record<string, string> = { Active: '推进中', Exploring: '酝酿中', Spark: '灵感', Realized: '已落地', Parked: '已搁置' };
+const areaZh: Record<string, string> = { Research: '研究', Build: '构建', Life: '生活', Writing: '写作', Learning: '学习' };
 ---
-<BaseLayout title={idea.data.title}>
+<BaseLayout title={idea.data.title} active="Ideas">
   <main class="idea-detail-shell">
     <header>
-      <div class="eyebrow">{idea.data.area} · {idea.data.stage}</div>
-      <h1>{idea.data.title}</h1>
-      <p class="idea-detail-summary">{idea.data.summary}</p>
+      <div class="eyebrow"><span class="ui-copy-en">{idea.data.area} · {idea.data.stage}</span><span class="ui-copy-zh">{areaZh[idea.data.area]} · {stageZh[idea.data.stage]}</span></div>
+      <h1><span class="ui-copy-en">{idea.data.title}</span><span class="ui-copy-zh">{idea.data.titleZh || idea.data.title}</span></h1>
+      <p class="idea-detail-summary"><span class="ui-copy-en">{idea.data.summary}</span><span class="ui-copy-zh">{idea.data.summaryZh || idea.data.summary}</span></p>
       <div class="idea-detail-meta">
-        <span><span class="ui-copy-en">Created</span><span class="ui-copy-zh">创建于</span> {formatDate(idea.data.createdDate)}</span>
-        <span><span class="ui-copy-en">Updated</span><span class="ui-copy-zh">更新于</span> {formatDate(updated)}</span>
+        <span><span class="ui-copy-en">Created {formatDateEn(idea.data.createdDate)}</span><span class="ui-copy-zh">创建于 {formatDateZh(idea.data.createdDate)}</span></span>
+        <span><span class="ui-copy-en">Updated {formatDateEn(updated)}</span><span class="ui-copy-zh">更新于 {formatDateZh(updated)}</span></span>
         {idea.data.tags.length > 0 && <span>{idea.data.tags.join(' · ')}</span>}
       </div>
     </header>
 
     <div class="idea-detail-grid">
       <div class="idea-detail-main">
+        <div class="idea-detail-content-label"><span class="ui-copy-en">Working note</span><span class="ui-copy-zh">工作说明</span></div>
         <div class="prose"><Content /></div>
 
         {idea.data.progress.length > 0 && (
           <section class="idea-progress-log" aria-labelledby="idea-progress-log-title">
             <h2 id="idea-progress-log-title"><span class="ui-copy-en">Progress log</span><span class="ui-copy-zh">推进记录</span></h2>
             {[...idea.data.progress].sort((a,b) => b.date.valueOf() - a.date.valueOf()).map(entry => (
-              <div class="idea-progress-entry"><time>{formatDate(entry.date)}</time><p>{entry.note}</p></div>
+              <div class="idea-progress-entry">
+                <time><span class="ui-copy-en">{formatDateEn(entry.date)}</span><span class="ui-copy-zh">{formatDateZh(entry.date)}</span></time>
+                <p><span class="ui-copy-en">{entry.note}</span><span class="ui-copy-zh">{entry.noteZh || entry.note}</span></p>
+              </div>
             ))}
           </section>
         )}
 
-        <div class="backline"><a href={withBase('/ideas')}>← <span class="ui-copy-en">Back to Ideas</span><span class="ui-copy-zh">返回 Ideas</span></a></div>
+        <div class="backline"><a href={withBase('/ideas')}>← <span class="ui-copy-en">Back to Ideas</span><span class="ui-copy-zh">返回想法</span></a></div>
       </div>
 
       <aside class="idea-detail-side">
         {idea.data.nextAction && (
-          <section class="idea-side-card"><span>Next</span><strong>{idea.data.nextAction}</strong></section>
+          <section class="idea-side-card">
+            <span><span class="ui-copy-en">Next</span><span class="ui-copy-zh">下一步</span></span>
+            <strong><span class="ui-copy-en">{idea.data.nextAction}</span><span class="ui-copy-zh">{idea.data.nextActionZh || idea.data.nextAction}</span></strong>
+          </section>
         )}
         {idea.data.whyNow && (
-          <section class="idea-side-card"><span><span class="ui-copy-en">Why now</span><span class="ui-copy-zh">为什么现在做</span></span><strong>{idea.data.whyNow}</strong></section>
+          <section class="idea-side-card">
+            <span><span class="ui-copy-en">Why now</span><span class="ui-copy-zh">为什么现在做</span></span>
+            <strong><span class="ui-copy-en">{idea.data.whyNow}</span><span class="ui-copy-zh">{idea.data.whyNowZh || idea.data.whyNow}</span></strong>
+          </section>
         )}
         {total > 0 && (
           <section class="idea-side-card">
-            <span><span class="ui-copy-en">Milestones</span><span class="ui-copy-zh">里程碑</span> · {done}/{total}</span>
+            <span><span class="ui-copy-en">Milestones · {done}/{total}</span><span class="ui-copy-zh">里程碑 · {done}/{total}</span></span>
             <div class="idea-progress-line" style="margin:8px 0 13px"><span style={`width:${pct}%`}></span></div>
             <ul class="idea-milestones">
-              {idea.data.milestones.map(item => <li class={item.done ? 'done' : ''}><span class="idea-milestones-mark">{item.done ? '✓' : '○'}</span><span>{item.text}</span></li>)}
+              {idea.data.milestones.map(item => (
+                <li class={item.done ? 'done' : ''}>
+                  <span class="idea-milestones-mark">{item.done ? '✓' : '○'}</span>
+                  <span><span class="ui-copy-en">{item.text}</span><span class="ui-copy-zh">{item.textZh || item.text}</span></span>
+                </li>
+              ))}
             </ul>
           </section>
         )}
