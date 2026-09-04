@@ -35,7 +35,17 @@ const githubUsername = site.github?.split('/').filter(Boolean).pop() || 'kaize-w
       <div><img class="avatar avatar-reactive" data-avatar-reactive src={site.avatar} alt={`${site.fullName} profile photo`} /></div>
       <div>
         <div class="eyebrow">Academic homepage · research notes</div>
-        <h1>{site.fullName}</h1>
+        <h1>
+          {site.fullName}
+          {site.chineseName && (
+            <span
+              lang="zh-CN"
+              style="margin-left:.42em;font-family:'Songti SC','STSong','SimSun',serif;font-size:.42em;font-weight:400;letter-spacing:.06em;color:var(--muted);vertical-align:baseline;"
+            >
+              {site.chineseName}
+            </span>
+          )}
+        </h1>
         <p class="role">{site.role}</p>
         <p class="affiliation">{site.affiliation} · {site.location}</p>
         <div class="profile-links">
