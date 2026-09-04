@@ -21,6 +21,7 @@ routePath = routePath.replace(/\/+$/, '') || '/';
 const isHome = routePath === '/';
 const isArticle = routePath.startsWith('/notes/');
 const isIdeaDetail = routePath.startsWith('/ideas/');
+const isResearchDetail = routePath.startsWith('/research/');
 const labRoute = ['/graph', '/literature', '/questions', '/sandbox', '/explore'].includes(routePath);
 const noteUtilityRoute =
   routePath === '/archive' ||
@@ -33,13 +34,15 @@ const contextBack = isHome
     ? { label: 'Notes', href: '/notes' }
     : isIdeaDetail
       ? { label: 'Ideas', href: '/ideas' }
-      : routePath === '/papers'
-        ? { label: 'Notes', href: '/notes' }
-        : labRoute
-          ? { label: 'Lab', href: '/lab' }
-          : noteUtilityRoute
-            ? { label: 'Notes', href: '/notes' }
-            : { label: 'Home', href: '/' };
+      : isResearchDetail
+        ? { label: 'Research', href: '/research' }
+        : routePath === '/papers'
+          ? { label: 'Notes', href: '/notes' }
+          : labRoute
+            ? { label: 'Lab', href: '/lab' }
+            : noteUtilityRoute
+              ? { label: 'Notes', href: '/notes' }
+              : { label: 'Home', href: '/' };
 
 const navZh: Record<string, string> = {
   Home: '首页',
