@@ -88,13 +88,16 @@ const areaRoutes = [
       </div>
       <div class="research-grid">
         {areaRoutes.map(area => (
-          <a class="research-card research-area-card" href={withBase(`/research/${area.slug}`)}>
+          <a class="research-card research-area-card" href={withBase(`/research/${area.slug}`)} aria-label={`Open ${area.name} field primer`}>
             <div class="research-card-kicker"><span>{area.index}</span><i></i></div>
             <h3><span class="ui-copy-en">{area.name}</span><span class="ui-copy-zh">{area.nameZh}</span></h3>
             <p><span class="ui-copy-en">{area.description}</span><span class="ui-copy-zh">{area.descriptionZh}</span></p>
             <span class="research-card-open">
-              <span class="ui-copy-en">{area.label}</span>
-              <span class="ui-copy-zh">{area.labelZh}</span>
+              <span>
+                <span class="ui-copy-en">{area.label}</span>
+                <span class="ui-copy-zh">{area.labelZh}</span>
+              </span>
+              <b><span class="ui-copy-en">Open primer</span><span class="ui-copy-zh">进入科普页</span></b>
             </span>
           </a>
         ))}
