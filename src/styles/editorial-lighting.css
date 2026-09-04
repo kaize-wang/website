@@ -1,0 +1,246 @@
+/* Shared editorial lighting — extends the Ideas Studio art direction without turning every page into a dashboard. */
+
+:root {
+  --editorial-glow: color-mix(in srgb, var(--accent) 5%, transparent);
+  --editorial-glow-strong: color-mix(in srgb, var(--accent) 9%, transparent);
+  --editorial-hairline: color-mix(in srgb, var(--line) 86%, transparent);
+  --editorial-paper: color-mix(in srgb, var(--paper) 88%, var(--bg));
+}
+
+/* Page heroes: same quiet light source as Ideas, scaled down. */
+.site-shell:not(.ideas-studio) > .page-hero {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  margin-bottom: 0;
+  border-bottom: 0;
+  background:
+    radial-gradient(ellipse 380px 170px at 92% 12%, var(--editorial-glow-strong), transparent 74%);
+}
+.site-shell:not(.ideas-studio) > .page-hero::before {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 1px;
+  background: linear-gradient(90deg, var(--line) 0 58%, color-mix(in srgb, var(--accent) 28%, var(--line)) 84%, var(--line));
+}
+.site-shell:not(.ideas-studio) > .page-hero::after {
+  content: '';
+  position: absolute;
+  right: -22px;
+  bottom: 5px;
+  z-index: -1;
+  width: 260px;
+  height: 92px;
+  opacity: .48;
+  background: radial-gradient(circle at 70% 35%, color-mix(in srgb, var(--accent) 18%, transparent) 0 1px, transparent 1.35px) 0 0 / 18px 18px;
+  mask-image: linear-gradient(90deg, transparent, #000 44%);
+}
+
+/* Section separators become a hairline with a soft accent light, not a hard horizontal rule. */
+.site-shell:not(.ideas-studio) > .section {
+  position: relative;
+  border-top: 0;
+  background: radial-gradient(ellipse 280px 120px at 94% 0%, var(--editorial-glow), transparent 76%);
+}
+.site-shell:not(.ideas-studio) > .section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 1px;
+  background: linear-gradient(90deg, var(--line) 0 62%, color-mix(in srgb, var(--accent) 24%, var(--line)) 86%, var(--line));
+}
+.site-shell:not(.ideas-studio) > .section-head {
+  position: relative;
+}
+.site-shell:not(.ideas-studio) .section-head h2 {
+  letter-spacing: -.018em;
+}
+.site-shell:not(.ideas-studio) .section-kicker {
+  transition: color .15s ease, transform .15s ease;
+}
+.site-shell:not(.ideas-studio) a.section-kicker:hover {
+  color: var(--accent);
+  transform: translateX(2px);
+}
+
+/* Home gets the same light source without losing its profile-first hierarchy. */
+.hero-banner {
+  position: relative;
+  isolation: isolate;
+}
+.hero-banner::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(128deg, transparent 54%, color-mix(in srgb, var(--accent) 4%, transparent));
+}
+.profile-grid {
+  position: relative;
+}
+.profile-grid::after {
+  content: '';
+  position: absolute;
+  top: -28px;
+  right: -4%;
+  z-index: -1;
+  width: 300px;
+  height: 170px;
+  background: radial-gradient(ellipse at center, var(--editorial-glow), transparent 72%);
+  pointer-events: none;
+}
+
+/* Cards remain restrained, but now share the same paper/light treatment. */
+.current-focus-card,
+.research-card,
+.note-shelf-card,
+.explore-card,
+.github-activity-card,
+.visitor-detail-card,
+.contextual-backlink-item {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 190px 100px at 100% 0%, var(--editorial-glow), transparent 75%),
+    var(--paper);
+}
+
+.research-card,
+.note-shelf-card[href],
+.explore-card,
+.github-activity-card,
+.contextual-backlink-item {
+  transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease, background .16s ease;
+}
+.research-card:hover,
+.note-shelf-card[href]:hover,
+.explore-card:hover,
+.github-activity-card:hover,
+.contextual-backlink-item:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--line));
+  box-shadow: 0 12px 30px rgba(38, 33, 29, .045);
+  background:
+    radial-gradient(ellipse 220px 120px at 100% 0%, var(--editorial-glow-strong), transparent 76%),
+    var(--paper);
+}
+
+/* Numbered research cards use the same index language as the Ideas Board. */
+.research-card .num {
+  display: inline-grid;
+  place-items: center;
+  width: 27px;
+  height: 27px;
+  border: 1px solid var(--editorial-hairline);
+  background: color-mix(in srgb, var(--paper) 74%, transparent);
+  font: 600 9px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: .03em;
+}
+.research-card h3 { margin-top: 28px; }
+
+/* Notes shelves keep their clear classification role, with a quieter stage/index feel. */
+.note-shelf-card > span {
+  width: max-content;
+  min-width: 25px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid color-mix(in srgb, var(--accent) 28%, var(--line));
+  font-size: 16px;
+}
+
+/* Lists feel like editorial rows rather than database tables. */
+.note-row,
+.paper-reading-row,
+.education-item {
+  position: relative;
+  transition: background .15s ease, padding-left .15s ease;
+}
+.note-row:hover,
+.paper-reading-row:hover,
+.education-item:hover {
+  padding-left: 7px;
+  background: linear-gradient(90deg, var(--editorial-glow), transparent 44%);
+}
+.note-title,
+.paper-reading-main h2 { transition: color .15s ease; }
+.note-row:hover .note-title,
+.paper-reading-row:hover .paper-reading-main h2 { color: var(--accent); }
+
+/* Lab keeps a little more playfulness, but with the same light discipline. */
+.lab-page .explore-card > span {
+  position: relative;
+  width: max-content;
+}
+.lab-page .explore-card > span::after {
+  content: '';
+  position: absolute;
+  right: -21px;
+  top: 50%;
+  width: 13px;
+  height: 1px;
+  background: color-mix(in srgb, var(--accent) 42%, var(--line));
+}
+.lab-surprise-button {
+  position: relative;
+  overflow: hidden;
+  transition: transform .16s ease, border-color .16s ease, background .16s ease;
+  background:
+    radial-gradient(ellipse 230px 100px at 100% 0%, var(--editorial-glow), transparent 75%),
+    var(--paper);
+}
+.lab-surprise-button:hover {
+  transform: translateY(-1px);
+  background:
+    radial-gradient(ellipse 260px 120px at 100% 0%, var(--editorial-glow-strong), transparent 76%),
+    var(--paper);
+}
+
+/* Reading-page utility separators get the same hairline treatment while the prose stays quiet. */
+.article-update-history,
+.contextual-backlinks-section,
+.backline {
+  position: relative;
+  border-top: 0;
+}
+.article-update-history::before,
+.contextual-backlinks-section::before,
+.backline::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 1px;
+  background: linear-gradient(90deg, var(--line) 0 68%, color-mix(in srgb, var(--accent) 22%, var(--line)) 90%, var(--line));
+}
+
+@media (max-width: 760px) {
+  .site-shell:not(.ideas-studio) > .page-hero {
+    background: radial-gradient(ellipse 260px 130px at 100% 8%, var(--editorial-glow), transparent 76%);
+  }
+  .site-shell:not(.ideas-studio) > .page-hero::after { display: none; }
+  .site-shell:not(.ideas-studio) > .section {
+    background: radial-gradient(ellipse 210px 100px at 100% 0%, color-mix(in srgb, var(--accent) 4%, transparent), transparent 78%);
+  }
+  .profile-grid::after { width: 210px; height: 120px; right: -8%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .research-card,
+  .note-shelf-card[href],
+  .explore-card,
+  .github-activity-card,
+  .contextual-backlink-item,
+  .note-row,
+  .paper-reading-row,
+  .education-item,
+  .lab-surprise-button,
+  .site-shell:not(.ideas-studio) .section-kicker {
+    transition: none !important;
+  }
+}
