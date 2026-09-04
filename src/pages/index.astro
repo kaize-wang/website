@@ -1,13 +1,23 @@
 ---
+import { getCollection } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import NoteList from '@/components/NoteList.astro';
 import SiteExtras from '@/components/SiteExtras.astro';
 import VisitorAnalytics from '@/components/VisitorAnalytics.astro';
+import '@/styles/ideas.css';
 import { site } from '@/site.config';
 import { getPublishedNotes } from '@/utils/notes';
 import { withBase } from '@/utils/url';
 const notes = await getPublishedNotes();
 const recent = notes.slice(0,4);
+const ideas = (await getCollection('ideas', ({ data }) => !data.draft))
+  .filter(idea => idea.data.stage === 'Active' || idea.data.featured)
+  .sort((a,b) => {
+    const stageA = a.data.stage === 'Active' ? 1 : 0;
+    const stageB = b.data.stage === 'Active' ? 1 : 0;
+    return stageB - stageA || (b.data.updatedDate ?? b.data.createdDate).valueOf() - (a.data.updatedDate ?? a.data.createdDate).valueOf();
+  })
+  .slice(0,2);
 const githubUsername = site.github?.split('/').filter(Boolean).pop() || 'kaize-wang';
 ---
 <BaseLayout title={site.title} active="Home">
@@ -45,6 +55,24 @@ const githubUsername = site.github?.split('/').filter(Boolean).pop() || 'kaize-w
         <div class="current-focus-meta"><span>inventory theory</span><span>stochastic optimization</span><span>paper reading</span></div>
       </div>
     </section>
+
+    {ideas.length > 0 && (
+      <section class="section" aria-labelledby="ideas-motion-title">
+        <div class="section-head">
+          <h2 id="ideas-motion-title"><span class="ui-copy-en">Ideas in motion</span><span class="ui-copy-zh">正在推进的想法</span></h2>
+          <a class="section-kicker" href={withBase('/ideas')}><span class="ui-copy-en">Open idea board →</span><span class="ui-copy-zh">打开想法面板 →</span></a>
+        </div>
+        <div class="home-ideas-preview">
+          {ideas.map(idea => (
+            <a class="home-idea-row" href={withBase(`/ideas/${idea.id}/`)}>
+              <div><small>{idea.data.area} · {idea.data.stage}</small><br/><strong>{idea.data.title}</strong></div>
+              <span class="home-idea-next">{idea.data.nextAction ? `Next: ${idea.data.nextAction}` : idea.data.summary}</span>
+              <span class="home-idea-arrow">→</span>
+            </a>
+          ))}
+        </div>
+      </section>
+    )}
 
     <section class="section">
       <div class="section-head">
