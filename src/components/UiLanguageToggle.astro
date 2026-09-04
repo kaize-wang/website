@@ -11,11 +11,14 @@
     ['Home', '首页'],
     ['Research', '研究'],
     ['Notes', '笔记'],
+    ['Ideas', '想法'],
+    ['Idea', '想法'],
     ['Lab', '杂物间'],
     ['Quick search', '快速搜索'],
     ['← Back to Home', '← 返回首页'],
     ['← Back to Research', '← 返回研究'],
     ['← Back to Notes', '← 返回笔记'],
+    ['← Back to Ideas', '← 返回想法'],
     ['← Back to Lab', '← 返回杂物间'],
     ['Built with Astro · writing stays in Markdown', '使用 Astro 构建 · 写作保持 Markdown'],
     ['Search kaizewang', '搜索 kaizewang'],
@@ -194,8 +197,8 @@
 
   const zoneSelector = [
     '.site-sidebar', '.context-nav-wrap', '.site-footer', '.command-palette',
-    '.hero-banner', '.profile-grid', '.current-focus-section',
-    '.page-hero', '.section-head', '.knowledge-links',
+    '.hero-banner', '.profile-grid', '.current-focus-section', '.home-ideas-preview',
+    '.page-hero', '.section-head', '.knowledge-links', '.ideas-page', '.idea-detail-shell',
     '.note-shelf-guide', '.current-focus-meta', '.lab-page .explore-grid',
     '.research-grid', '.about-copy', '.sandbox-purpose',
     '.visitor-summary-section', '.visitor-detail-section',
@@ -234,6 +237,8 @@
       if (match) return preserveSpace(value, `${match[1]} 篇论文`);
       match = text.match(/^(\d+) notes$/);
       if (match) return preserveSpace(value, `${match[1]} 篇笔记`);
+      match = text.match(/^(\d+) ideas$/);
+      if (match) return preserveSpace(value, `${match[1]} 个想法`);
       match = text.match(/^(\d+) wiki links$/);
       if (match) return preserveSpace(value, `${match[1]} 个 Wiki 链接`);
       match = text.match(/^(\d+) series$/);
@@ -253,6 +258,8 @@
       if (match) return preserveSpace(value, `${match[1]} papers`);
       match = text.match(/^(\d+) 篇笔记$/);
       if (match) return preserveSpace(value, `${match[1]} notes`);
+      match = text.match(/^(\d+) 个想法$/);
+      if (match) return preserveSpace(value, `${match[1]} ideas`);
       match = text.match(/^(\d+) 个 Wiki 链接$/);
       if (match) return preserveSpace(value, `${match[1]} wiki links`);
       match = text.match(/^(\d+) 个系列$/);
