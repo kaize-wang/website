@@ -2,109 +2,171 @@
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import SiteExtras from '@/components/SiteExtras.astro';
 import '@/styles/research-primer.css';
+import '@/styles/research-field-guide.css';
 import { withBase } from '@/utils/url';
 ---
 <BaseLayout title="Stochastic Optimization" active="Research">
-  <main class="site-shell research-primer-page">
+  <main class="site-shell research-primer-page field-guide-page">
     <header class="page-hero">
-      <div class="eyebrow"><span class="ui-copy-en">Research primer · 02</span><span class="ui-copy-zh">研究科普 · 02</span></div>
+      <div class="eyebrow"><span class="ui-copy-en">Field guide · 02</span><span class="ui-copy-zh">领域导览 · 02</span></div>
       <h1>Stochastic Optimization</h1>
-      <p class="research-primer-lede">
-        <span class="ui-copy-en">Stochastic optimization is about choosing actions before uncertainty is fully resolved. The central problem is not predicting the future perfectly, but making decisions that remain good across many possible futures.</span>
-        <span class="ui-copy-zh">随机优化研究的是：当未来还没有完全揭晓时，我们该怎样先做决策。核心不是把未来预测得完美，而是让当前决策在许多可能的未来里依然表现良好。</span>
+      <p class="field-guide-lede">
+        <span class="ui-copy-en">Stochastic optimization studies how to choose actions when important parts of the future are unknown. Its subject is not uncertainty by itself, but decisions made before uncertainty is fully resolved: what information is available, what can be postponed, what risks matter, and how today’s choice changes tomorrow’s options.</span>
+        <span class="ui-copy-zh">随机优化研究的是，当未来的重要信息还没有揭晓时，我们应该怎样做决策。它关心的不是“不确定性本身”，而是必须在不确定性尚未完全消失之前采取行动时，决策者掌握什么信息、哪些选择可以推迟、哪些风险需要控制，以及今天的行动会怎样改变明天的选择空间。</span>
       </p>
-      <div class="research-primer-meta">
+      <div class="field-guide-meta">
+        <span><span class="ui-copy-en">Stochastic programming</span><span class="ui-copy-zh">随机规划</span></span>
         <span><span class="ui-copy-en">Dynamic programming</span><span class="ui-copy-zh">动态规划</span></span>
-        <span><span class="ui-copy-en">State design</span><span class="ui-copy-zh">状态设计</span></span>
-        <span><span class="ui-copy-en">Policy structure</span><span class="ui-copy-zh">策略结构</span></span>
-        <span><span class="ui-copy-en">Approximation</span><span class="ui-copy-zh">近似计算</span></span>
+        <span><span class="ui-copy-en">MDPs & control</span><span class="ui-copy-zh">MDP 与随机控制</span></span>
+        <span><span class="ui-copy-en">Approximation & learning</span><span class="ui-copy-zh">近似与学习</span></span>
       </div>
     </header>
 
-    <section class="primer-flow" aria-label="Stochastic optimization mental model">
-      <div class="primer-flow-track" style="--flow-count:5">
-        <div class="primer-flow-step"><b>01</b><span><span class="ui-copy-en">Observe state</span><span class="ui-copy-zh">观察状态</span></span></div>
-        <div class="primer-flow-step is-focus"><b>02</b><span><span class="ui-copy-en">Choose action</span><span class="ui-copy-zh">选择行动</span></span></div>
-        <div class="primer-flow-step"><b>03</b><span><span class="ui-copy-en">Uncertainty resolves</span><span class="ui-copy-zh">随机性实现</span></span></div>
-        <div class="primer-flow-step"><b>04</b><span><span class="ui-copy-en">State changes</span><span class="ui-copy-zh">状态转移</span></span></div>
-        <div class="primer-flow-step"><b>05</b><span><span class="ui-copy-en">Repeat</span><span class="ui-copy-zh">继续决策</span></span></div>
-      </div>
+    <section class="field-guide-orientation">
+      <span>30,000 FT</span>
+      <p>
+        <span class="ui-copy-en">A forecast asks what may happen. Stochastic optimization asks what we should do now, knowing that several things may happen later. That extra verb — decide — is what turns probability into a decision discipline.</span>
+        <span class="ui-copy-zh">预测问的是未来可能发生什么。随机优化问的是，在知道未来可能有很多种结果的情况下，我们现在应该做什么。正是这个“做决策”，把概率问题变成了一个完整的决策领域。</span>
+      </p>
     </section>
 
-    <section class="primer-section">
-      <div class="primer-section-head">
-        <span class="primer-section-index">01</span>
+    <section class="field-guide-section">
+      <div class="field-guide-section-head">
+        <span class="field-guide-index">01</span>
         <div>
-          <h2><span class="ui-copy-en">The basic idea: decide now, learn later</span><span class="ui-copy-zh">基本直觉：先决策，再看到结果</span></h2>
-          <p><span class="ui-copy-en">Many operational decisions are made before demand, failures, prices, arrivals, or other random events are known.</span><span class="ui-copy-zh">很多运营决策都必须在需求、失效、价格、到达过程等随机因素完全揭晓之前做出。</span></p>
+          <h2><span class="ui-copy-en">What makes an optimization problem stochastic?</span><span class="ui-copy-zh">什么让一个优化问题变成“随机优化”？</span></h2>
+          <p><span class="ui-copy-en">Uncertainty matters only through the order in which information and decisions arrive.</span><span class="ui-copy-zh">真正关键的不只是存在随机性，而是信息和决策按照什么顺序出现。</span></p>
         </div>
       </div>
-      <div class="primer-prose">
-        <p><span class="ui-copy-en">Suppose an inventory manager decides how much to order today. Tomorrow's demand is unknown. If the manager orders too little, shortage costs appear; too much creates holding costs. Stochastic optimization formalizes this trade-off by optimizing expected or risk-sensitive performance across uncertain outcomes.</span><span class="ui-copy-zh">例如库存管理者今天必须先决定订货量，而明天的需求未知。订少了会缺货，订多了会产生库存成本。随机优化就是把这种权衡写进数学模型，在许多可能的未来结果之间寻找更好的决策。</span></p>
-        <p><span class="ui-copy-en">The difficult part becomes sharper in sequential problems: today's action changes not only today's cost, but also tomorrow's state and therefore tomorrow's options.</span><span class="ui-copy-zh">在序贯问题里，困难更进一步：今天的行动不仅影响今天的成本，还会改变明天的状态，于是也改变了明天还能做什么。</span></p>
+      <div class="field-guide-prose">
+        <p><span class="ui-copy-en">Imagine committing generation capacity before tomorrow’s electricity demand is known, choosing an investment before prices are revealed, or ordering inventory before customer demand arrives. The decision must be made with incomplete information. Later, new information appears and some decisions may be revised. This creates the central architecture of stochastic optimization: information, action, uncertainty, recourse, and time.</span><span class="ui-copy-zh">想象一下，你要在明天电力需求未知时先安排发电能力，在价格尚未揭晓时决定投资，或者在顾客需求到来之前先下库存订单。行动发生时，信息并不完整。之后新的信息逐步出现，有些决策可以修正，有些已经无法撤回。这就形成了随机优化最基本的结构：信息、行动、不确定性、后续调整与时间。</span></p>
+        <p><span class="ui-copy-en">Two models can have exactly the same random variables and still be very different decision problems if the timing of information is different. This is why concepts such as scenarios, states, filtration, nonanticipativity, recourse, and policies are not technical decoration; they specify what a decision maker is actually allowed to know and do.</span><span class="ui-copy-zh">两个模型即使拥有完全相同的随机变量，只要信息揭晓的时点不同，也可能成为完全不同的决策问题。因此场景、状态、信息结构、非预见性、补救决策和策略这些概念并不是技术装饰，它们实际上规定了决策者在每个时点究竟知道什么、又允许做什么。</span></p>
       </div>
-      <div class="primer-concepts">
-        <article class="primer-concept"><span>A</span><h3><span class="ui-copy-en">State</span><span class="ui-copy-zh">状态</span></h3><p><span class="ui-copy-en">The information retained from the past that is sufficient for making the next decision.</span><span class="ui-copy-zh">从过去保留下来、足以支持下一步决策的信息摘要。</span></p></article>
-        <article class="primer-concept"><span>B</span><h3><span class="ui-copy-en">Action</span><span class="ui-copy-zh">行动</span></h3><p><span class="ui-copy-en">The choice made by the decision maker: order, allocate, schedule, route, accept, reject, and so on.</span><span class="ui-copy-zh">决策者真正可以控制的选择，例如订货、分配、排程、路径、接受或拒绝。</span></p></article>
-        <article class="primer-concept"><span>C</span><h3><span class="ui-copy-en">Transition</span><span class="ui-copy-zh">状态转移</span></h3><p><span class="ui-copy-en">How the current state and action, together with random events, produce the next state.</span><span class="ui-copy-zh">当前状态、行动与随机事件怎样共同生成下一期状态。</span></p></article>
+      <div class="field-guide-process" style="--guide-steps:5">
+        <div class="field-guide-step"><b>01</b><span><span class="ui-copy-en">Observe information</span><span class="ui-copy-zh">获得当前信息</span></span></div>
+        <div class="field-guide-step is-focus"><b>02</b><span><span class="ui-copy-en">Choose action</span><span class="ui-copy-zh">做出行动</span></span></div>
+        <div class="field-guide-step"><b>03</b><span><span class="ui-copy-en">Uncertainty resolves</span><span class="ui-copy-zh">随机性部分揭晓</span></span></div>
+        <div class="field-guide-step"><b>04</b><span><span class="ui-copy-en">State / constraints change</span><span class="ui-copy-zh">状态与约束变化</span></span></div>
+        <div class="field-guide-step"><b>05</b><span><span class="ui-copy-en">Decide again</span><span class="ui-copy-zh">继续决策</span></span></div>
       </div>
     </section>
 
-    <section class="primer-section">
-      <div class="primer-section-head">
-        <span class="primer-section-index">02</span>
+    <section class="field-guide-section">
+      <div class="field-guide-section-head">
+        <span class="field-guide-index">02</span>
         <div>
-          <h2><span class="ui-copy-en">Bellman's idea in one line</span><span class="ui-copy-zh">Bellman 思想的一句话版本</span></h2>
-          <p><span class="ui-copy-en">A good action balances immediate cost with the value of the future state it creates.</span><span class="ui-copy-zh">一个好的行动，要同时考虑眼前成本，以及它所创造的未来状态值不值得。</span></p>
+          <h2><span class="ui-copy-en">A map of the main approaches</span><span class="ui-copy-zh">随机优化的主要方法地图</span></h2>
+          <p><span class="ui-copy-en">There is no single “stochastic optimization method”. Different branches organize uncertainty, time, and decisions in different ways.</span><span class="ui-copy-zh">随机优化并不存在一种唯一的方法。不同分支用不同方式组织不确定性、时间和决策。</span></p>
         </div>
       </div>
-      <div class="primer-equations">
-        <div class="primer-equation"><code>V(t,s) = minₐ &#123; current cost + E[next value] &#125;</code><span><span class="ui-copy-en">The value function V summarizes the best achievable future performance from state s.</span><span class="ui-copy-zh">价值函数 V 概括了从状态 s 出发，未来能够达到的最佳表现。</span></span></div>
-        <div class="primer-equation"><code>s' = transition(s, a, ξ)</code><span><span class="ui-copy-en">The next state depends on the current state, action, and random information ξ.</span><span class="ui-copy-zh">下一期状态由当前状态 s、行动 a 与随机信息 ξ 共同决定。</span></span></div>
-        <div class="primer-equation"><code>policy: s → a</code><span><span class="ui-copy-en">The final object we want is usually a policy: a rule mapping observed states to decisions.</span><span class="ui-copy-zh">最终真正想得到的通常是一个策略：看到什么状态，就采取什么行动。</span></span></div>
+      <div class="field-guide-atlas">
+        <article class="field-guide-card"><small>01 · recourse</small><h3><span class="ui-copy-en">Stochastic programming</span><span class="ui-copy-zh">随机规划</span></h3><p><span class="ui-copy-en">Represents uncertain outcomes through probability distributions or scenarios. A first-stage decision is followed by recourse after uncertainty is observed; multistage versions repeat this logic over time.</span><span class="ui-copy-zh">通过概率分布或场景描述未来。先做一阶段决策，随后在随机结果揭晓后做补救决策；多阶段模型则把这个结构沿时间不断展开。</span></p></article>
+        <article class="field-guide-card"><small>02 · state & policy</small><h3><span class="ui-copy-en">Dynamic programming & MDPs</span><span class="ui-copy-zh">动态规划与 MDP</span></h3><p><span class="ui-copy-en">Represents the past through a state and searches for a policy mapping states to actions. Bellman recursion is a computational principle inside this branch, not the definition of the whole field.</span><span class="ui-copy-zh">把过去的信息压缩成状态，并寻找从状态映射到行动的策略。Bellman 递推只是这一分支中的核心计算思想之一，并不是整个随机优化领域的定义。</span></p></article>
+        <article class="field-guide-card"><small>03 · continuous systems</small><h3><span class="ui-copy-en">Stochastic control</span><span class="ui-copy-zh">随机控制</span></h3><p><span class="ui-copy-en">Studies controlled stochastic processes, often in continuous time. It connects optimization with dynamical systems, filtering, diffusion models, and control theory.</span><span class="ui-copy-zh">研究受控制的随机过程，很多问题发生在连续时间中，与动力系统、滤波、扩散过程和控制理论紧密相连。</span></p></article>
+        <article class="field-guide-card"><small>04 · risk</small><h3><span class="ui-copy-en">Risk-aware optimization</span><span class="ui-copy-zh">风险敏感优化</span></h3><p><span class="ui-copy-en">Expected value is not always enough. Chance constraints, CVaR, utility, downside risk, and distributional ideas change what “good” means under uncertainty.</span><span class="ui-copy-zh">期望值并不总是足够。机会约束、CVaR、效用、下行风险和分布层面的风险度量，会重新定义不确定环境下什么叫“好”。</span></p></article>
+        <article class="field-guide-card"><small>05 · simulation</small><h3><span class="ui-copy-en">Stochastic approximation</span><span class="ui-copy-zh">随机逼近</span></h3><p><span class="ui-copy-en">When exact expectations or gradients are unavailable, noisy observations and simulation can guide iterative optimization. This is a foundation for many large-scale learning and control methods.</span><span class="ui-copy-zh">当期望或梯度无法精确计算时，可以利用带噪观测与仿真反复更新决策。这类思想也是许多大规模学习与控制方法的基础。</span></p></article>
+        <article class="field-guide-card"><small>06 · large state spaces</small><h3><span class="ui-copy-en">Approximate DP & reinforcement learning</span><span class="ui-copy-zh">近似动态规划与强化学习</span></h3><p><span class="ui-copy-en">When exact value functions are impossible to store or compute, algorithms approximate value, policy, or long-run performance from simulation and data.</span><span class="ui-copy-zh">当精确价值函数无法存储或计算时，算法会利用仿真与数据去近似价值函数、策略或长期表现。</span></p></article>
+      </div>
+      <div class="field-guide-callout">
+        <small><span class="ui-copy-en">A useful distinction</span><span class="ui-copy-zh">一个很重要的区分</span></small>
+        <strong><span class="ui-copy-en">Robust optimization is a close neighbor, but not the same thing.</span><span class="ui-copy-zh">鲁棒优化是非常近的邻居，但并不等同于随机优化。</span></strong>
+        <p><span class="ui-copy-en">Stochastic optimization typically models uncertainty probabilistically; robust optimization often protects against a set of possible parameter values without committing to a full probability model. Distributionally robust optimization sits between these viewpoints by optimizing against a family of plausible distributions.</span><span class="ui-copy-zh">随机优化通常用概率分布描述不确定性；鲁棒优化常常不要求完整概率模型，而是在一组可能参数中寻求保护。分布鲁棒优化则位于两者之间，在一族可能的概率分布上进行优化。</span></p>
       </div>
     </section>
 
-    <section class="primer-section">
-      <div class="primer-section-head">
-        <span class="primer-section-index">03</span>
+    <section class="field-guide-section">
+      <div class="field-guide-section-head">
+        <span class="field-guide-index">03</span>
         <div>
-          <h2><span class="ui-copy-en">Why state design matters so much</span><span class="ui-copy-zh">为什么状态设计如此重要？</span></h2>
-          <p><span class="ui-copy-en">A state that is too small loses relevant information; a state that is too large may be computationally impossible.</span><span class="ui-copy-zh">状态太小会丢掉决策所需的信息；状态太大，又可能让计算彻底失去可行性。</span></p>
+          <h2><span class="ui-copy-en">The vocabulary that organizes the field</span><span class="ui-copy-zh">理解这个领域最需要掌握的几个词</span></h2>
+          <p><span class="ui-copy-en">These ideas appear in different mathematical forms, but they describe the same underlying decision architecture.</span><span class="ui-copy-zh">这些概念在不同模型里会写成不同数学形式，但它们描述的是同一套决策结构。</span></p>
         </div>
       </div>
-      <div class="primer-prose">
-        <p><span class="ui-copy-en">This is one reason I keep returning to state representation in warranty inventory models. If the future failure process depends on the age profile of many product cohorts, the mathematically exact state can become high-dimensional very quickly.</span><span class="ui-copy-zh">这也是我在保修库存模型中反复考虑状态表示的原因。如果未来失效取决于许多产品批次的年龄结构，那么“数学上完全精确”的状态维度会迅速膨胀。</span></p>
-        <p><span class="ui-copy-en">The research question is therefore structural as much as computational: can we prove that some information can be aggregated, compressed, or bounded without changing too much of the decision problem?</span><span class="ui-copy-zh">所以真正的问题既是计算问题，也是结构问题：能不能证明某些信息可以聚合、压缩，或者用某种近似表示，而不会过度改变原来的决策问题？</span></p>
-      </div>
-      <div class="primer-question-list">
-        <article class="primer-question"><span>Q1</span><div><strong><span class="ui-copy-en">Can the state be compressed?</span><span class="ui-copy-zh">状态能不能压缩？</span></strong><p><span class="ui-copy-en">Finding sufficient low-dimensional summaries is often more valuable than using a more powerful optimizer on an unnecessarily large state.</span><span class="ui-copy-zh">找到低维且充分的信息摘要，往往比在一个过大的状态上换更强的优化器更重要。</span></p></div></article>
-        <article class="primer-question"><span>Q2</span><div><strong><span class="ui-copy-en">What structure does the value function have?</span><span class="ui-copy-zh">价值函数有什么结构？</span></strong><p><span class="ui-copy-en">Convexity, monotonicity, submodularity, and threshold behavior can turn a black-box optimization problem into something interpretable.</span><span class="ui-copy-zh">凸性、单调性、次模性与阈值结构，能把黑箱式求解转化成更可解释的策略规律。</span></p></div></article>
-        <article class="primer-question"><span>Q3</span><div><strong><span class="ui-copy-en">When should we approximate?</span><span class="ui-copy-zh">什么时候应该近似？</span></strong><p><span class="ui-copy-en">Approximate dynamic programming, simulation, regression, or neural value/policy approximators become useful when exact recursion is no longer tractable.</span><span class="ui-copy-zh">当精确递推不再可计算时，近似动态规划、仿真、回归或神经网络价值/策略近似才真正进入舞台。</span></p></div></article>
-        <article class="primer-question"><span>Q4</span><div><strong><span class="ui-copy-en">How do we know the approximation is safe?</span><span class="ui-copy-zh">近似怎样才算可信？</span></strong><p><span class="ui-copy-en">A useful approximation needs more than good numerical fit; ideally we also understand stability, error propagation, and decision loss.</span><span class="ui-copy-zh">有用的近似不能只看拟合误差，还希望理解稳定性、误差怎样沿时间传播，以及最终造成多大的决策损失。</span></p></div></article>
+      <div class="field-guide-spectrum">
+        <div class="field-guide-spectrum-row"><strong><span class="ui-copy-en">State</span><span class="ui-copy-zh">状态</span></strong><p><span class="ui-copy-en">A summary of past information that is sufficient for evaluating future decisions. Choosing the state is often part of the modelling problem itself.</span><span class="ui-copy-zh">对过去信息的摘要，而且必须足以支持未来决策。怎样选择状态，本身往往就是最重要的建模问题之一。</span></p><small>memory</small></div>
+        <div class="field-guide-spectrum-row"><strong><span class="ui-copy-en">Policy</span><span class="ui-copy-zh">策略</span></strong><p><span class="ui-copy-en">A rule telling the decision maker what action to take for each possible information state, rather than a single one-time decision.</span><span class="ui-copy-zh">它不是某一次孤立行动，而是一条规则：在每一种可能的信息状态下应该采取什么行动。</span></p><small>decision rule</small></div>
+        <div class="field-guide-spectrum-row"><strong><span class="ui-copy-en">Scenario / distribution</span><span class="ui-copy-zh">场景与概率分布</span></strong><p><span class="ui-copy-en">A representation of what can happen and how likely it is. The quality of a solution depends on whether this uncertainty model captures decision-relevant variation.</span><span class="ui-copy-zh">描述未来可能发生什么以及这些结果有多大可能。一个方案是否有意义，取决于这套不确定性模型是否抓住了真正会改变决策的变化。</span></p><small>uncertainty</small></div>
+        <div class="field-guide-spectrum-row"><strong><span class="ui-copy-en">Recourse</span><span class="ui-copy-zh">补救决策</span></strong><p><span class="ui-copy-en">Actions that can be taken after more information arrives. Recourse distinguishes decisions that must be committed now from decisions that can remain flexible.</span><span class="ui-copy-zh">在更多信息到来以后可以采取的行动。它区分了哪些决定必须现在承诺，哪些选择可以保留到以后再做。</span></p><small>flexibility</small></div>
+        <div class="field-guide-spectrum-row"><strong><span class="ui-copy-en">Nonanticipativity</span><span class="ui-copy-zh">非预见性</span></strong><p><span class="ui-copy-en">A decision may use information already observed, but cannot depend on future information that has not yet been revealed. This simple rule is fundamental in multistage models.</span><span class="ui-copy-zh">决策可以依赖已经看到的信息，但不能偷偷使用未来尚未揭晓的信息。这个看似简单的原则是多阶段随机模型的基础。</span></p><small>information</small></div>
       </div>
     </section>
 
-    <section class="primer-section">
-      <div class="primer-section-head">
-        <span class="primer-section-index">04</span>
+    <section class="field-guide-section">
+      <div class="field-guide-section-head">
+        <span class="field-guide-index">04</span>
         <div>
-          <h2><span class="ui-copy-en">Prediction is not the same as optimization</span><span class="ui-copy-zh">预测和优化不是一回事</span></h2>
-          <p><span class="ui-copy-en">A very accurate forecast can still be operationally unimportant if the optimal action hardly changes.</span><span class="ui-copy-zh">一个预测即使非常准确，如果它并不会改变最优行动，那么它的运营价值仍然可能很有限。</span></p>
+          <h2><span class="ui-copy-en">Where the computational difficulty comes from</span><span class="ui-copy-zh">这个领域为什么经常“算不动”？</span></h2>
+          <p><span class="ui-copy-en">Uncertainty multiplies possibilities, while time multiplies decisions. Large stochastic problems therefore grow through scenarios, states, actions, constraints, or all of them at once.</span><span class="ui-copy-zh">随机性会增加未来可能性，时间会增加决策次数。因此大型随机优化问题会在场景、状态、行动和约束等维度同时膨胀。</span></p>
         </div>
       </div>
-      <div class="primer-prose">
-        <p><span class="ui-copy-en">This distinction matters for data-driven operations. Forecasting asks, “what will happen?” Optimization asks, “what should I do, given what may happen?” The second question depends on costs, constraints, timing, and the shape of the decision problem—not only on predictive accuracy.</span><span class="ui-copy-zh">这一区别对数据驱动运营尤其重要。预测问“将会发生什么”；优化问“考虑这些可能发生的事情，我现在应该做什么”。后一个问题还取决于成本、约束、决策时机与策略结构，而不仅仅是预测准确率。</span></p>
+      <div class="field-guide-prose">
+        <p><span class="ui-copy-en">A two-stage stochastic program with a few scenarios may be solved as one large deterministic optimization problem. A long-horizon multistage model may require scenario trees whose size grows explosively. A Markov decision process may have an enormous state space. Continuous control can require solving differential equations. The computational strategy therefore depends on how uncertainty is represented.</span><span class="ui-copy-zh">一个只有少量场景的两阶段随机规划，有时可以直接展开成一个大型确定性优化问题；长期多阶段模型可能需要规模爆炸的场景树；马尔可夫决策过程可能面临巨大的状态空间；连续时间随机控制则可能需要求解偏微分方程。不同的不确定性表示方式会直接决定计算策略。</span></p>
+        <p><span class="ui-copy-en">This is why the field contains decomposition, sampling, Monte Carlo methods, value-function approximation, policy approximation, scenario reduction, SDDP, simulation optimization, and reinforcement learning. Approximation is not a single fallback technique; it is an entire family of ways to preserve the decision logic while avoiding impossible exact computation.</span><span class="ui-copy-zh">这也是为什么随机优化发展出了分解、抽样、Monte Carlo、价值函数近似、策略近似、场景缩减、SDDP、仿真优化与强化学习等大量方法。近似并不是一个简单的“算不动就凑合一下”，而是一整套在保留决策逻辑的同时绕开不可计算性的研究方向。</span></p>
       </div>
-      <div class="primer-related">
-        <a href={withBase('/research/inventory-warranty')}><small>01 · Application</small><strong>Inventory & Warranty</strong><span><span class="ui-copy-en">A concrete sequential decision problem with failure-generated demand.</span><span class="ui-copy-zh">一个由产品失效生成需求的具体序贯决策场景。</span></span></a>
-        <a href={withBase('/research/operations-research')}><small>03 · Wider frame</small><strong>Operations Research</strong><span><span class="ui-copy-en">The broader modelling discipline that contains these methods.</span><span class="ui-copy-zh">包含这些方法、更广义的建模与决策学科。</span></span></a>
+      <div class="field-guide-question-grid">
+        <article class="field-guide-question"><span>M1</span><strong><span class="ui-copy-en">Decompose</span><span class="ui-copy-zh">分解</span></strong><p><span class="ui-copy-en">Exploit time, scenario, or constraint structure so a huge model can be solved through smaller coordinated subproblems.</span><span class="ui-copy-zh">利用时间、场景或约束结构，把一个巨大问题拆成更小、可以协调求解的子问题。</span></p></article>
+        <article class="field-guide-question"><span>M2</span><strong><span class="ui-copy-en">Sample</span><span class="ui-copy-zh">抽样</span></strong><p><span class="ui-copy-en">Replace intractable expectations or distributions with simulated or empirical samples, while controlling statistical error.</span><span class="ui-copy-zh">用仿真样本或经验样本替代难以直接处理的期望与概率分布，同时控制统计误差。</span></p></article>
+        <article class="field-guide-question"><span>M3</span><strong><span class="ui-copy-en">Approximate value</span><span class="ui-copy-zh">近似价值</span></strong><p><span class="ui-copy-en">Represent future value with parametric, nonparametric, or neural approximators when exact dynamic programming is too large.</span><span class="ui-copy-zh">当精确动态规划过大时，用参数模型、非参数方法或神经网络去表示未来价值。</span></p></article>
+        <article class="field-guide-question"><span>M4</span><strong><span class="ui-copy-en">Approximate policy</span><span class="ui-copy-zh">近似策略</span></strong><p><span class="ui-copy-en">Search directly within a tractable family of decision rules rather than approximating every value in the state space.</span><span class="ui-copy-zh">不再近似整个状态空间的价值，而是直接在一个可计算的策略族中寻找好的决策规则。</span></p></article>
       </div>
     </section>
 
-    <div class="research-primer-back">
-      <a href={withBase('/research')}>← <span class="ui-copy-en">Back to Research</span><span class="ui-copy-zh">返回研究主页</span></a>
-      <a href={withBase('/notes')}><span class="ui-copy-en">Browse technical notes →</span><span class="ui-copy-zh">继续看技术笔记 →</span></a>
+    <section class="field-guide-section">
+      <div class="field-guide-section-head">
+        <span class="field-guide-index">05</span>
+        <div>
+          <h2><span class="ui-copy-en">What kinds of systems use stochastic optimization?</span><span class="ui-copy-zh">随机优化会出现在哪些系统里？</span></h2>
+          <p><span class="ui-copy-en">Whenever decisions must be made before demand, prices, failures, arrivals, weather, or other uncertain quantities are fully known, the same ideas reappear.</span><span class="ui-copy-zh">只要行动必须发生在需求、价格、失效、到达、天气或其他随机因素完全揭晓之前，随机优化的思想就会重新出现。</span></p>
+        </div>
+      </div>
+      <div class="field-guide-atlas">
+        <article class="field-guide-card"><small>energy</small><h3><span class="ui-copy-en">Power & energy systems</span><span class="ui-copy-zh">电力与能源系统</span></h3><p><span class="ui-copy-en">Generation, storage, renewable uncertainty, market prices, and grid constraints create sequential decisions with physical limits.</span><span class="ui-copy-zh">发电、储能、可再生能源不确定性、市场价格与电网约束共同形成连续的随机决策。</span></p></article>
+        <article class="field-guide-card"><small>finance</small><h3><span class="ui-copy-en">Investment & risk</span><span class="ui-copy-zh">投资与风险</span></h3><p><span class="ui-copy-en">Portfolio choice, hedging, asset-liability management, and stopping decisions combine uncertain returns with explicit risk preferences.</span><span class="ui-copy-zh">投资组合、对冲、资产负债管理与停止决策把随机收益和风险偏好结合在一起。</span></p></article>
+        <article class="field-guide-card"><small>operations</small><h3><span class="ui-copy-en">Inventory & revenue management</span><span class="ui-copy-zh">库存与收益管理</span></h3><p><span class="ui-copy-en">Orders, prices, capacity, and acceptance decisions must be made while future demand remains uncertain.</span><span class="ui-copy-zh">在未来需求仍然未知时，系统就必须决定订货、价格、产能与是否接受订单。</span></p></article>
+        <article class="field-guide-card"><small>mobility</small><h3><span class="ui-copy-en">Transportation & logistics</span><span class="ui-copy-zh">交通与物流</span></h3><p><span class="ui-copy-en">Vehicle routing, fleet positioning, dispatching, and network flows respond to random demand, travel time, and disruptions.</span><span class="ui-copy-zh">车辆路径、车队定位、调度和网络流需要面对随机需求、随机旅行时间与系统中断。</span></p></article>
+        <article class="field-guide-card"><small>healthcare</small><h3><span class="ui-copy-en">Healthcare operations</span><span class="ui-copy-zh">医疗运营</span></h3><p><span class="ui-copy-en">Beds, staff, appointments, emergency arrivals, and treatment pathways create uncertain resource-allocation problems.</span><span class="ui-copy-zh">床位、人员、预约、急诊到达与治疗路径共同构成不确定资源分配问题。</span></p></article>
+        <article class="field-guide-card"><small>learning</small><h3><span class="ui-copy-en">Learning & experimentation</span><span class="ui-copy-zh">学习与试验</span></h3><p><span class="ui-copy-en">Bandits, adaptive experimentation, and reinforcement learning add a new tension: actions both earn rewards and generate information.</span><span class="ui-copy-zh">多臂老虎机、自适应试验与强化学习增加了一层新的矛盾：行动既产生收益，也产生未来会用到的信息。</span></p></article>
+      </div>
+    </section>
+
+    <section class="field-guide-section">
+      <div class="field-guide-section-head">
+        <span class="field-guide-index">06</span>
+        <div>
+          <h2><span class="ui-copy-en">What makes a research question interesting here?</span><span class="ui-copy-zh">这个领域里什么样的问题值得研究？</span></h2>
+          <p><span class="ui-copy-en">Strong work often identifies a new information structure, uncertainty mechanism, policy structure, or computational regime — and then explains how decisions change because of it.</span><span class="ui-copy-zh">好的研究往往不是简单地“再加一个随机变量”，而是找到新的信息结构、不确定机制、策略结构或计算情形，并解释它们为什么会真正改变决策。</span></p>
+        </div>
+      </div>
+      <div class="field-guide-question-grid">
+        <article class="field-guide-question"><span>R1</span><strong><span class="ui-copy-en">Information value</span><span class="ui-copy-zh">信息价值</span></strong><p><span class="ui-copy-en">Which information changes the optimal decision enough to justify observing, estimating, or communicating it?</span><span class="ui-copy-zh">哪些信息会显著改变最优决策，从而值得被观测、估计或传递？</span></p></article>
+        <article class="field-guide-question"><span>R2</span><strong><span class="ui-copy-en">Policy structure</span><span class="ui-copy-zh">策略结构</span></strong><p><span class="ui-copy-en">Can a complex dynamic problem be reduced to thresholds, monotone rules, indices, or another interpretable policy family?</span><span class="ui-copy-zh">复杂动态问题能否被压缩成阈值、单调规则、指数策略或其他可解释的策略族？</span></p></article>
+        <article class="field-guide-question"><span>R3</span><strong><span class="ui-copy-en">Model ambiguity</span><span class="ui-copy-zh">模型不确定性</span></strong><p><span class="ui-copy-en">What happens when the probability model itself is estimated, misspecified, drifting, or only partially known?</span><span class="ui-copy-zh">如果概率模型本身是估计出来的、可能设定错误、会漂移，或者只能部分知道，决策应该怎样改变？</span></p></article>
+        <article class="field-guide-question"><span>R4</span><strong><span class="ui-copy-en">Scale</span><span class="ui-copy-zh">规模</span></strong><p><span class="ui-copy-en">How much optimality can be preserved when state, scenario, or action spaces become too large for exact methods?</span><span class="ui-copy-zh">当状态、场景或行动空间大到精确方法不可行时，我们还能保留多少最优性与结构？</span></p></article>
+      </div>
+    </section>
+
+    <section class="field-guide-section">
+      <div class="field-guide-section-head">
+        <span class="field-guide-index">07</span>
+        <div>
+          <h2><span class="ui-copy-en">Where my current work sits</span><span class="ui-copy-zh">我的当前研究落在这张地图的哪里？</span></h2>
+          <p><span class="ui-copy-en">My work is one particular sequential decision problem inside this much larger field.</span><span class="ui-copy-zh">我的研究只是这张大地图中的一个具体序贯决策问题。</span></p>
+        </div>
+      </div>
+      <div class="field-guide-callout">
+        <small><span class="ui-copy-en">My research lens</span><span class="ui-copy-zh">我的研究切口</span></small>
+        <strong><span class="ui-copy-en">How much history must a warranty-inventory decision remember?</span><span class="ui-copy-zh">带保修库存决策究竟需要记住多少历史信息？</span></strong>
+        <p><span class="ui-copy-en">Failure-driven service demand can make the exact state depend on the age composition of an installed base. That places my problem at the intersection of state design, dynamic programming, policy structure, and approximation. Those are important questions in stochastic optimization generally, not only in warranty models.</span><span class="ui-copy-zh">由失效驱动的售后需求，可能使精确状态依赖于在役产品的年龄构成。因此我的问题位于状态设计、动态规划、策略结构与近似方法的交叉位置。它们都是随机优化里很一般的问题，只是保修库存给了我一个具体研究场景。</span></p>
+      </div>
+      <div class="field-guide-links">
+        <a href="https://web.stanford.edu/~bvr/pubs/InfangerDantzigStochasticprogramming.pdf" target="_blank" rel="noreferrer"><small>Stanford-hosted reference</small><strong><span class="ui-copy-en">Multistage stochastic programming</span><span class="ui-copy-zh">多阶段随机规划</span></strong><span><span class="ui-copy-en">A broad reference on sequential decisions under incomplete information and multistage stochastic programs.</span><span class="ui-copy-zh">从不完全信息下的序贯决策出发，理解多阶段随机规划的一套系统资料。</span></span></a>
+        <a href="https://optimization.cbe.cornell.edu/index.php?title=Stochastic_dynamic_programming" target="_blank" rel="noreferrer"><small>Cornell Optimization Wiki</small><strong><span class="ui-copy-en">Stochastic dynamic programming</span><span class="ui-copy-zh">随机动态规划</span></strong><span><span class="ui-copy-en">A compact introduction to stochastic dynamic programming and its role in decision-making under uncertainty.</span><span class="ui-copy-zh">对随机动态规划及其在不确定决策中的作用进行紧凑介绍。</span></span></a>
+      </div>
+    </section>
+
+    <div class="field-guide-back">
+      <a href={withBase('/research/inventory-warranty')}>← <span class="ui-copy-en">Inventory Theory</span><span class="ui-copy-zh">库存理论</span></a>
+      <a href={withBase('/research/operations-research')}><span class="ui-copy-en">Next: Operations Research →</span><span class="ui-copy-zh">下一篇：运筹学 →</span></a>
     </div>
   </main>
   <SiteExtras />
