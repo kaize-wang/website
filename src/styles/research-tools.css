@@ -135,19 +135,36 @@
 }
 .crossref-link { color: var(--accent); text-decoration-style: dotted !important; }
 .crossref-unresolved { color: var(--muted); text-decoration: underline dashed; text-underline-offset: 3px; cursor: help; }
+
+/* Numbered equations use a two-column shell. The mathematics owns the
+   scrollable cell and the equation number stays in a separate fixed column. */
+.equation-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  margin: 1.45em 0;
+  min-width: 0;
+}
+.equation-layout .katex-display {
+  width: 100% !important;
+  max-width: 100%;
+  min-width: 0;
+  margin: 0 !important;
+  transform: none !important;
+}
 .equation-number {
-  position: absolute;
-  right: 6px;
-  top: 50%;
-  transform: translateY(-50%);
+  align-self: center;
+  padding: 0 2px 0 4px;
   color: var(--muted);
   font: 16px/1.1 Georgia, 'Times New Roman', serif;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
-.prose .katex-display.numbered-equation { position: relative; padding-right: 48px; }
 .equation-marker { display: none; }
 
 /* KaTeX also uses the class name `tag`. Do not let the site's note-tag pill style
-   turn equation numbers into tiny rounded badges. */
+   turn equation numbers into tiny rounded badges while the page is initializing. */
 .prose .katex-display .tag {
   padding: 0 0 0 1.2em !important;
   border-radius: 0 !important;
@@ -162,6 +179,8 @@
   scrollbar-width: thin;
   scrollbar-color: color-mix(in srgb, var(--muted) 42%, transparent) transparent;
 }
+.prose .katex-display.math-wide { font-size: .94em; }
+.prose .katex-display.math-very-wide { font-size: .89em; }
 .prose .katex-display::-webkit-scrollbar { height: 5px; }
 .prose .katex-display::-webkit-scrollbar-track { background: transparent; }
 .prose .katex-display::-webkit-scrollbar-thumb {
@@ -198,16 +217,21 @@
     width: min(100%, 780px) !important;
     margin: 0 auto !important;
   }
-  .prose > .katex-display,
-  .prose > .scholarly-block .katex-display,
-  .prose > .scholarly-details .katex-display,
-  .prose > .scholarly-proof .katex-display {
+  .prose > .katex-display:not(.equation-scroll-cell),
+  .prose > .equation-layout,
+  .prose > .scholarly-block .katex-display:not(.equation-scroll-cell),
+  .prose > .scholarly-block .equation-layout,
+  .prose > .scholarly-details .katex-display:not(.equation-scroll-cell),
+  .prose > .scholarly-details .equation-layout,
+  .prose > .scholarly-proof .katex-display:not(.equation-scroll-cell),
+  .prose > .scholarly-proof .equation-layout {
     width: min(900px, calc(100vw - 300px));
     max-width: none;
     margin-left: 50%;
     transform: translateX(-50%);
   }
-  body.paper-reader-active .prose .katex-display {
+  body.paper-reader-active .prose .katex-display,
+  body.paper-reader-active .prose .equation-layout {
     width: 100% !important;
     margin-left: 0 !important;
     transform: none !important;
@@ -284,15 +308,19 @@ body.paper-reader-active article .comments-section { display: none !important; }
   .prose, .article-desc { color: #111 !important; }
   a { color: inherit !important; text-decoration: none !important; }
   .scholarly-block, .paper-meta-card, .bilingual-summary, .scholarly-details { break-inside: avoid; border-color: #aaa !important; background: transparent !important; }
+  .equation-layout { display: grid !important; grid-template-columns: minmax(0,1fr) auto !important; width: 100% !important; margin-left: 0 !important; transform: none !important; }
 }
 
 @media (max-width: 620px) {
   .cite-option { grid-template-columns: 1fr; }
   .cite-option > span { padding-top: 0; }
-  .equation-number { font-size: 14px; }
+  .equation-layout { gap: 6px; }
+  .equation-number { font-size: 14px; padding-left: 1px; }
   .scholarly-block { padding: 15px 15px 14px; }
   .scholarly-proof-body, .scholarly-details-body { padding: 15px; }
   .prose .katex-display { font-size: .96em; }
+  .prose .katex-display.math-wide { font-size: .91em; }
+  .prose .katex-display.math-very-wide { font-size: .86em; }
 }
 
 @media (prefers-reduced-motion: reduce) {
