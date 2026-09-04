@@ -13,10 +13,11 @@ const readerConfig = currentPath.endsWith('/notes/paper-reading-huang-2008')
       pdfPageStart: 2
     }
   : null;
+const publicHuangDigestUrl = `${import.meta.env.BASE_URL}sources/huang-2008-core.md`;
 ---
 <div class="citation-popover" id="citation-popover" role="status" hidden>
   <strong id="citation-popover-title"></strong>
-  <p id="citation-popover-meta"></p>
+  <p class="citation-popover-meta" id="citation-popover-meta"></p>
   <p class="citation-doi" id="citation-popover-doi"></p>
 </div>
 
@@ -27,6 +28,84 @@ const readerConfig = currentPath.endsWith('/notes/paper-reading-huang-2008')
     <div class="image-lightbox-caption" id="image-lightbox-caption"></div>
   </div>
 </div>
+
+{readerConfig && (
+  <script is:inline define:vars={{ publicHuangDigestUrl }}>
+  (() => {
+    const NOTE_ID = 'paper-reading-huang-2008';
+    const DB_NAME = 'kaize-paper-reader-v2';
+    const STORE_NAME = 'pdfs';
+    const MARKDOWN_ID = `${NOTE_ID}:markdown`;
+    const MODE_KEY = `kaize-reader-source-mode:${NOTE_ID}`;
+    const SEED_KEY = `kaize-reader-public-core:${NOTE_ID}:v1`;
+
+    try {
+      if (!localStorage.getItem(SEED_KEY)) {
+        localStorage.setItem(MODE_KEY, 'markdown');
+        localStorage.setItem(SEED_KEY, '1');
+      }
+    } catch {}
+
+    if (!('indexedDB' in window)) return;
+
+    const openDb = () => new Promise((resolve, reject) => {
+      const request = indexedDB.open(DB_NAME, 1);
+      request.onupgradeneeded = () => {
+        const db = request.result;
+        if (!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+      };
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error || new Error('Reader source store unavailable'));
+      request.onblocked = () => reject(new Error('Reader source store blocked'));
+    });
+
+    const getRecord = (db, id) => new Promise((resolve, reject) => {
+      try {
+        const tx = db.transaction(STORE_NAME, 'readonly');
+        const request = tx.objectStore(STORE_NAME).get(id);
+        request.onsuccess = () => resolve(request.result || null);
+        request.onerror = () => reject(request.error || new Error('Reader source read failed'));
+      } catch (error) { reject(error); }
+    });
+
+    const putRecord = (db, record) => new Promise((resolve, reject) => {
+      try {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        tx.objectStore(STORE_NAME).put(record);
+        tx.oncomplete = () => resolve(true);
+        tx.onerror = () => reject(tx.error || new Error('Reader source write failed'));
+        tx.onabort = () => reject(tx.error || new Error('Reader source write aborted'));
+      } catch (error) { reject(error); }
+    });
+
+    void (async () => {
+      const db = await openDb();
+      try {
+        const existing = await getRecord(db, MARKDOWN_ID);
+        if (existing?.text) return;
+        const response = await fetch(publicHuangDigestUrl, { cache: 'force-cache' });
+        if (!response.ok) return;
+        const text = await response.text();
+        if (!text.trim()) return;
+        await putRecord(db, {
+          id: MARKDOWN_ID,
+          name: 'Huang_2008_Core_Reference.md',
+          text,
+          publicCore: true,
+          savedAt: Date.now()
+        });
+      } finally {
+        try { db.close(); } catch {}
+      }
+
+      const markdownTab = document.querySelector('[data-source-mode="markdown"]');
+      if (document.body.classList.contains('paper-reader-active') && markdownTab?.classList.contains('active')) {
+        markdownTab.click();
+      }
+    })().catch(() => {});
+  })();
+  </script>
+)}
 
 {readerConfig && <PaperReaderWorkspace {...readerConfig} />}
 
@@ -128,8 +207,7 @@ const readerConfig = currentPath.endsWith('/notes/paper-reading-huang-2008')
   const openLightbox = image => {
     if (!lightbox || !lightboxImage || !lightboxCaption) return;
     lightboxImage.src = image.currentSrc || image.src; lightboxImage.alt = image.alt || '';
-    lightboxCaption.textContent = image.alt || ''; lightbox.hidden = false;
-    document.body.style.overflow = ''; lightboxClose?.focus();
+    lightboxCaption.textContent = image.alt || ''; lightbox.hidden = false; document.body.style.overflow = ''; lightboxClose?.focus();
   };
   document.querySelectorAll('.prose img').forEach(image => {
     image.classList.add('zoomable-figure'); image.tabIndex = 0; image.setAttribute('role', 'button');
