@@ -3,10 +3,11 @@ import { getCollection, render } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import SiteExtras from '@/components/SiteExtras.astro';
 import '@/styles/ideas.css';
+import { applyIdeaWorkbenchState } from '@/utils/idea-workbench-state';
 import { withBase } from '@/utils/url';
 
 export async function getStaticPaths() {
-  const ideas = await getCollection('ideas', ({ data }) => !data.draft);
+  const ideas = (await getCollection('ideas', ({ data }) => !data.draft)).map(applyIdeaWorkbenchState);
   return ideas.map(idea => ({ params: { slug: idea.id }, props: { idea } }));
 }
 
