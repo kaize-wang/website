@@ -169,7 +169,7 @@ const { citation = { plain: '', markdown: '', bibtex: '' } } = Astro.props;
     textNode.replaceWith(fragment);
   });
 
-  // Clean a few drafting-style headings/cues in the public reading view.
+  // Remove drafting-style cues from the public reading view.
   const replacements = new Map([
     ['一页先读懂：论文究竟做了什么', '论文概要'],
     ['1. 业务故事：为什么售后不是一个外生的第二需求流', '1. 业务背景：为什么保修需求不能单独处理'],
@@ -185,6 +185,16 @@ const { citation = { plain: '', markdown: '', bibtex: '' } } = Astro.props;
     if (text.startsWith('中文看这个定理，最重要的不是')) p.firstChild && (p.firstChild.textContent = (p.firstChild.textContent || '').replace(/^中文看这个定理，最重要的不是/, '这个定理的关键不是'));
   });
 
+  const syncOutlineCopy = () => {
+    document.querySelectorAll('.floating-toc a, .article-contents a').forEach(link => {
+      const id = decodeURIComponent((link.getAttribute('href') || '').replace(/^#/, ''));
+      if (!id) return;
+      const target = document.getElementById(id);
+      if (target) link.textContent = target.textContent || link.textContent;
+    });
+  };
+  syncOutlineCopy();
+
   // Keep only one unobtrusive outline control. Notation and assumptions live inline as collapsible blocks.
   const aside = document.querySelector('.floating-toc');
   const outlinePanel = aside?.querySelector('[data-aside-panel="outline"]');
@@ -194,6 +204,7 @@ const { citation = { plain: '', markdown: '', bibtex: '' } } = Astro.props;
       aside.remove();
     } else {
       outlinePanel.hidden = false;
+      const tocLabel = outlinePanel.querySelector('.floating-toc-label');
       const toggle = document.createElement('button');
       toggle.type = 'button';
       toggle.className = 'floating-toc-toggle';
@@ -202,6 +213,7 @@ const { citation = { plain: '', markdown: '', bibtex: '' } } = Astro.props;
         const zh = document.documentElement.dataset.uiLanguage === 'zh';
         toggle.textContent = zh ? '目录' : 'Contents';
         toggle.setAttribute('aria-label', zh ? '打开文章目录' : 'Open article contents');
+        if (tocLabel) tocLabel.textContent = zh ? '目录' : 'On this page';
       };
       const closeToc = () => {
         aside.classList.remove('is-open');
