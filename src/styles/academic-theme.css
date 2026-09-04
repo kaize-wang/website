@@ -1,0 +1,136 @@
+/* Academic color system
+   Light theme: warm ivory paper + AcademicRed (#9E1B32).
+   Dark theme: preserve the existing charcoal mood, with a cooler rose derived from AcademicRed. */
+
+html:root:not([data-theme='dark']) {
+  --bg: #f3f0ea;
+  --paper: #fcfaf6;
+  --text: #25211f;
+  --muted: #746d68;
+  --line: #d9d1c8;
+  --accent: #9e1b32;
+  --soft: #ebe4dc;
+  --shadow: 0 18px 46px rgba(56, 43, 38, .055);
+  --academic-red: #9e1b32;
+  --academic-red-deep: #7f1428;
+  --academic-red-soft: #c98d98;
+  --paper-bright: #fffdf9;
+}
+
+html:root[data-theme='dark'] {
+  --bg: #171716;
+  --paper: #1e1e1c;
+  --text: #efebe6;
+  --muted: #aaa4a0;
+  --line: #3a3835;
+  --accent: #d18f9b;
+  --soft: #282724;
+  --shadow: none;
+  --academic-red: #9e1b32;
+  --academic-red-deep: #7f1428;
+  --academic-red-soft: #d18f9b;
+  --paper-bright: #23221f;
+}
+
+/* Light should read as clean paper, not a grey dashboard. */
+html:root:not([data-theme='dark']) body {
+  background:
+    radial-gradient(ellipse 720px 420px at 88% -8%, rgba(158, 27, 50, .022), transparent 72%),
+    var(--bg);
+}
+
+html:root:not([data-theme='dark']) .site-sidebar {
+  background:
+    linear-gradient(180deg, rgba(255, 253, 249, .74), rgba(248, 244, 238, .86)),
+    var(--paper);
+  border-right-color: color-mix(in srgb, var(--line) 90%, var(--accent) 10%);
+}
+
+html:root:not([data-theme='dark']) .hero-banner,
+html:root:not([data-theme='dark']) .current-focus-card,
+html:root:not([data-theme='dark']) .github-activity-card,
+html:root:not([data-theme='dark']) .visitor-summary-card,
+html:root:not([data-theme='dark']) .visitor-detail-card,
+html:root:not([data-theme='dark']) .research-card,
+html:root:not([data-theme='dark']) .note-shelf-card,
+html:root:not([data-theme='dark']) .explore-card,
+html:root:not([data-theme='dark']) .field-guide-card,
+html:root:not([data-theme='dark']) .field-guide-question,
+html:root:not([data-theme='dark']) .field-guide-links a,
+html:root:not([data-theme='dark']) .field-guide-callout {
+  background-color: var(--paper);
+}
+
+html:root:not([data-theme='dark']) .hero-banner img {
+  background: linear-gradient(120deg, #eee7df 0%, #e6ded7 48%, #e8e5df 100%);
+}
+
+html:root:not([data-theme='dark']) .pill,
+html:root:not([data-theme='dark']) .category-nav a,
+html:root:not([data-theme='dark']) .theme-toggle,
+html:root:not([data-theme='dark']) .sidebar-command {
+  border-color: color-mix(in srgb, var(--line) 92%, var(--accent) 8%);
+}
+
+html:root:not([data-theme='dark']) ::selection {
+  background: rgba(158, 27, 50, .16);
+}
+
+/* Keep AcademicRed disciplined: ink and local light, never a broad pink wash. */
+html:root:not([data-theme='dark']) .eyebrow,
+html:root:not([data-theme='dark']) .research-card .num,
+html:root:not([data-theme='dark']) .field-guide-index,
+html:root:not([data-theme='dark']) .note-shelf-card > span,
+html:root:not([data-theme='dark']) .sidebar-nav a.active::before,
+html:root:not([data-theme='dark']) .reading-progress span {
+  color: var(--academic-red);
+}
+
+html:root:not([data-theme='dark']) .sidebar-nav a.active::before,
+html:root:not([data-theme='dark']) .reading-progress span {
+  background: var(--academic-red);
+}
+
+html:root:not([data-theme='dark']) a:hover,
+html:root:not([data-theme='dark']) .section-kicker:hover,
+html:root:not([data-theme='dark']) .sidebar-lab-link:hover {
+  color: var(--academic-red);
+}
+
+html:root:not([data-theme='dark']) .theme-toggle:hover,
+html:root:not([data-theme='dark']) .pill:hover,
+html:root:not([data-theme='dark']) .category-nav a:hover {
+  border-color: color-mix(in srgb, var(--academic-red) 34%, var(--line));
+}
+
+/* Contribution calendar follows the same ink hierarchy. */
+html:root:not([data-theme='dark']) .github-calendar {
+  --gh-0: #e7e0d8;
+  --gh-1: #ecd4d8;
+  --gh-2: #dca9b3;
+  --gh-3: #bd6274;
+  --gh-4: #9e1b32;
+}
+
+/* Dark mode stays almost where it was; only the accent family becomes less orange. */
+html:root[data-theme='dark'] body {
+  background:
+    radial-gradient(ellipse 680px 380px at 88% -8%, rgba(158, 27, 50, .035), transparent 72%),
+    var(--bg);
+}
+
+html:root[data-theme='dark'] .site-sidebar {
+  background: color-mix(in srgb, var(--paper) 94%, #151514);
+}
+
+html:root[data-theme='dark'] .github-calendar {
+  --gh-0: #343331;
+  --gh-1: #55323a;
+  --gh-2: #78404d;
+  --gh-3: #a55f70;
+  --gh-4: #d18f9b;
+}
+
+html:root[data-theme='dark'] ::selection {
+  background: rgba(209, 143, 155, .22);
+}
