@@ -219,6 +219,175 @@
   background: linear-gradient(90deg, var(--line) 0 68%, color-mix(in srgb, var(--accent) 22%, var(--line)) 90%, var(--line));
 }
 
+/* Home: full-width surfaces share one frame and one light source. */
+.home-page > .section {
+  isolation: isolate;
+}
+.home-page > .section .section-head::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: -12px;
+  width: 58px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent) 42%, var(--line)));
+  opacity: .72;
+}
+.home-page .current-focus-card::before,
+.home-page .github-activity-card::before,
+.home-page .visitor-summary-card::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 68px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent) 54%, var(--line)));
+}
+.home-page .home-ideas-preview {
+  position: relative;
+  overflow: hidden;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background:
+    radial-gradient(ellipse 260px 120px at 100% 0%, var(--editorial-glow), transparent 74%);
+}
+.home-page .home-ideas-preview::after {
+  content: '';
+  position: absolute;
+  right: -24px;
+  bottom: -34px;
+  width: 190px;
+  height: 92px;
+  pointer-events: none;
+  opacity: .35;
+  background: radial-gradient(circle at center, color-mix(in srgb, var(--accent) 22%, transparent) 0 1px, transparent 1.4px) 0 0 / 16px 16px;
+  mask-image: linear-gradient(90deg, transparent, #000 45%);
+}
+.home-page .home-idea-row { position: relative; z-index: 1; }
+.home-page .visitor-summary-card {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 240px 120px at 100% 0%, var(--editorial-glow), transparent 76%),
+    var(--paper);
+}
+
+/* Notes: each shelf gets an index, count, and a faint editorial light rather than a generic dashboard card. */
+.note-shelf-guide {
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 14px 40px rgba(38, 33, 29, .025);
+}
+.note-shelf-guide::after {
+  content: '';
+  position: absolute;
+  top: -34px;
+  right: -22px;
+  width: 230px;
+  height: 120px;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, var(--editorial-glow-strong), transparent 72%);
+}
+.note-shelf-card {
+  position: relative;
+  z-index: 1;
+  padding-top: 45px;
+}
+.note-shelf-card::before {
+  position: absolute;
+  top: 17px;
+  left: 18px;
+  color: color-mix(in srgb, var(--muted) 64%, transparent);
+  font: 650 8px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: .07em;
+}
+.note-shelf-card:nth-child(1)::before { content: '01'; }
+.note-shelf-card:nth-child(2)::before { content: '02'; }
+.note-shelf-card:nth-child(3)::before { content: '03'; }
+.note-shelf-card:nth-child(4)::before { content: '04'; }
+.note-shelf-card::after {
+  content: '↗';
+  position: absolute;
+  top: 15px;
+  right: 17px;
+  color: transparent;
+  font-size: 12px;
+  transform: translate(-2px, 2px);
+  transition: color .16s ease, transform .16s ease;
+}
+.note-shelf-card[href]:hover::after {
+  color: var(--accent);
+  transform: none;
+}
+.note-shelf-card > span {
+  margin-bottom: 14px;
+  color: var(--accent);
+  font-size: 22px;
+  letter-spacing: -.04em;
+}
+.note-shelf-card > strong {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 16px;
+  font-weight: 500;
+}
+.note-shelf-card > p { margin-top: 7px; }
+.note-shelf-section .section-head h2::before {
+  content: '';
+  display: inline-block;
+  width: 18px;
+  height: 1px;
+  margin: 0 9px 7px 0;
+  background: color-mix(in srgb, var(--accent) 42%, var(--line));
+}
+
+/* Lab: the attic gets slightly stronger light and visible indexing, but keeps the same paper discipline. */
+.lab-page .lab-grid {
+  gap: 1px;
+  border: 1px solid var(--line);
+  background: var(--line);
+}
+.lab-page .lab-grid .explore-card {
+  position: relative;
+  min-height: 188px;
+  border: 0;
+  padding: 24px 22px 21px;
+}
+.lab-page .lab-grid .explore-card::before {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  color: color-mix(in srgb, var(--muted) 60%, transparent);
+  font: 650 8px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: .08em;
+}
+.lab-page .lab-grid .explore-card:nth-child(1)::before { content: '01'; }
+.lab-page .lab-grid .explore-card:nth-child(2)::before { content: '02'; }
+.lab-page .lab-grid .explore-card:nth-child(3)::before { content: '03'; }
+.lab-page .lab-grid .explore-card:nth-child(4)::before { content: '04'; }
+.lab-page .lab-grid .explore-card:nth-child(5)::before { content: '05'; }
+.lab-page .lab-grid .explore-card::after {
+  content: '↗';
+  position: absolute;
+  right: 20px;
+  bottom: 18px;
+  color: color-mix(in srgb, var(--muted) 26%, transparent);
+  font-size: 13px;
+  transition: color .16s ease, transform .16s ease;
+}
+.lab-page .lab-grid .explore-card:hover::after {
+  color: var(--accent);
+  transform: translate(2px, -2px);
+}
+.lab-page .lab-grid .explore-card > span { margin-bottom: 34px; }
+.lab-page .lab-grid .explore-card strong { font-size: 23px; letter-spacing: -.02em; }
+.lab-page .lab-grid .explore-card p { max-width: 260px; }
+.lab-page .lab-rediscover { max-width: none; }
+.lab-page .lab-surprise-button {
+  min-height: 64px;
+  padding: 18px 21px;
+}
+
 @media (max-width: 760px) {
   .site-shell:not(.ideas-studio) > .page-hero {
     background: radial-gradient(ellipse 260px 130px at 100% 8%, var(--editorial-glow), transparent 76%);
@@ -228,6 +397,8 @@
     background: radial-gradient(ellipse 210px 100px at 100% 0%, color-mix(in srgb, var(--accent) 4%, transparent), transparent 78%);
   }
   .profile-grid::after { width: 210px; height: 120px; right: -8%; }
+  .note-shelf-card { padding-top: 42px; }
+  .lab-page .lab-grid .explore-card { min-height: 160px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -240,7 +411,9 @@
   .paper-reading-row,
   .education-item,
   .lab-surprise-button,
-  .site-shell:not(.ideas-studio) .section-kicker {
+  .site-shell:not(.ideas-studio) .section-kicker,
+  .note-shelf-card::after,
+  .lab-page .lab-grid .explore-card::after {
     transition: none !important;
   }
 }
