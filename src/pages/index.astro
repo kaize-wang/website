@@ -18,6 +18,8 @@ const ideas = (await getCollection('ideas', ({ data }) => !data.draft))
     return stageB - stageA || (b.data.updatedDate ?? b.data.createdDate).valueOf() - (a.data.updatedDate ?? a.data.createdDate).valueOf();
   })
   .slice(0,2);
+const stageZh: Record<string, string> = { Active: '推进中', Exploring: '酝酿中', Spark: '灵感', Realized: '已落地', Parked: '已搁置' };
+const areaZh: Record<string, string> = { Research: '研究', Build: '构建', Life: '生活', Writing: '写作', Learning: '学习' };
 const githubUsername = site.github?.split('/').filter(Boolean).pop() || 'kaize-wang';
 ---
 <BaseLayout title={site.title} active="Home">
@@ -60,13 +62,21 @@ const githubUsername = site.github?.split('/').filter(Boolean).pop() || 'kaize-w
       <section class="section" aria-labelledby="ideas-motion-title">
         <div class="section-head">
           <h2 id="ideas-motion-title"><span class="ui-copy-en">Ideas in motion</span><span class="ui-copy-zh">正在推进的想法</span></h2>
-          <a class="section-kicker" href={withBase('/ideas')}><span class="ui-copy-en">Open idea board →</span><span class="ui-copy-zh">打开想法面板 →</span></a>
+          <div class="home-ideas-actions">
+            <a class="section-kicker" href={withBase('/ideas')}><span class="ui-copy-en">Open board →</span><span class="ui-copy-zh">进入面板 →</span></a>
+            <a class="home-idea-capture-link" href={withBase('/ideas/?capture=1')}><span class="ui-copy-en">+ Capture</span><span class="ui-copy-zh">+ 记下想法</span></a>
+          </div>
         </div>
         <div class="home-ideas-preview">
           {ideas.map(idea => (
             <a class="home-idea-row" href={withBase(`/ideas/${idea.id}/`)}>
-              <div><small>{idea.data.area} · {idea.data.stage}</small><br/><strong>{idea.data.title}</strong></div>
-              <span class="home-idea-next">{idea.data.nextAction ? `Next: ${idea.data.nextAction}` : idea.data.summary}</span>
+              <div>
+                <small><span class="ui-copy-en">{idea.data.area} · {idea.data.stage}</span><span class="ui-copy-zh">{areaZh[idea.data.area]} · {stageZh[idea.data.stage]}</span></small><br/>
+                <strong><span class="ui-copy-en">{idea.data.title}</span><span class="ui-copy-zh">{idea.data.titleZh || idea.data.title}</span></strong>
+              </div>
+              <span class="home-idea-next">
+                {idea.data.nextAction ? <><span class="ui-copy-en">Next: {idea.data.nextAction}</span><span class="ui-copy-zh">下一步：{idea.data.nextActionZh || idea.data.nextAction}</span></> : <><span class="ui-copy-en">{idea.data.summary}</span><span class="ui-copy-zh">{idea.data.summaryZh || idea.data.summary}</span></>}
+              </span>
               <span class="home-idea-arrow">→</span>
             </a>
           ))}
