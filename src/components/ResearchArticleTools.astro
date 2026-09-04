@@ -25,6 +25,7 @@ const { citation = { plain: '', markdown: '', bibtex: '' } } = Astro.props;
     theorem: { label: 'Theorem', prefix: 'thm' },
     lemma: { label: 'Lemma', prefix: 'lem' },
     proposition: { label: 'Proposition', prefix: 'prop' },
+    corollary: { label: 'Corollary', prefix: 'cor' },
     assumption: { label: 'Assumption', prefix: 'assumption' },
     notation: { label: 'Notation', prefix: 'notation' }
   };
@@ -36,7 +37,7 @@ const { citation = { plain: '', markdown: '', bibtex: '' } } = Astro.props;
   };
 
   const detailsPattern = /^\s*\[!details(?:\s+([^\]]+))?\]\s*/i;
-  const blockPattern = /^\s*\[!(definition|theorem|lemma|proposition|proof|assumption|notation)(?:\s+id=([^\]\s]+))?\]\s*/i;
+  const blockPattern = /^\s*\[!(definition|theorem|lemma|proposition|corollary|proof|assumption|notation)(?:\s+id=([^\]\s|]+))?(?:\s*\|\s*([^\]]+))?\]\s*/i;
   [...prose.querySelectorAll('blockquote')].forEach(quote => {
     const first = quote.querySelector('p');
     const text = first?.textContent || '';
@@ -48,7 +49,13 @@ const { citation = { plain: '', markdown: '', bibtex: '' } } = Astro.props;
       const details = document.createElement('details');
       details.className = 'scholarly-details';
       const summary = document.createElement('summary');
-      summary.textContent = (detailsMatch[1] || '').trim() || 'Details';
+      const title = document.createElement('span');
+      title.className = 'scholarly-summary-title';
+      title.textContent = (detailsMatch[1] || '').trim() || 'Details';
+      const affordance = document.createElement('span');
+      affordance.className = 'scholarly-summary-affordance';
+      affordance.setAttribute('aria-hidden', 'true');
+      summary.append(title, affordance);
       const body = document.createElement('div');
       body.className = 'scholarly-details-body';
       while (quote.firstChild) body.appendChild(quote.firstChild);
@@ -61,14 +68,20 @@ const { citation = { plain: '', markdown: '', bibtex: '' } } = Astro.props;
     if (!match) return;
     const kind = match[1].toLowerCase();
     const id = (match[2] || '').trim();
+    const customLabel = (match[3] || '').trim();
     first.innerHTML = first.innerHTML.replace(blockPattern, '');
 
     if (kind === 'proof') {
       const details = document.createElement('details');
       details.className = 'scholarly-proof';
-      details.open = true;
       const summary = document.createElement('summary');
-      summary.textContent = 'Proof';
+      const title = document.createElement('span');
+      title.className = 'scholarly-summary-title';
+      title.textContent = customLabel || 'Proof';
+      const affordance = document.createElement('span');
+      affordance.className = 'scholarly-summary-affordance';
+      affordance.setAttribute('aria-hidden', 'true');
+      summary.append(title, affordance);
       const body = document.createElement('div');
       body.className = 'scholarly-proof-body';
       while (quote.firstChild) body.appendChild(quote.firstChild);
@@ -84,12 +97,12 @@ const { citation = { plain: '', markdown: '', bibtex: '' } } = Astro.props;
     quote.dataset.scholarKind = kind;
     const label = document.createElement('span');
     label.className = 'scholarly-label';
-    label.textContent = `${config.label} ${number}`;
+    label.textContent = customLabel || `${config.label} ${number}`;
     quote.prepend(label);
     if (id) {
       const anchorId = `${config.prefix}-${id}`;
       quote.id = anchorId;
-      crossrefs.set(`${config.prefix}:${id}`, { href: `#${anchorId}`, label: `${config.label} ${number}` });
+      crossrefs.set(`${config.prefix}:${id}`, { href: `#${anchorId}`, label: customLabel || `${config.label} ${number}` });
     }
   });
 
@@ -112,7 +125,7 @@ const { citation = { plain: '', markdown: '', bibtex: '' } } = Astro.props;
     }
   });
 
-  const refPattern = /\[\[(eq|def|thm|lem|prop|assumption|notation):([^\]]+)\]\]/g;
+  const refPattern = /\[\[(eq|def|thm|lem|prop|cor|assumption|notation):([^\]]+)\]\]/g;
   const walker = document.createTreeWalker(prose, NodeFilter.SHOW_TEXT);
   const nodes = [];
   let current;
