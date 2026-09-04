@@ -6,11 +6,13 @@ import SiteExtras from '@/components/SiteExtras.astro';
 import VisitorAnalytics from '@/components/VisitorAnalytics.astro';
 import '@/styles/ideas.css';
 import { site } from '@/site.config';
+import { applyIdeaWorkbenchState } from '@/utils/idea-workbench-state';
 import { getPublishedNotes } from '@/utils/notes';
 import { withBase } from '@/utils/url';
 const notes = await getPublishedNotes();
 const recent = notes.slice(0,4);
 const ideas = (await getCollection('ideas', ({ data }) => !data.draft))
+  .map(applyIdeaWorkbenchState)
   .filter(idea => idea.data.stage === 'Active' || idea.data.featured)
   .sort((a,b) => {
     const stageA = a.data.stage === 'Active' ? 1 : 0;
@@ -21,6 +23,8 @@ const ideas = (await getCollection('ideas', ({ data }) => !data.draft))
 const areaZh: Record<string, string> = { Research:'研究', Build:'构建', Life:'生活', Writing:'写作', Learning:'学习' };
 const stageZh: Record<string, string> = { Spark:'灵感', Exploring:'酝酿中', Active:'推进中', Realized:'已落地', Parked:'已搁置' };
 const githubUsername = site.github?.split('/').filter(Boolean).pop() || 'kaize-wang';
+const githubHeatmapLight = `https://ghchart.xqsit94.in/light:7d2f2f/${githubUsername}`;
+const githubHeatmapDark = `https://ghchart.xqsit94.in/dark:d4938d/${githubUsername}`;
 ---
 <BaseLayout title={site.title} active="Home">
   <main class="site-shell">
@@ -100,10 +104,10 @@ const githubUsername = site.github?.split('/').filter(Boolean).pop() || 'kaize-w
         </div>
         <a class="github-activity-card" href={site.github} aria-label={`View ${site.fullName}'s GitHub profile`}>
           <div class="github-activity-chart-scroll">
-            <img class="github-activity-chart github-activity-chart-light" src={`https://ghchart.xqsit94.in/light:7d2f2f/${githubUsername}`} alt={`${site.fullName}'s GitHub contribution chart`} loading="lazy" />
-            <img class="github-activity-chart github-activity-chart-dark" src={`https://ghchart.xqsit94.in/dark:d4938d/${githubUsername}`} alt={`${site.fullName}'s GitHub contribution chart in dark mode`} loading="lazy" />
+            <img class="github-activity-chart github-activity-chart-light" data-github-heatmap data-github-heatmap-base={githubHeatmapLight} src={githubHeatmapLight} alt={`${site.fullName}'s GitHub contribution chart`} loading="lazy" />
+            <img class="github-activity-chart github-activity-chart-dark" data-github-heatmap data-github-heatmap-base={githubHeatmapDark} src={githubHeatmapDark} alt={`${site.fullName}'s GitHub contribution chart in dark mode`} loading="lazy" />
           </div>
-          <span class="github-activity-note"><span class="ui-copy-en">Public contribution activity over the past year.</span><span class="ui-copy-zh">过去一年的公开 GitHub 贡献活动。</span></span>
+          <span class="github-activity-note"><span class="ui-copy-en">Public contribution activity over the past year · refreshed hourly.</span><span class="ui-copy-zh">过去一年的公开 GitHub 贡献活动 · 每小时刷新。</span></span>
         </a>
       </section>
     )}
@@ -111,4 +115,31 @@ const githubUsername = site.github?.split('/').filter(Boolean).pop() || 'kaize-w
     <VisitorAnalytics compact />
   </main>
   <SiteExtras />
+
+  <script is:inline>
+    (() => {
+      const heatmaps = [...document.querySelectorAll('[data-github-heatmap]')];
+      if (!heatmaps.length) return;
+      let lastBucket = '';
+      const refresh = () => {
+        const now = new Date();
+        const bucket = [
+          now.getUTCFullYear(),
+          String(now.getUTCMonth() + 1).padStart(2, '0'),
+          String(now.getUTCDate()).padStart(2, '0'),
+          String(now.getUTCHours()).padStart(2, '0')
+        ].join('');
+        if (bucket === lastBucket) return;
+        lastBucket = bucket;
+        heatmaps.forEach(image => {
+          const base = image.dataset.githubHeatmapBase;
+          if (!base) return;
+          image.src = `${base}?v=${bucket}`;
+        });
+      };
+      refresh();
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
+      window.setInterval(refresh, 5 * 60 * 1000);
+    })();
+  </script>
 </BaseLayout>
