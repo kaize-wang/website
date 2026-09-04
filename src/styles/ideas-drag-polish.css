@@ -1,0 +1,177 @@
+/* Ideas Board interaction layer: reliable pointer drag + clearer stage headers. */
+
+.ideas-studio-v3 .board-lane header {
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  min-height: 30px;
+}
+
+.ideas-studio-v3 .board-lane-index {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
+  background: color-mix(in srgb, var(--paper) 76%, transparent);
+  color: color-mix(in srgb, var(--muted) 84%, var(--text));
+  font: 600 9px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: .04em;
+  box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--bg) 72%, transparent);
+}
+
+.ideas-studio-v3 .board-lane[data-board-lane='Active'] .board-lane-index {
+  border-color: color-mix(in srgb, var(--accent) 46%, var(--line));
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 5%, var(--paper));
+}
+
+.ideas-studio-v3 .board-lane h3 {
+  overflow: hidden;
+  margin: 0;
+  font: 500 17px/1.2 Georgia, 'Times New Roman', serif;
+  letter-spacing: -.012em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ideas-studio-v3 .board-lane header strong {
+  min-width: 22px;
+  color: color-mix(in srgb, var(--muted) 86%, var(--text));
+  font: 600 10px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  text-align: right;
+}
+
+.ideas-studio-v3 .board-lane > p {
+  min-height: 31px;
+  margin: 7px 0 18px 40px;
+  color: color-mix(in srgb, var(--muted) 88%, var(--text));
+  font-size: 9.5px;
+  line-height: 1.5;
+}
+
+.ideas-studio-v3 .board-card {
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+.ideas-studio-v3 .board-grip {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  margin: -6px -5px -6px 0;
+  border: 1px solid transparent;
+  color: color-mix(in srgb, var(--muted) 72%, transparent);
+  cursor: grab;
+  font-size: 13px;
+  touch-action: none;
+  transition: opacity .15s ease, color .15s ease, border-color .15s ease, background .15s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ideas-studio-v3 .board-card:hover .board-grip {
+    opacity: 1;
+    border-color: color-mix(in srgb, var(--line) 88%, transparent);
+    background: color-mix(in srgb, var(--paper) 80%, var(--bg));
+    color: var(--muted);
+  }
+}
+
+body.idea-pointer-dragging {
+  cursor: grabbing !important;
+  user-select: none !important;
+}
+body.idea-pointer-dragging * { cursor: grabbing !important; }
+
+.ideas-studio-v3 .board-card.pointer-drag-source {
+  opacity: .28;
+  transform: scale(.985);
+  border-style: dashed;
+}
+
+.idea-pointer-drag-ghost {
+  position: fixed !important;
+  inset: auto auto auto auto !important;
+  z-index: 160 !important;
+  margin: 0 !important;
+  pointer-events: none !important;
+  opacity: .93 !important;
+  transform-origin: 48% 55%;
+  rotate: .7deg;
+  border-color: color-mix(in srgb, var(--accent) 34%, var(--line)) !important;
+  background:
+    radial-gradient(ellipse 140px 72px at 88% 0%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 72%),
+    var(--paper) !important;
+  box-shadow:
+    0 22px 56px rgba(33, 29, 25, .14),
+    0 3px 10px rgba(33, 29, 25, .08) !important;
+}
+
+.idea-pointer-drag-ghost .board-grip { opacity: 1 !important; color: var(--accent); }
+
+.ideas-studio-v3 .board-dropzone.pointer-drag-over,
+.ideas-studio-v3 .board-dropzone.drag-over {
+  outline: 1px dashed color-mix(in srgb, var(--accent) 62%, var(--line));
+  outline-offset: 5px;
+  background:
+    radial-gradient(ellipse 180px 110px at 50% 0%, color-mix(in srgb, var(--accent) 11%, transparent), transparent 76%),
+    linear-gradient(180deg, color-mix(in srgb, var(--accent) 7%, transparent), transparent 74%);
+}
+
+.ideas-studio-v3 .board-lane.pointer-lane-over {
+  background:
+    radial-gradient(ellipse 220px 130px at 50% 0%, color-mix(in srgb, var(--accent) 8%, transparent), transparent 78%),
+    linear-gradient(180deg, color-mix(in srgb, var(--paper) 32%, transparent), transparent 170px);
+}
+
+.ideas-studio-v3 .board-lane[data-board-lane='Active'].pointer-lane-over {
+  background:
+    radial-gradient(ellipse 240px 140px at 50% 0%, color-mix(in srgb, var(--accent) 13%, transparent), transparent 78%),
+    linear-gradient(180deg, var(--idea-glow), transparent 170px);
+}
+
+/* The second tab is a working surface; keep its microcopy designed, but readable. */
+.ideas-studio-v3 #idea-view-board .board-intro {
+  position: relative;
+  padding-bottom: 25px;
+}
+.ideas-studio-v3 #idea-view-board .board-intro::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 1px;
+  background: linear-gradient(90deg, var(--line) 0 52%, color-mix(in srgb, var(--accent) 30%, var(--line)) 82%, var(--line));
+}
+.ideas-studio-v3 #idea-view-board .board-intro > p {
+  font-size: 10px;
+  line-height: 1.65;
+}
+.ideas-studio-v3 .board-footnote {
+  min-height: 38px;
+  padding-top: 11px;
+  padding-bottom: 11px;
+  font-size: 8.5px;
+}
+
+@media (max-width: 760px) {
+  .ideas-studio-v3 .board-lane-index {
+    width: 26px;
+    height: 26px;
+    font-size: 9.5px;
+  }
+  .ideas-studio-v3 .board-lane h3 { font-size: 18px; }
+  .ideas-studio-v3 .board-lane > p { margin-left: 42px; font-size: 10px; }
+  .ideas-studio-v3 .board-grip {
+    opacity: 1;
+    border-color: color-mix(in srgb, var(--line) 74%, transparent);
+    color: var(--muted);
+    background: color-mix(in srgb, var(--paper) 74%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .idea-pointer-drag-ghost { rotate: 0deg; }
+}
