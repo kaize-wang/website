@@ -41,33 +41,48 @@
   white-space: nowrap;
 }
 
-/* Use one reading width for prose, display equations, and scholarly blocks.
-   Equations no longer break out beyond the text column. */
+/* Normal article reading uses one shared width for prose and equations.
+   Reader mode is deliberately excluded: it owns a separate full-viewport
+   split layout and must never inherit this 900px reading column. */
 @media (min-width: 1121px) {
-  .article-page-layout {
+  body:not(.paper-reader-active) .article-page-layout {
     width: min(calc(100% - 72px), 940px) !important;
   }
 
-  .article-page-layout .article-wrap {
+  body:not(.paper-reader-active) .article-page-layout .article-wrap {
     width: min(100%, 900px) !important;
     max-width: 900px !important;
     margin-left: auto !important;
     margin-right: auto !important;
   }
 
-  .prose > .katex-display:not(.equation-scroll-cell),
-  .prose > .equation-layout,
-  .prose > .scholarly-block .katex-display:not(.equation-scroll-cell),
-  .prose > .scholarly-block .equation-layout,
-  .prose > .scholarly-details .katex-display:not(.equation-scroll-cell),
-  .prose > .scholarly-details .equation-layout,
-  .prose > .scholarly-proof .katex-display:not(.equation-scroll-cell),
-  .prose > .scholarly-proof .equation-layout {
+  body:not(.paper-reader-active) .prose > .katex-display:not(.equation-scroll-cell),
+  body:not(.paper-reader-active) .prose > .equation-layout,
+  body:not(.paper-reader-active) .prose > .scholarly-block .katex-display:not(.equation-scroll-cell),
+  body:not(.paper-reader-active) .prose > .scholarly-block .equation-layout,
+  body:not(.paper-reader-active) .prose > .scholarly-details .katex-display:not(.equation-scroll-cell),
+  body:not(.paper-reader-active) .prose > .scholarly-details .equation-layout,
+  body:not(.paper-reader-active) .prose > .scholarly-proof .katex-display:not(.equation-scroll-cell),
+  body:not(.paper-reader-active) .prose > .scholarly-proof .equation-layout {
     width: 100% !important;
     max-width: 100% !important;
     margin-left: 0 !important;
     margin-right: 0 !important;
     transform: none !important;
+  }
+
+  /* Hard reset for the split Reader. These rules intentionally outrank the
+     normal article width rules above so the source/notes grid can fill the viewport. */
+  body.paper-reader-active .article-page-layout {
+    width: 100vw !important;
+    max-width: none !important;
+    margin: 0 !important;
+  }
+
+  body.paper-reader-active .article-page-layout .article-wrap {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
   }
 }
 
