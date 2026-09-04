@@ -1,0 +1,243 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import SiteExtras from '@/components/SiteExtras.astro';
+import '@/styles/ideas.css';
+import { withBase } from '@/utils/url';
+
+const ideas = (await getCollection('ideas', ({ data }) => !data.draft))
+  .sort((a, b) => (b.data.updatedDate ?? b.data.createdDate).valueOf() - (a.data.updatedDate ?? a.data.createdDate).valueOf());
+const stages = ['Active', 'Exploring', 'Spark', 'Realized', 'Parked'] as const;
+const areas = ['Research', 'Build', 'Life', 'Writing', 'Learning'] as const;
+const counts = Object.fromEntries(stages.map(stage => [stage, ideas.filter(idea => idea.data.stage === stage).length]));
+const activeIdeas = ideas.filter(idea => idea.data.stage === 'Active');
+const exploringIdeas = ideas.filter(idea => idea.data.stage === 'Exploring');
+const sparkIdeas = ideas.filter(idea => idea.data.stage === 'Spark');
+const realizedIdeas = ideas.filter(idea => idea.data.stage === 'Realized');
+const parkedIdeas = ideas.filter(idea => idea.data.stage === 'Parked');
+const fmt = (date: Date) => new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric' }).format(date);
+const progressOf = (idea: typeof ideas[number]) => {
+  const total = idea.data.milestones.length;
+  const done = idea.data.milestones.filter(item => item.done).length;
+  return { total, done, pct: total ? Math.round((done / total) * 100) : 0 };
+};
+---
+<BaseLayout title="Ideas">
+  <main class="site-shell ideas-page">
+    <header class="page-hero ideas-hero">
+      <div class="ideas-hero-row">
+        <div class="ideas-hero-copy">
+          <div class="eyebrow"><span class="ui-copy-en">Ideas · from thought to action</span><span class="ui-copy-zh">想法 · 从念头走向行动</span></div>
+          <h1>Ideas</h1>
+          <p>
+            <span class="ui-copy-en">A working space for thoughts that may become research, writing, tools, habits, or real projects. Capture first; choose carefully; keep the next step visible.</span>
+            <span class="ui-copy-zh">一个让想法暂时落脚、逐渐澄清并真正推进的工作空间。先接住念头，再筛选值得做的事，并始终看得见下一步。</span>
+          </p>
+        </div>
+        <button class="ideas-capture-trigger" id="idea-capture-trigger" type="button">
+          <span class="ui-copy-en">Capture idea</span><span class="ui-copy-zh">记下想法</span>
+        </button>
+      </div>
+    </header>
+
+    <section class="idea-dashboard" aria-label="Idea overview">
+      <div class="idea-overview">
+        <div class="idea-overview-top">
+          <div>
+            <span class="idea-overview-kicker"><span class="ui-copy-en">Idea pipeline</span><span class="ui-copy-zh">想法管线</span></span>
+            <h2><span class="ui-copy-en">Keep the few things in motion visible.</span><span class="ui-copy-zh">把真正正在推进的少数事情留在视野里。</span></h2>
+            <p class="idea-overview-note">
+              <span class="ui-copy-en">The dashboard is deliberately biased toward action: Active ideas come first, while sparks stay quiet until they earn more attention.</span>
+              <span class="ui-copy-zh">这个面板刻意偏向“推进”：Active 永远在最前面，而灵感只安静地待着，直到它值得更多注意。</span>
+            </p>
+          </div>
+        </div>
+        <div class="idea-stage-track" aria-label="Idea stages">
+          <div class="idea-stage-node"><strong>{counts.Active}</strong><span><span class="ui-copy-en">Active</span><span class="ui-copy-zh">推进中</span></span></div>
+          <div class="idea-stage-node"><strong>{counts.Exploring}</strong><span><span class="ui-copy-en">Exploring</span><span class="ui-copy-zh">酝酿中</span></span></div>
+          <div class="idea-stage-node"><strong>{counts.Spark}</strong><span><span class="ui-copy-en">Sparks</span><span class="ui-copy-zh">灵感</span></span></div>
+          <div class="idea-stage-node"><strong>{counts.Realized}</strong><span><span class="ui-copy-en">Realized</span><span class="ui-copy-zh">已落地</span></span></div>
+        </div>
+      </div>
+
+      <aside class="idea-inbox-panel" aria-labelledby="private-inbox-title">
+        <span class="idea-overview-kicker"><span class="ui-copy-en">Local only</span><span class="ui-copy-zh">仅本机</span></span>
+        <h3 id="private-inbox-title"><span class="ui-copy-en">Private Inbox</span><span class="ui-copy-zh">私人收件箱</span></h3>
+        <p><span class="ui-copy-en">Fast, rough captures stored only in this browser. Good for thoughts that are too early—or too private—to publish.</span><span class="ui-copy-zh">快速记录还很粗糙、或暂时不适合公开的念头。只保存在当前浏览器，不上传到网站。</span></p>
+        <div class="idea-inbox-list" id="idea-inbox-list"></div>
+        <div class="idea-inbox-count" id="idea-inbox-count"><span class="ui-copy-en">No local captures yet.</span><span class="ui-copy-zh">还没有本地记录。</span></div>
+      </aside>
+    </section>
+
+    <section class="section" aria-labelledby="ideas-board-title">
+      <div class="section-head">
+        <h2 id="ideas-board-title"><span class="ui-copy-en">Idea board</span><span class="ui-copy-zh">想法面板</span></h2>
+        <span class="section-kicker"><span class="ui-copy-en">Filter without turning it into a task manager</span><span class="ui-copy-zh">可以筛选，但不要把它变成任务管理器</span></span>
+      </div>
+
+      <div class="idea-toolbar">
+        <div class="idea-filter-group" aria-label="Filter ideas">
+          <button class="idea-filter active" type="button" data-idea-filter="all"><span class="ui-copy-en">All</span><span class="ui-copy-zh">全部</span></button>
+          <button class="idea-filter" type="button" data-idea-filter="Active"><span class="ui-copy-en">Active</span><span class="ui-copy-zh">推进中</span></button>
+          <button class="idea-filter" type="button" data-idea-filter="Exploring"><span class="ui-copy-en">Exploring</span><span class="ui-copy-zh">酝酿中</span></button>
+          <button class="idea-filter" type="button" data-idea-filter="Spark"><span class="ui-copy-en">Sparks</span><span class="ui-copy-zh">灵感</span></button>
+          {areas.map(area => <button class="idea-filter" type="button" data-idea-filter={area}>{area}</button>)}
+        </div>
+        <span class="idea-visible-count" id="idea-visible-count">{ideas.length} ideas</span>
+      </div>
+
+      {activeIdeas.length > 0 && (
+        <div class="idea-section" data-idea-section>
+          <div class="idea-section-head"><h2><span class="ui-copy-en">In motion</span><span class="ui-copy-zh">正在推进</span></h2><span><span class="ui-copy-en">Make the next action obvious</span><span class="ui-copy-zh">下一步必须足够明确</span></span></div>
+          <div class="idea-grid">
+            {activeIdeas.map(idea => {
+              const progress = progressOf(idea);
+              return (
+                <a class="idea-card" data-idea-card data-stage={idea.data.stage} data-area={idea.data.area} href={withBase(`/ideas/${idea.id}/`)}>
+                  <div class="idea-card-top"><span class="idea-card-stage">{idea.data.stage}</span><span class="idea-card-area">{idea.data.area}</span></div>
+                  <h3>{idea.data.title}</h3>
+                  <p class="idea-card-summary">{idea.data.summary}</p>
+                  {idea.data.nextAction && <div class="idea-next"><span>Next</span><strong>{idea.data.nextAction}</strong></div>}
+                  <div class="idea-card-footer">
+                    <div class="idea-progress-line"><span style={`width:${progress.pct}%`}></span></div>
+                    <div class="idea-progress-meta"><span>{progress.total ? `${progress.done} / ${progress.total} milestones` : 'No milestones yet'}</span><span>{fmt(idea.data.updatedDate ?? idea.data.createdDate)}</span></div>
+                  </div>
+                </a>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {exploringIdeas.length > 0 && (
+        <div class="idea-section" data-idea-section>
+          <div class="idea-section-head"><h2><span class="ui-copy-en">Exploring</span><span class="ui-copy-zh">酝酿中</span></h2><span><span class="ui-copy-en">Worth another look</span><span class="ui-copy-zh">值得再想一想</span></span></div>
+          <div class="idea-grid">
+            {exploringIdeas.map(idea => {
+              const progress = progressOf(idea);
+              return (
+                <a class="idea-card is-compact" data-idea-card data-stage={idea.data.stage} data-area={idea.data.area} href={withBase(`/ideas/${idea.id}/`)}>
+                  <div class="idea-card-top"><span class="idea-card-stage">{idea.data.stage}</span><span class="idea-card-area">{idea.data.area}</span></div>
+                  <h3>{idea.data.title}</h3><p class="idea-card-summary">{idea.data.summary}</p>
+                  {idea.data.nextAction && <div class="idea-next"><span>Next</span><strong>{idea.data.nextAction}</strong></div>}
+                  <div class="idea-card-footer"><div class="idea-progress-line"><span style={`width:${progress.pct}%`}></span></div><div class="idea-progress-meta"><span>{progress.total ? `${progress.done} / ${progress.total} milestones` : 'Still taking shape'}</span><span>{fmt(idea.data.updatedDate ?? idea.data.createdDate)}</span></div></div>
+                </a>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {sparkIdeas.length > 0 && (
+        <div class="idea-section" data-idea-section>
+          <div class="idea-section-head"><h2><span class="ui-copy-en">Sparks</span><span class="ui-copy-zh">灵感</span></h2><span><span class="ui-copy-en">No commitment required</span><span class="ui-copy-zh">先记录，不承诺</span></span></div>
+          <div class="idea-grid">
+            {sparkIdeas.map(idea => <a class="idea-card is-compact" data-idea-card data-stage={idea.data.stage} data-area={idea.data.area} href={withBase(`/ideas/${idea.id}/`)}><div class="idea-card-top"><span class="idea-card-stage">{idea.data.stage}</span><span class="idea-card-area">{idea.data.area}</span></div><h3>{idea.data.title}</h3><p class="idea-card-summary">{idea.data.summary}</p>{idea.data.nextAction && <div class="idea-next"><span>Next</span><strong>{idea.data.nextAction}</strong></div>}<div class="idea-card-footer"><div class="idea-progress-meta"><span><span class="ui-copy-en">Captured</span><span class="ui-copy-zh">记录于</span></span><span>{fmt(idea.data.createdDate)}</span></div></div></a>)}
+          </div>
+        </div>
+      )}
+
+      {(realizedIdeas.length > 0 || parkedIdeas.length > 0) && (
+        <div class="idea-section" data-idea-section>
+          <div class="idea-section-head"><h2><span class="ui-copy-en">Elsewhere</span><span class="ui-copy-zh">其他状态</span></h2><span><span class="ui-copy-en">Completed or intentionally quiet</span><span class="ui-copy-zh">已经落地，或有意暂时搁置</span></span></div>
+          <div class="idea-grid">
+            {[...realizedIdeas, ...parkedIdeas].map(idea => <a class="idea-card is-compact" data-idea-card data-stage={idea.data.stage} data-area={idea.data.area} href={withBase(`/ideas/${idea.id}/`)}><div class="idea-card-top"><span class="idea-card-stage">{idea.data.stage}</span><span class="idea-card-area">{idea.data.area}</span></div><h3>{idea.data.title}</h3><p class="idea-card-summary">{idea.data.summary}</p></a>)}
+          </div>
+        </div>
+      )}
+    </section>
+  </main>
+
+  <dialog class="idea-capture-dialog" id="idea-capture-dialog">
+    <div class="idea-capture-head"><strong><span class="ui-copy-en">Capture before it disappears</span><span class="ui-copy-zh">先把念头接住</span></strong><button class="idea-dialog-close" id="idea-dialog-close" type="button" aria-label="Close">×</button></div>
+    <form class="idea-capture-form" id="idea-capture-form" method="dialog">
+      <div class="idea-field"><label for="idea-title"><span class="ui-copy-en">Idea</span><span class="ui-copy-zh">想法</span></label><input id="idea-title" name="title" required maxlength="120" placeholder="One sentence is enough…" /></div>
+      <div class="idea-form-row">
+        <div class="idea-field"><label for="idea-area"><span class="ui-copy-en">Area</span><span class="ui-copy-zh">领域</span></label><select id="idea-area" name="area"><option>Research</option><option>Build</option><option>Life</option><option>Writing</option><option>Learning</option></select></div>
+        <div class="idea-field"><label for="idea-stage"><span class="ui-copy-en">Initial state</span><span class="ui-copy-zh">初始状态</span></label><select id="idea-stage" name="stage"><option>Spark</option><option>Exploring</option></select></div>
+      </div>
+      <div class="idea-field"><label for="idea-note"><span class="ui-copy-en">Quick note</span><span class="ui-copy-zh">随手记</span></label><textarea id="idea-note" name="note" maxlength="800" placeholder="What made this worth capturing?"></textarea></div>
+      <p class="idea-capture-note"><span class="ui-copy-en">Private by default: this capture stays in localStorage on this browser and is never committed to the public site.</span><span class="ui-copy-zh">默认私密：这条记录只保存在当前浏览器的 localStorage，不会提交到公开网站。</span></p>
+      <div class="idea-form-actions"><button type="button" id="idea-cancel"><span class="ui-copy-en">Cancel</span><span class="ui-copy-zh">取消</span></button><button type="submit"><span class="ui-copy-en">Save locally</span><span class="ui-copy-zh">保存到本机</span></button></div>
+    </form>
+  </dialog>
+
+  <SiteExtras />
+
+  <script is:inline>
+    (() => {
+      const filters = [...document.querySelectorAll('[data-idea-filter]')];
+      const cards = [...document.querySelectorAll('[data-idea-card]')];
+      const sections = [...document.querySelectorAll('[data-idea-section]')];
+      const count = document.getElementById('idea-visible-count');
+      const setFilter = value => {
+        filters.forEach(button => button.classList.toggle('active', button.dataset.ideaFilter === value));
+        let visible = 0;
+        cards.forEach(card => {
+          const show = value === 'all' || card.dataset.stage === value || card.dataset.area === value;
+          card.hidden = !show;
+          if (show) visible += 1;
+        });
+        sections.forEach(section => {
+          const hasVisible = [...section.querySelectorAll('[data-idea-card]')].some(card => !card.hidden);
+          section.hidden = !hasVisible;
+        });
+        if (count) count.textContent = `${visible} ${visible === 1 ? 'idea' : 'ideas'}`;
+      };
+      filters.forEach(button => button.addEventListener('click', () => setFilter(button.dataset.ideaFilter || 'all')));
+
+      const STORAGE_KEY = 'kaize-private-idea-inbox-v1';
+      const dialog = document.getElementById('idea-capture-dialog');
+      const trigger = document.getElementById('idea-capture-trigger');
+      const close = document.getElementById('idea-dialog-close');
+      const cancel = document.getElementById('idea-cancel');
+      const form = document.getElementById('idea-capture-form');
+      const list = document.getElementById('idea-inbox-list');
+      const inboxCount = document.getElementById('idea-inbox-count');
+      const readInbox = () => {
+        try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; }
+      };
+      const writeInbox = items => {
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); } catch {}
+      };
+      const escapeText = value => String(value || '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+      const renderInbox = () => {
+        const items = readInbox();
+        if (!list || !inboxCount) return;
+        list.innerHTML = items.slice(0, 4).map((item, index) => `<div class="idea-inbox-item"><div><strong>${escapeText(item.title)}</strong><small>${escapeText(item.area)} · ${escapeText(item.stage)}</small></div><button class="idea-inbox-remove" type="button" data-inbox-remove="${index}" aria-label="Remove">×</button></div>`).join('');
+        inboxCount.textContent = items.length ? `${items.length} local ${items.length === 1 ? 'capture' : 'captures'} · browser only` : (document.documentElement.dataset.uiLanguage === 'zh' ? '还没有本地记录。' : 'No local captures yet.');
+        list.querySelectorAll('[data-inbox-remove]').forEach(button => button.addEventListener('click', () => {
+          const current = readInbox();
+          current.splice(Number(button.dataset.inboxRemove), 1);
+          writeInbox(current); renderInbox();
+        }));
+      };
+      trigger?.addEventListener('click', () => dialog?.showModal());
+      close?.addEventListener('click', () => dialog?.close());
+      cancel?.addEventListener('click', () => dialog?.close());
+      dialog?.addEventListener('click', event => {
+        const rect = dialog.getBoundingClientRect();
+        const inside = event.clientX >= rect.left && event.clientX <= rect.right && event.clientY >= rect.top && event.clientY <= rect.bottom;
+        if (!inside) dialog.close();
+      });
+      form?.addEventListener('submit', event => {
+        event.preventDefault();
+        const data = new FormData(form);
+        const item = {
+          title: String(data.get('title') || '').trim(),
+          area: String(data.get('area') || 'Build'),
+          stage: String(data.get('stage') || 'Spark'),
+          note: String(data.get('note') || '').trim(),
+          createdAt: new Date().toISOString()
+        };
+        if (!item.title) return;
+        const items = readInbox();
+        items.unshift(item);
+        writeInbox(items.slice(0, 50));
+        form.reset(); dialog?.close(); renderInbox();
+      });
+      document.addEventListener('kaize:ui-language', renderInbox);
+      renderInbox();
+    })();
+  </script>
+</BaseLayout>
