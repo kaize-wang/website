@@ -258,6 +258,7 @@ import '@/styles/ideas-drag-polish.css';
       if (event.target?.closest?.('input, textarea, select, button, a')) return;
       const isTouch = event.pointerType === 'touch';
       if (isTouch && !event.target?.closest?.('.board-grip')) return;
+
       card.draggable = false;
       const rect = card.getBoundingClientRect();
       drag = {
@@ -284,6 +285,7 @@ import '@/styles/ideas-drag-polish.css';
       if (!drag.active && Math.hypot(dx, dy) < threshold) return;
       if (!drag.active) beginDrag(event);
       if (!drag?.active) return;
+
       event.preventDefault();
       positionGhost(event);
       autoScroll(event);
@@ -292,6 +294,11 @@ import '@/styles/ideas-drag-polish.css';
 
     studio.addEventListener('pointerup', event => finishDrag(event, false));
     studio.addEventListener('pointercancel', event => finishDrag(event, true));
+    window.addEventListener('blur', () => {
+      if (!drag) return;
+      swallowClickUntil = performance.now() + 500;
+      cleanup();
+    });
   };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initIdeasPointerDrag, { once: true });
