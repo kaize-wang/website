@@ -77,7 +77,8 @@ const isIdeasStudio = /\/ideas\/?$/.test(Astro.url.pathname);
         }
 
         if (dataLink) {
-          dataLink.textContent = t('View saved data ↗', '查看已保存数据 ↗');
+          const compact = window.matchMedia('(max-width: 760px)').matches;
+          dataLink.textContent = compact ? t('Data ↗', '数据 ↗') : t('View saved data ↗', '查看已保存数据 ↗');
           dataLink.title = t('Open the persistent Ideas state stored in GitHub', '打开 GitHub 中永久保存的 Ideas 状态文件');
         }
       };
@@ -116,6 +117,7 @@ const isIdeasStudio = /\/ideas\/?$/.test(Astro.url.pathname);
       window.addEventListener('storage', event => {
         if (event.key === REMOTE_MARKER_KEY) render();
       });
+      window.addEventListener('resize', render, { passive: true });
       if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true });
       else init();
     })();
@@ -152,6 +154,22 @@ const isIdeasStudio = /\/ideas\/?$/.test(Astro.url.pathname);
     opacity: 1;
   }
   @media (max-width: 760px) {
-    .idea-save-receipt { display: none; }
+    body.idea-owner-active .idea-owner-save-state {
+      display: inline-flex;
+      min-height: 24px;
+      margin-left: 0;
+      font-size: 7px;
+      letter-spacing: .02em;
+    }
+    .idea-save-receipt {
+      display: inline-flex;
+      min-height: 24px;
+      margin-left: 0;
+    }
+    .idea-save-data-link { font-size: 7px; }
+    .idea-save-data-link::before {
+      width: 8px;
+      margin-right: 4px;
+    }
   }
 </style>
