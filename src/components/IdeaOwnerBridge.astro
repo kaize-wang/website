@@ -1,0 +1,453 @@
+---
+import '@/styles/ideas-owner.css';
+
+const isIdeasStudio = /\/ideas\/?$/.test(Astro.url.pathname);
+const tokenTemplate = 'https://github.com/settings/personal-access-tokens/new?name=Kaize+Ideas+Owner&description=Write+Ideas+workspace+state+for+kaize-wang%2Fwebsite&target_name=kaize-wang&expires_in=90&contents=write';
+---
+
+{isIdeasStudio && (
+  <>
+    <dialog class="idea-owner-dialog" id="idea-owner-dialog">
+      <form id="idea-owner-form" method="dialog">
+        <div class="idea-owner-dialog-head">
+          <div>
+            <span class="idea-owner-dialog-kicker"><span class="ui-copy-en">Private owner access</span><span class="ui-copy-zh">仅本人编辑</span></span>
+            <h2><span class="ui-copy-en">Unlock the workbench</span><span class="ui-copy-zh">解锁你的工作台</span></h2>
+          </div>
+          <button class="idea-owner-dialog-close" id="idea-owner-close" type="button" aria-label="Close">×</button>
+        </div>
+        <p class="idea-owner-dialog-copy">
+          <span class="ui-copy-en">Visitors stay read-only. Your public stage, next action, milestones and progress are saved back to GitHub when you edit.</span>
+          <span class="ui-copy-zh">访客始终只读。你修改的公开状态、下一步、里程碑和推进记录会真正写回 GitHub。</span>
+        </p>
+        <div class="idea-owner-dialog-steps">
+          <span><b>1.</b> <span class="ui-copy-en">Create a fine-grained token and select only the <code>website</code> repository.</span><span class="ui-copy-zh">创建 fine-grained token，并且只选择 <code>website</code> 这个仓库。</span></span>
+          <span><b>2.</b> <span class="ui-copy-en">Repository permission: <code>Contents → Read and write</code>.</span><span class="ui-copy-zh">仓库权限只需要：<code>Contents → Read and write</code>。</span></span>
+          <span><b>3.</b> <span class="ui-copy-en">Paste it below. It is kept only for this browser session.</span><span class="ui-copy-zh">把 token 粘贴到下面。它只保留在当前浏览器会话里。</span></span>
+        </div>
+        <label class="idea-owner-token-label" for="idea-owner-token">
+          <span>GitHub token</span>
+          <input id="idea-owner-token" type="password" autocomplete="off" spellcheck="false" placeholder="github_pat_…" />
+        </label>
+        <div class="idea-owner-dialog-actions">
+          <a class="idea-owner-token-link" href={tokenTemplate} target="_blank" rel="noreferrer"><span class="ui-copy-en">Create the restricted token ↗</span><span class="ui-copy-zh">创建受限 token ↗</span></a>
+          <button class="idea-owner-unlock-submit" id="idea-owner-submit" type="submit"><span class="ui-copy-en">Verify & unlock</span><span class="ui-copy-zh">验证并解锁</span></button>
+        </div>
+        <p class="idea-owner-dialog-status" id="idea-owner-dialog-status" aria-live="polite"></p>
+        <p class="idea-owner-security-note"><span class="ui-copy-en">The token is never written into this website or repository. Locking the workspace removes it from the session.</span><span class="ui-copy-zh">token 不会写进网站源码或仓库；锁定工作台后会从当前会话中删除。</span></p>
+      </form>
+    </dialog>
+
+    <script is:inline>
+      (() => {
+        const OWNER_LOGIN = 'kaize-wang';
+        const REPO = 'kaize-wang/website';
+        const STATE_PATH = 'src/data/idea-workbench-state.json';
+        const STATE_RAW = `https://raw.githubusercontent.com/${REPO}/main/${STATE_PATH}`;
+        const STATE_API = `https://api.github.com/repos/${REPO}/contents/${STATE_PATH}`;
+        const TOKEN_KEY = 'kaize-ideas-owner-token-v1';
+        const SESSION_OK_KEY = 'kaize-ideas-owner-session-ok-v1';
+        const REMOTE_MARKER_KEY = 'kaize-ideas-remote-state-v1';
+        const INBOX_KEY = 'kaize-private-idea-inbox-v2';
+        const LEGACY_INBOX_KEY = 'kaize-private-idea-inbox-v1';
+        const WORKBENCH_KEY = 'kaize-idea-workbench-v2';
+        const nativeGet = Storage.prototype.getItem;
+        const nativeSet = Storage.prototype.setItem;
+        const nativeRemove = Storage.prototype.removeItem;
+
+        const sessionValue = key => {
+          try { return nativeGet.call(sessionStorage, key); } catch { return null; }
+        };
+        const localValue = key => {
+          try { return nativeGet.call(localStorage, key); } catch { return null; }
+        };
+        const provisionalToken = sessionValue(TOKEN_KEY) || '';
+        const provisionalOwner = Boolean(provisionalToken && sessionValue(SESSION_OK_KEY) === '1');
+        const owner = {
+          isUnlocked: provisionalOwner,
+          verified: false,
+          token: provisionalToken,
+          syncing: false,
+          saveTimer: 0,
+          pendingRaw: '',
+          lastSavedSnapshot: ''
+        };
+        window.__kaizeIdeaOwner = owner;
+
+        const parseJson = (raw, fallback = {}) => {
+          try { return raw ? (JSON.parse(raw) ?? fallback) : fallback; } catch { return fallback; }
+        };
+        const cleanObject = value => value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+        const parseWorkbench = raw => {
+          const parsed = cleanObject(parseJson(raw, {}));
+          return {
+            ...parsed,
+            stage: cleanObject(parsed.stage),
+            next: cleanObject(parsed.next),
+            scratch: cleanObject(parsed.scratch),
+            milestones: cleanObject(parsed.milestones),
+            progress: cleanObject(parsed.progress),
+            resurfaceIndex: Number.isFinite(Number(parsed.resurfaceIndex)) ? Number(parsed.resurfaceIndex) : 0
+          };
+        };
+        const publicSnapshot = workbench => ({
+          stage: cleanObject(workbench.stage),
+          next: cleanObject(workbench.next),
+          milestones: cleanObject(workbench.milestones),
+          progress: cleanObject(workbench.progress)
+        });
+        const hasPublicState = snapshot =>
+          Object.keys(snapshot.stage).length > 0 ||
+          Object.keys(snapshot.next).length > 0 ||
+          Object.keys(snapshot.milestones).length > 0 ||
+          Object.keys(snapshot.progress).length > 0;
+        const stableSnapshot = snapshot => JSON.stringify(snapshot);
+
+        const lockedWorkbench = raw => {
+          const workbench = parseWorkbench(raw);
+          workbench.scratch = {};
+          return JSON.stringify(workbench);
+        };
+
+        Storage.prototype.getItem = function(key) {
+          const value = nativeGet.call(this, key);
+          if (this === localStorage && !owner.isUnlocked) {
+            if (key === INBOX_KEY || key === LEGACY_INBOX_KEY) return '[]';
+            if (key === WORKBENCH_KEY && value) return lockedWorkbench(value);
+          }
+          return value;
+        };
+
+        Storage.prototype.setItem = function(key, value) {
+          if (this === localStorage && !owner.isUnlocked && (key === INBOX_KEY || key === LEGACY_INBOX_KEY || key === WORKBENCH_KEY)) {
+            return;
+          }
+          const result = nativeSet.call(this, key, value);
+          if (this === localStorage && key === WORKBENCH_KEY && owner.verified && !owner.syncing) {
+            queuePersist(value);
+          }
+          return result;
+        };
+
+        const utf8ToBase64 = value => {
+          const bytes = new TextEncoder().encode(value);
+          let binary = '';
+          for (let index = 0; index < bytes.length; index += 0x8000) {
+            binary += String.fromCharCode(...bytes.subarray(index, index + 0x8000));
+          }
+          return btoa(binary);
+        };
+        const base64ToUtf8 = value => {
+          const binary = atob(String(value || '').replace(/\s/g, ''));
+          const bytes = Uint8Array.from(binary, char => char.charCodeAt(0));
+          return new TextDecoder().decode(bytes);
+        };
+        const headersFor = token => ({
+          Accept: 'application/vnd.github+json',
+          Authorization: `Bearer ${token}`,
+          'X-GitHub-Api-Version': '2022-11-28'
+        });
+        const language = () => window.__kaizeUi?.language === 'zh' ? 'zh' : 'en';
+        const t = (en, zh) => language() === 'zh' ? zh : en;
+
+        let ownerButton = null;
+        let saveState = null;
+        const dialog = document.getElementById('idea-owner-dialog');
+        const ownerForm = document.getElementById('idea-owner-form');
+        const tokenInput = document.getElementById('idea-owner-token');
+        const dialogStatus = document.getElementById('idea-owner-dialog-status');
+
+        const setDialogStatus = (message, isError = false) => {
+          if (!dialogStatus) return;
+          dialogStatus.textContent = message || '';
+          dialogStatus.classList.toggle('is-error', Boolean(isError));
+        };
+        const setSaveState = (mode, message) => {
+          if (!saveState) return;
+          saveState.textContent = message || '';
+          saveState.classList.toggle('is-saving', mode === 'saving');
+          saveState.classList.toggle('is-error', mode === 'error');
+        };
+        const updateOwnerUi = () => {
+          const unlocked = owner.verified;
+          document.body?.classList.toggle('idea-owner-locked', !unlocked);
+          document.body?.classList.toggle('idea-owner-active', unlocked);
+          document.querySelector('.ideas-studio-v3')?.classList.toggle('idea-owner-unlocked', unlocked);
+          if (ownerButton) {
+            ownerButton.classList.toggle('is-owner', unlocked);
+            ownerButton.setAttribute('aria-pressed', unlocked ? 'true' : 'false');
+            ownerButton.innerHTML = unlocked
+              ? `<span class="owner-dot"></span><span>${t('Owner · GitHub', '本人 · GitHub')}</span>`
+              : `<span class="owner-dot"></span><span>${t('Owner', '本人编辑')}</span>`;
+          }
+          if (!unlocked) setSaveState('', t('Public · read only', '公开 · 只读'));
+          sanitizePeek();
+        };
+
+        const openDialog = () => {
+          if (!dialog) return;
+          setDialogStatus('');
+          if (owner.verified) return;
+          try { dialog.showModal(); } catch { dialog.setAttribute('open', ''); }
+          requestAnimationFrame(() => tokenInput?.focus());
+        };
+        const closeDialog = () => {
+          if (!dialog) return;
+          try { dialog.close(); } catch { dialog.removeAttribute('open'); }
+        };
+
+        const installOwnerControl = () => {
+          const hero = document.querySelector('.ideas-studio-v3 .ideas-studio-hero');
+          const capture = document.getElementById('idea-capture-trigger');
+          if (!hero || ownerButton) return;
+          ownerButton = document.createElement('button');
+          ownerButton.type = 'button';
+          ownerButton.className = 'idea-owner-button';
+          ownerButton.setAttribute('aria-pressed', 'false');
+          ownerButton.addEventListener('click', () => {
+            if (!owner.verified) return openDialog();
+            try {
+              nativeRemove.call(sessionStorage, TOKEN_KEY);
+              nativeRemove.call(sessionStorage, SESSION_OK_KEY);
+            } catch {}
+            owner.token = '';
+            owner.verified = false;
+            owner.isUnlocked = false;
+            location.reload();
+          });
+          if (capture) capture.insertAdjacentElement('beforebegin', ownerButton);
+          else hero.appendChild(ownerButton);
+          saveState = document.createElement('span');
+          saveState.className = 'idea-owner-save-state';
+          ownerButton.insertAdjacentElement('afterend', saveState);
+          updateOwnerUi();
+        };
+
+        const sanitizePeek = () => {
+          const peek = document.getElementById('idea-peek');
+          if (!peek) return;
+          peek.classList.toggle('peek-readonly', !owner.verified);
+          if (owner.verified) return;
+          peek.querySelectorAll('select').forEach(control => { control.disabled = true; });
+          peek.querySelectorAll('input[type="checkbox"]').forEach(control => { control.disabled = true; });
+          peek.querySelectorAll('textarea').forEach(control => { control.readOnly = true; });
+          const scratch = peek.querySelector('#peek-scratch-input')?.closest('.peek-section');
+          scratch?.classList.add('owner-private-hidden');
+          peek.querySelector('#peek-progress-form')?.classList.add('owner-private-hidden');
+          peek.querySelector('#peek-delete-private')?.classList.add('owner-private-hidden');
+        };
+
+        const fetchRemoteState = async () => {
+          const response = await fetch(`${STATE_RAW}?v=${Date.now()}`, { cache: 'no-store' });
+          if (!response.ok) throw new Error(`state ${response.status}`);
+          const state = await response.json();
+          return {
+            version: 1,
+            updatedAt: state?.updatedAt || null,
+            stage: cleanObject(state?.stage),
+            next: cleanObject(state?.next),
+            milestones: cleanObject(state?.milestones),
+            progress: cleanObject(state?.progress)
+          };
+        };
+
+        const syncRemoteBeforeUse = async () => {
+          document.documentElement.classList.add('idea-state-syncing');
+          try {
+            const remote = await fetchRemoteState();
+            if (!remote.updatedAt) return;
+            const marker = localValue(REMOTE_MARKER_KEY);
+            if (marker === remote.updatedAt) return;
+            const current = parseWorkbench(localValue(WORKBENCH_KEY));
+            const merged = {
+              ...current,
+              stage: remote.stage,
+              next: remote.next,
+              milestones: remote.milestones,
+              progress: remote.progress
+            };
+            owner.syncing = true;
+            try {
+              nativeSet.call(localStorage, WORKBENCH_KEY, JSON.stringify(merged));
+              nativeSet.call(localStorage, REMOTE_MARKER_KEY, remote.updatedAt);
+            } finally { owner.syncing = false; }
+            location.reload();
+          } catch {
+            // The site still works from the last deployed snapshot if raw GitHub is temporarily unavailable.
+          } finally {
+            document.documentElement.classList.remove('idea-state-syncing');
+          }
+        };
+
+        const verifyToken = async token => {
+          const response = await fetch('https://api.github.com/user', { headers: headersFor(token), cache: 'no-store' });
+          if (!response.ok) throw new Error(t('GitHub rejected this token.', 'GitHub 没有接受这个 token。'));
+          const profile = await response.json();
+          if (String(profile?.login || '').toLowerCase() !== OWNER_LOGIN.toLowerCase()) {
+            throw new Error(t(`This token belongs to ${profile?.login || 'another account'}, not ${OWNER_LOGIN}.`, `这个 token 属于 ${profile?.login || '其他账号'}，不是 ${OWNER_LOGIN}。`));
+          }
+          return profile;
+        };
+
+        const readStateViaApi = async token => {
+          const response = await fetch(`${STATE_API}?ref=main&t=${Date.now()}`, { headers: headersFor(token), cache: 'no-store' });
+          if (!response.ok) throw new Error(t('The token cannot read the workspace state file.', '这个 token 无法读取工作台状态文件。'));
+          const payload = await response.json();
+          const state = parseJson(base64ToUtf8(payload.content), {});
+          return { payload, state };
+        };
+
+        const writeSnapshot = async (snapshot, attempt = 0) => {
+          if (!owner.verified || !owner.token) return;
+          const serialized = stableSnapshot(snapshot);
+          if (serialized === owner.lastSavedSnapshot) {
+            setSaveState('', t('Saved · GitHub', '已保存 · GitHub'));
+            return;
+          }
+          setSaveState('saving', t('Saving to GitHub…', '正在保存到 GitHub…'));
+          try {
+            const { payload, state } = await readStateViaApi(owner.token);
+            const currentSnapshot = publicSnapshot(state);
+            if (stableSnapshot(currentSnapshot) === serialized) {
+              owner.lastSavedSnapshot = serialized;
+              if (state.updatedAt) nativeSet.call(localStorage, REMOTE_MARKER_KEY, state.updatedAt);
+              setSaveState('', t('Saved · GitHub', '已保存 · GitHub'));
+              return;
+            }
+            const nextState = {
+              version: 1,
+              updatedAt: new Date().toISOString(),
+              ...snapshot
+            };
+            const response = await fetch(STATE_API, {
+              method: 'PUT',
+              headers: { ...headersFor(owner.token), 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                message: 'Update Ideas workspace state',
+                content: utf8ToBase64(`${JSON.stringify(nextState, null, 2)}\n`),
+                sha: payload.sha,
+                branch: 'main'
+              })
+            });
+            if (response.status === 409 && attempt < 1) return writeSnapshot(snapshot, attempt + 1);
+            if (!response.ok) {
+              const error = await response.json().catch(() => ({}));
+              throw new Error(error?.message || `GitHub ${response.status}`);
+            }
+            owner.lastSavedSnapshot = serialized;
+            nativeSet.call(localStorage, REMOTE_MARKER_KEY, nextState.updatedAt);
+            setSaveState('', t('Saved · GitHub', '已保存 · GitHub'));
+          } catch (error) {
+            setSaveState('error', t('Save failed · open Owner', '保存失败 · 打开本人编辑'));
+            ownerButton?.setAttribute('title', String(error?.message || error));
+          }
+        };
+
+        function queuePersist(raw) {
+          if (!owner.verified) return;
+          owner.pendingRaw = raw;
+          setSaveState('saving', t('Saving…', '正在保存…'));
+          clearTimeout(owner.saveTimer);
+          owner.saveTimer = window.setTimeout(() => {
+            const workbench = parseWorkbench(owner.pendingRaw || localValue(WORKBENCH_KEY));
+            writeSnapshot(publicSnapshot(workbench));
+          }, 900);
+        }
+
+        const migrateLocalStateIfNeeded = async () => {
+          try {
+            const { state } = await readStateViaApi(owner.token);
+            const remoteSnapshot = publicSnapshot(state);
+            owner.lastSavedSnapshot = stableSnapshot(remoteSnapshot);
+            if (state?.updatedAt || hasPublicState(remoteSnapshot)) return;
+            const localSnapshot = publicSnapshot(parseWorkbench(localValue(WORKBENCH_KEY)));
+            if (hasPublicState(localSnapshot)) await writeSnapshot(localSnapshot);
+          } catch {
+            // A read-only or mis-scoped token will surface a clear save error on first edit.
+          }
+        };
+
+        const finishUnlock = async token => {
+          setDialogStatus(t('Checking GitHub identity…', '正在验证 GitHub 身份……'));
+          await verifyToken(token);
+          owner.token = token;
+          owner.verified = true;
+          owner.isUnlocked = true;
+          try {
+            nativeSet.call(sessionStorage, TOKEN_KEY, token);
+            nativeSet.call(sessionStorage, SESSION_OK_KEY, '1');
+          } catch {}
+          await migrateLocalStateIfNeeded();
+          setDialogStatus(t('Verified. Opening your workspace…', '验证成功，正在打开你的工作台……'));
+          closeDialog();
+          location.reload();
+        };
+
+        ownerForm?.addEventListener('submit', async event => {
+          event.preventDefault();
+          const token = String(tokenInput?.value || '').trim();
+          if (!token) return setDialogStatus(t('Paste your fine-grained token first.', '请先粘贴 fine-grained token。'), true);
+          try { await finishUnlock(token); }
+          catch (error) { setDialogStatus(String(error?.message || error), true); }
+        });
+        document.getElementById('idea-owner-close')?.addEventListener('click', closeDialog);
+        dialog?.addEventListener('click', event => {
+          const rect = dialog.getBoundingClientRect();
+          const inside = event.clientX >= rect.left && event.clientX <= rect.right && event.clientY >= rect.top && event.clientY <= rect.bottom;
+          if (!inside) closeDialog();
+        });
+
+        document.addEventListener('keydown', event => {
+          if (owner.verified || event.defaultPrevented) return;
+          const tag = document.activeElement?.tagName?.toLowerCase();
+          const editing = ['input', 'textarea', 'select'].includes(tag) || document.activeElement?.isContentEditable;
+          if (!editing && !event.metaKey && !event.ctrlKey && !event.altKey && event.key.toLowerCase() === 'c') {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            openDialog();
+          }
+        }, true);
+
+        const params = new URLSearchParams(location.search);
+        const requestedCapture = params.get('capture') === '1';
+        if (requestedCapture && !provisionalOwner) {
+          const cleanUrl = new URL(location.href);
+          cleanUrl.searchParams.delete('capture');
+          history.replaceState(history.state, '', cleanUrl);
+        }
+
+        installOwnerControl();
+        const peekInner = document.getElementById('idea-peek-inner');
+        if (peekInner) new MutationObserver(sanitizePeek).observe(peekInner, { childList: true, subtree: true });
+        updateOwnerUi();
+
+        syncRemoteBeforeUse().then(async () => {
+          if (owner.isUnlocked && owner.token) {
+            try {
+              await verifyToken(owner.token);
+              owner.verified = true;
+              updateOwnerUi();
+              const localSnapshot = publicSnapshot(parseWorkbench(localValue(WORKBENCH_KEY)));
+              owner.lastSavedSnapshot = stableSnapshot(localSnapshot);
+            } catch {
+              try {
+                nativeRemove.call(sessionStorage, TOKEN_KEY);
+                nativeRemove.call(sessionStorage, SESSION_OK_KEY);
+              } catch {}
+              owner.token = '';
+              owner.isUnlocked = false;
+              owner.verified = false;
+              updateOwnerUi();
+              location.reload();
+            }
+          } else {
+            updateOwnerUi();
+            if (requestedCapture) setTimeout(openDialog, 120);
+          }
+        });
+
+        document.addEventListener('kaize:ui-language', updateOwnerUi);
+      })();
+    </script>
+  </>
+)}
