@@ -312,6 +312,94 @@
   line-height: 1.65;
 }
 
+/* Language visibility is a hard UI contract. Component-level span rules must never reveal both languages. */
+.ui-copy-zh { display: none !important; }
+:root[data-ui-language='zh'] .ui-copy-en { display: none !important; }
+:root[data-ui-language='zh'] .ui-copy-zh { display: revert !important; }
+
+/* Home interactions: selectable surfaces brighten as a whole, not only their text. */
+.home-page a.pill,
+.home-page a.section-kicker,
+.home-page .home-idea-row,
+.home-page .note-main-link,
+.home-page .github-activity-card {
+  cursor: pointer;
+}
+.home-page a.pill {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 90px 54px at 100% 0%, color-mix(in srgb, var(--accent) 3%, transparent), transparent 75%),
+    var(--paper);
+  transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease, background .16s ease, color .16s ease;
+}
+.home-page a.pill:hover {
+  color: var(--text);
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--accent) 34%, var(--line));
+  box-shadow: 0 8px 20px rgba(38, 33, 29, .045);
+  background:
+    radial-gradient(ellipse 120px 70px at 100% 0%, var(--surface-glow-strong), transparent 76%),
+    color-mix(in srgb, var(--paper) 96%, white 4%);
+}
+.home-page a.section-kicker {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 7px;
+  margin: -4px -7px;
+  border-radius: 3px;
+  transition: color .16s ease, background .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+.home-page a.section-kicker:hover {
+  color: var(--accent);
+  transform: translateX(2px);
+  background: radial-gradient(ellipse 120px 48px at 100% 50%, var(--surface-glow-strong), transparent 78%);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 11%, transparent);
+}
+.home-page .home-idea-row {
+  transition: background .16s ease, box-shadow .16s ease, padding-left .16s ease;
+}
+.home-page .home-idea-row:hover {
+  padding-left: 9px;
+  background:
+    radial-gradient(ellipse 290px 105px at 100% 50%, var(--surface-glow-strong), transparent 76%),
+    linear-gradient(90deg, color-mix(in srgb, var(--accent) 4%, transparent), transparent 48%);
+  box-shadow: inset 2px 0 0 color-mix(in srgb, var(--accent) 48%, transparent);
+}
+.home-page .note-row {
+  transition: background .16s ease, box-shadow .16s ease, padding-left .16s ease;
+}
+.home-page .note-row:hover {
+  padding-left: 9px;
+  background:
+    radial-gradient(ellipse 250px 90px at 100% 50%, var(--surface-glow), transparent 76%),
+    linear-gradient(90deg, color-mix(in srgb, var(--accent) 4%, transparent), transparent 44%);
+  box-shadow: inset 2px 0 0 color-mix(in srgb, var(--accent) 42%, transparent);
+}
+.home-page .github-activity-card {
+  transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease, background .16s ease;
+}
+.home-page .github-activity-card:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--accent) 31%, var(--line));
+  box-shadow: 0 13px 32px rgba(38, 33, 29, .05);
+  background:
+    radial-gradient(ellipse 420px 180px at 100% 0%, color-mix(in srgb, var(--accent) 13%, transparent), transparent 78%),
+    color-mix(in srgb, var(--paper) 97%, white 3%);
+}
+
+/* Research cards must advertise clickability immediately. */
+.research-overview-page a.research-area-card,
+.research-overview-page .research-constellation a,
+.field-guide-links a {
+  cursor: pointer;
+}
+.research-overview-page a.research-area-card:hover {
+  background:
+    radial-gradient(ellipse 280px 155px at 100% 0%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 76%),
+    color-mix(in srgb, var(--paper) 97%, white 3%);
+}
+
 @media (max-width: 1040px) {
   .research-overview-page .research-grid { grid-template-columns: 1fr; }
   .research-overview-page .research-area-card { min-height: 225px; }
@@ -333,5 +421,10 @@
   .research-overview-page .research-area-card,
   .research-primer-page .primer-concept,
   .research-primer-page .primer-equation,
-  .lab-page .lab-grid .explore-card { transition: none; }
+  .lab-page .lab-grid .explore-card,
+  .home-page a.pill,
+  .home-page a.section-kicker,
+  .home-page .home-idea-row,
+  .home-page .note-row,
+  .home-page .github-activity-card { transition: none; }
 }
