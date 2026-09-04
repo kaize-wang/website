@@ -44,7 +44,7 @@ featured: true
 
 这一版笔记采用两层阅读。默认正文只保留故事、状态、关键公式和每个结构结果为什么成立；需要核对原始数学对象时，定理、完整 Bellman 递推、电子附录证明和数值表都可以展开。Reader 左边的 PDF 直接从正式论文第 1441 页开始，并保留后面的 electronic companion；Markdown 也按同一份完整材料清理。正文中的页码按钮可以直接把左侧原文跳到对应位置。
 
-## 论文概要
+## 一页先读懂：论文究竟做了什么
 
 企业面对两类需求：新客户需求，以及已售产品在保修期内失效产生的免费替换需求。案例中的保修索赔在一些时期超过总需求的 15%，而企业原来的库存计划主要只看新需求，于是出现加急生产、运输和等待成本。:source[1441]
 
@@ -74,9 +74,9 @@ $$
 
 第一项直接覆盖由当前在保群体决定的替换需求；第二项像一个 newsvendor 分位数，但缺货代价被未来保修责任 $m_1$ 修正。:source[1445] :source[1446]
 
-需要注意的是，这个结构并不是对任意“随机保修需求”都成立。论文在 §8.3 把失效比例本身改成随机向量 $\beta(n)$ 后，明确说前面的最优性结果不再保证成立，只提出了按总需求分布构造的 heuristic。:source[1450]
+最值得反复记住的一点是：这个漂亮结构并不是对任意“随机保修需求”都成立。论文在 §8.3 把失效比例本身改成随机向量 $\beta(n)$ 后，明确说前面的最优性结果不再保证成立，只提出了按总需求分布构造的 heuristic。:source[1450]
 
-## 1. 业务背景：为什么保修需求不能单独处理
+## 1. 业务故事：为什么售后不是一个外生的第二需求流
 
 论文由一家数字投影仪企业的库存问题驱动。产品在保修期内失效时免费替换，而且替换品重新获得完整保修。企业原来主要按新客户需求备货，保修索赔发生时临时应对。新产品生命周期很短，但过去售出的机器仍在保；如果年龄越大的产品失效率越高，保修需求可以在新销量下降后继续上升。:source[1441]
 
@@ -189,7 +189,7 @@ $$
 > $$
 > 在极限存在时定义。 :source[1444]
 
-## 3. Bellman 递推与 action-value 函数
+## 3. 完整 Bellman 递推：大 $G$ 到底是什么
 
 论文定义 $V_{n,N}(w,x)$ 为从第 $n$ 期到终点 $N$ 的最优折现成本；$G_{n,N}(w,x,y)$ 则是在当前状态 $(w,x)$ 下**固定先选 $y$**之后，当期成本加未来最优成本的 action-value。它不是一个口头上的“成本函数”，而是下面这个完整对象：
 
@@ -202,17 +202,17 @@ $$
 G_{n,N}(w,x,y)
 ={}&cy-cx+L_n(w,y)\\
 &+\alpha\int_0^{y-\beta\cdot w}
-V_{n+1,N}\Big(\\
-&\qquad \beta\cdot w+\zeta+[x]^-,\\
-&\qquad w^1(1-\beta_1),\ldots,w^{K-1}(1-\beta_{K-1}),\\
-&\qquad y-\beta\cdot w-\zeta
+V_{n+1,N}\Big(
+\beta\cdot w+\zeta+[x]^-,
+ w^1(1-\beta_1),\ldots,w^{K-1}(1-\beta_{K-1}),
+ y-\beta\cdot w-\zeta
 \Big)f_n(\zeta)\,d\zeta\\
 &+\alpha\int_{y-\beta\cdot w}^{\infty}
-V_{n+1,N}\Big(\\
-&\qquad y+[x]^-,\\
-&\qquad w^1(1-\beta_1),\ldots,w^{K-1}(1-\beta_{K-1}),\\
-&\qquad y-\beta\cdot w-\zeta
-\Big)f_n(\zeta)\,d\zeta.
+V_{n+1,N}\Big(
+ y+[x]^-,
+ w^1(1-\beta_1),\ldots,w^{K-1}(1-\beta_{K-1}),
+ y-\beta\cdot w-\zeta
+\Big)f_n(\zeta)\,d\zeta,
 \end{aligned}
 \tag{13}
 $$
@@ -224,7 +224,7 @@ $$
 
 两个积分为什么分开？如果 $\zeta\le y-\beta\cdot w$，本期总需求可以全部履约，下一期新进入 age-1 的在保量是 $\beta\cdot w+\zeta+[x]^-$；如果新需求超过剩余库存，真正能交付的量被 $y$ 截断，于是下一期 age-1 在保量变成 $y+[x]^-$。这正是 $G$ 可能比普通库存模型难的原因：**决策 $y$ 不只改变 $x_{n+1}$，也改变未来的 $w_{n+1}$。** :source[1445]
 
-> [!details Bellman 递推的紧凑表示]
+> [!details 把 $G$ 写成“当前成本 + 下一期状态”的紧凑读法]
 > 若记
 > $$
 > \widehat x=y-\beta\cdot w-\zeta,
@@ -267,7 +267,7 @@ $$
 > $$
 > :source[1445]
 
-一台 age-$i$ 产品可能本期失败，也可能先存活若干期再失败；一旦失败，企业付出替换品采购成本 $c$，而替换品从 age 1 重新开始完整 warranty，于是又带来 $m_1$。这就是 renewable warranty 在终端责任里的递归。
+中文理解是：一台 age-$i$ 产品可能本期失败，也可能先存活若干期再失败；一旦失败，企业付出替换品采购成本 $c$，而替换品从 age 1 重新开始完整 warranty，于是又带来 $m_1$。这就是 renewable warranty 在终端责任里的递归。
 
 作者据此选择
 
@@ -343,7 +343,7 @@ $$
 > $$
 > Hence the optimal action in state $(w,x)$ is to order up to $S_n(w)$ whenever $x<S_n(w)$, and not order when $x\ge S_n(w)$. :source[1446]
 
-这个定理的关键不在于记住 (23) 的每个常数，而在于它怎样隔离决策变量 $y$：
+中文看这个定理，最重要的不是记 (23) 的每个常数，而是看它怎样隔离决策变量 $y$：
 
 1. $c(1-\alpha)y+\bar L_n(w,y)$ 是标准 newsvendor 型凸部分，在 $S_n(w)$ 达到最小；
 2. 剩下真正麻烦的 future excess term 用 $H_{n+1}$ 表示；
@@ -534,7 +534,7 @@ $$
 > $$
 > :source[1448] :source[1449]
 
-这里还有一个值得注意的结果：这个 target 不含 $\alpha$。论文指出这是 emergency-supply assumption 的后果。因为所有当期需求都必须立即满足，缺货不再被推到未来，折现因子不再进入这个临界分位数。:source[1449]
+一个很漂亮的小结果是：这个 target 不含 $\alpha$。论文指出这是 emergency-supply assumption 的后果。因为所有当期需求都必须立即满足，缺货不再被推到未来，折现因子不再进入这个临界分位数。:source[1449]
 
 ## 8. 三个扩展：哪些改变还能保结构，哪个改变直接打断结构
 
@@ -697,16 +697,16 @@ $$
 >
 > 结果说明完整 age information 的平均增益明显小于“是否把 warranty 纳入规划”的增益，而且 $\beta_1$ 越高时，相对 aggregate approximation 的额外价值反而快速下降：Table 6 的平均值从 9.95% 降到 0.36%。论文据此认为，一个设计得当的 aggregate approximation 已经能够吃到 warranty information 的大部分收益。:source[1451]
 
-## 10. 核心结论
+## 10. 我会怎样记住这篇论文
 
-全文的核心可以归纳为四点。
+这篇论文可以压缩成四句话。
 
-**业务机制。** 售后 replacement demand 不是与销售无关的外生需求；历史交付形成未来服务义务，今天的交付继续创造未来义务。
+**Story.** 售后 replacement demand 不是与销售无关的外生需求；历史交付形成未来服务义务，今天的交付继续创造未来义务。
 
-**状态。** 在固定 age-dependent failure fractions 下，$w_n$ 是足够的历史压缩；给定 $w_n$，当期 warranty demand 为 $\beta\cdot w_n$。
+**State.** 在固定 age-dependent failure fractions 下，$w_n$ 是足够的历史压缩；给定 $w_n$，当期 warranty demand 为 $\beta\cdot w_n$。
 
-**结构。** 特殊 terminal cost 把销售期之后仍未结束的 renewable-warranty liability 定价，允许 $G$ 被分解成一个 newsvendor-like 凸项和一个具有阈值单调性的 excess term，从而得到 $w$-dependent base-stock policy。
+**Structure.** 特殊 terminal cost 把销售期之后仍未结束的 renewable-warranty liability 定价，允许 $G$ 被分解成一个 newsvendor-like 凸项和一个具有阈值单调性的 excess term，从而得到 $w$-dependent base-stock policy。
 
-**边界。** 当 failure fractions 本身随机化成 $\beta(n)$ 时，论文不再能证明原来的结构，只保留 heuristic。这恰恰指出了主结果的结构边界。:source[1450] :source[1452]
+**Boundary.** 当 failure fractions 本身随机化成 $\beta(n)$ 时，论文不再能证明原来的结构，只保留 heuristic。这恰恰指出了主结果的结构边界。:source[1450] :source[1452]
 
 最后还要区分“论文告诉我们的边界”和“我们自己的研究模型”。这里记录的是 Huang et al. (2008) 的模型、证明与其附录；它可以帮助定位哪些假设在结构证明中起作用，但不能把这里的符号或结论自动搬到别的模型里。
