@@ -41,6 +41,48 @@
   white-space: nowrap;
 }
 
+/* Use one reading width for prose, display equations, and scholarly blocks.
+   Equations no longer break out beyond the text column. */
+@media (min-width: 1121px) {
+  .article-page-layout {
+    width: min(calc(100% - 72px), 940px) !important;
+  }
+
+  .article-page-layout .article-wrap {
+    width: min(100%, 900px) !important;
+    max-width: 900px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  .prose > .katex-display:not(.equation-scroll-cell),
+  .prose > .equation-layout,
+  .prose > .scholarly-block .katex-display:not(.equation-scroll-cell),
+  .prose > .scholarly-block .equation-layout,
+  .prose > .scholarly-details .katex-display:not(.equation-scroll-cell),
+  .prose > .scholarly-details .equation-layout,
+  .prose > .scholarly-proof .katex-display:not(.equation-scroll-cell),
+  .prose > .scholarly-proof .equation-layout {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    transform: none !important;
+  }
+}
+
+/* Formula content inside theorem/proof/detail boxes must respect the box itself. */
+.prose .scholarly-block .katex-display,
+.prose .scholarly-details .katex-display,
+.prose .scholarly-proof .katex-display,
+.prose .scholarly-block .equation-layout,
+.prose .scholarly-details .equation-layout,
+.prose .scholarly-proof .equation-layout {
+  max-width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
 @media (max-width: 620px) {
   .prose .katex-display.math-wide,
   .prose .katex-display.math-very-wide {
