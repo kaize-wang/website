@@ -1,6 +1,8 @@
 ---
 import PaperReaderWorkspace from '@/components/PaperReaderWorkspace.astro';
 import '@/styles/article-reading-polish.css';
+import '@/styles/editorial-lighting.css';
+import '@/styles/ideas-drag-polish.css';
 
 const isHuangReader = Astro.url.pathname.endsWith('/notes/paper-reading-huang-2008/');
 ---
@@ -132,5 +134,179 @@ const isHuangReader = Astro.url.pathname.endsWith('/notes/paper-reading-huang-20
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true });
   else init();
+})();
+</script>
+
+<script is:inline>
+(() => {
+  const initIdeasPointerDrag = () => {
+    const studio = document.querySelector('.ideas-studio-v3');
+    const boardScroll = document.getElementById('idea-board-scroll');
+    if (!studio || !boardScroll) return;
+
+    let drag = null;
+    let activeZone = null;
+    let swallowClickUntil = 0;
+
+    const clearTarget = () => {
+      activeZone?.classList.remove('pointer-drag-over');
+      activeZone?.closest('.board-lane')?.classList.remove('pointer-lane-over');
+      activeZone = null;
+    };
+
+    const zoneAt = (x, y) => {
+      const hit = document.elementFromPoint(x, y);
+      if (!hit) return null;
+      const direct = hit.closest?.('.board-dropzone');
+      if (direct) return direct;
+      const lane = hit.closest?.('.board-lane');
+      return lane?.querySelector('.board-dropzone') || null;
+    };
+
+    const setTarget = zone => {
+      if (zone === activeZone) return;
+      clearTarget();
+      activeZone = zone;
+      activeZone?.classList.add('pointer-drag-over');
+      activeZone?.closest('.board-lane')?.classList.add('pointer-lane-over');
+    };
+
+    const positionGhost = event => {
+      if (!drag?.ghost) return;
+      const left = event.clientX - drag.offsetX;
+      const top = event.clientY - drag.offsetY;
+      drag.ghost.style.left = `${left}px`;
+      drag.ghost.style.top = `${top}px`;
+    };
+
+    const autoScroll = event => {
+      const rect = boardScroll.getBoundingClientRect();
+      const edge = Math.min(62, rect.width * .12);
+      if (event.clientX < rect.left + edge) boardScroll.scrollLeft -= 18;
+      else if (event.clientX > rect.right - edge) boardScroll.scrollLeft += 18;
+    };
+
+    const beginDrag = event => {
+      if (!drag || drag.active) return;
+      drag.active = true;
+      swallowClickUntil = performance.now() + 1200;
+      document.body.classList.add('idea-pointer-dragging');
+      drag.card.classList.add('pointer-drag-source');
+
+      const ghost = drag.card.cloneNode(true);
+      ghost.classList.remove('pointer-drag-source', 'dragging');
+      ghost.classList.add('idea-pointer-drag-ghost');
+      ghost.removeAttribute('id');
+      ghost.removeAttribute('tabindex');
+      ghost.removeAttribute('role');
+      ghost.removeAttribute('data-open-idea');
+      ghost.removeAttribute('data-drag-idea');
+      ghost.removeAttribute('draggable');
+      ghost.style.width = `${drag.rect.width}px`;
+      ghost.style.height = `${drag.rect.height}px`;
+      document.body.appendChild(ghost);
+      drag.ghost = ghost;
+      positionGhost(event);
+    };
+
+    const cleanup = () => {
+      clearTarget();
+      if (drag?.ghost?.isConnected) drag.ghost.remove();
+      drag?.card?.classList.remove('pointer-drag-source');
+      document.body.classList.remove('idea-pointer-dragging');
+      drag = null;
+    };
+
+    const finishDrag = (event, cancelled = false) => {
+      if (!drag || event.pointerId !== drag.pointerId) return;
+      const wasActive = drag.active;
+      const id = drag.id;
+      const zone = activeZone || zoneAt(event.clientX, event.clientY);
+      try { drag.card.releasePointerCapture?.(drag.pointerId); } catch {}
+
+      if (!wasActive) {
+        cleanup();
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      swallowClickUntil = performance.now() + 650;
+      cleanup();
+
+      if (cancelled || !zone) return;
+      const transfer = {
+        effectAllowed: 'move',
+        dropEffect: 'move',
+        getData: type => type === 'text/plain' ? id : '',
+        setData: () => {}
+      };
+      const dropEvent = new Event('drop', { bubbles: true, cancelable: true });
+      Object.defineProperty(dropEvent, 'dataTransfer', { configurable: true, value: transfer });
+      zone.dispatchEvent(dropEvent);
+    };
+
+    document.addEventListener('dragstart', event => {
+      if (event.target?.closest?.('.ideas-studio-v3 .board-card')) event.preventDefault();
+    }, true);
+
+    studio.addEventListener('click', event => {
+      if (performance.now() >= swallowClickUntil) return;
+      if (!event.target?.closest?.('.board-card')) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }, true);
+
+    studio.addEventListener('pointerdown', event => {
+      const card = event.target?.closest?.('.board-card[data-drag-idea]');
+      if (!card || event.isPrimary === false || event.button !== 0) return;
+      if (event.target?.closest?.('input, textarea, select, button, a')) return;
+      const isTouch = event.pointerType === 'touch';
+      if (isTouch && !event.target?.closest?.('.board-grip')) return;
+
+      card.draggable = false;
+      const rect = card.getBoundingClientRect();
+      drag = {
+        id: card.dataset.dragIdea,
+        card,
+        pointerId: event.pointerId,
+        pointerType: event.pointerType,
+        startX: event.clientX,
+        startY: event.clientY,
+        offsetX: Math.max(12, Math.min(rect.width - 12, event.clientX - rect.left)),
+        offsetY: Math.max(12, Math.min(rect.height - 12, event.clientY - rect.top)),
+        rect,
+        active: false,
+        ghost: null
+      };
+      try { card.setPointerCapture?.(event.pointerId); } catch {}
+    });
+
+    studio.addEventListener('pointermove', event => {
+      if (!drag || event.pointerId !== drag.pointerId) return;
+      const dx = event.clientX - drag.startX;
+      const dy = event.clientY - drag.startY;
+      const threshold = drag.pointerType === 'touch' ? 9 : 6;
+      if (!drag.active && Math.hypot(dx, dy) < threshold) return;
+      if (!drag.active) beginDrag(event);
+      if (!drag?.active) return;
+
+      event.preventDefault();
+      positionGhost(event);
+      autoScroll(event);
+      setTarget(zoneAt(event.clientX, event.clientY));
+    });
+
+    studio.addEventListener('pointerup', event => finishDrag(event, false));
+    studio.addEventListener('pointercancel', event => finishDrag(event, true));
+    window.addEventListener('blur', () => {
+      if (!drag) return;
+      swallowClickUntil = performance.now() + 500;
+      cleanup();
+    });
+  };
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initIdeasPointerDrag, { once: true });
+  else initIdeasPointerDrag();
 })();
 </script>
