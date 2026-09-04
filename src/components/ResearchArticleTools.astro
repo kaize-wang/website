@@ -50,6 +50,29 @@ const { citation = { plain: '', markdown: '', bibtex: '' } } = Astro.props;
     return (clone.textContent || '').replace(/\s+/g, ' ').trim();
   };
 
+  // Callout markers usually share their first Markdown paragraph with the first
+  // sentence or symbol definition. Remove only the marker text, never the whole
+  // paragraph, otherwise the first line of the actual note disappears.
+  const stripLeadingMarker = (element, pattern) => {
+    if (!element) return;
+    const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+    let node;
+    while ((node = walker.nextNode())) {
+      const parent = node.parentElement;
+      if (parent?.closest('.katex-mathml')) continue;
+      const value = node.nodeValue || '';
+      if (!value.trim()) continue;
+      if (pattern.test(value)) {
+        pattern.lastIndex = 0;
+        node.nodeValue = value.replace(pattern, '');
+        break;
+      }
+      pattern.lastIndex = 0;
+      break;
+    }
+    if (!visibleText(element) && !element.querySelector('.katex, img, table, pre, code')) element.remove();
+  };
+
   const detailsTitleReplacements = new Map([
     ['把 G 写成“当前成本 + 下一期状态”的紧凑读法', 'Bellman 递推的紧凑表示'],
     ['把 G 写成“当前成本 + 下一期状态” 的紧凑读法', 'Bellman 递推的紧凑表示']
@@ -84,7 +107,7 @@ const { citation = { plain: '', markdown: '', bibtex: '' } } = Astro.props;
     if (detailsMatch) {
       const rawTitle = (detailsMatch[1] || '').trim() || 'Details';
       const titleText = detailsTitleReplacements.get(rawTitle) || rawTitle;
-      first.remove();
+      stripLeadingMarker(first, detailsPattern);
       makeDetails({ quote, className: 'scholarly-details', titleText });
       return;
     }
@@ -93,7 +116,7 @@ const { citation = { plain: '', markdown: '', bibtex: '' } } = Astro.props;
     const kind = match[1].toLowerCase();
     const id = (match[2] || '').trim();
     const customLabel = (match[3] || '').trim();
-    first.remove();
+    stripLeadingMarker(first, blockPattern);
     if (kind === 'proof') {
       makeDetails({ quote, className: 'scholarly-proof', titleText: customLabel || 'Proof' });
       return;
