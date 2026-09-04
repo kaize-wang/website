@@ -30,8 +30,8 @@ const {
     <button class="reader-source-close" type="button" data-reader-exit aria-label="Exit Reader">×</button>
     <div class="reader-source-actions">
       <label class="reader-file-button reader-entry-button">
-        <span data-reader-i18n="loadReplace">Load / Replace</span>
-        <input id="reader-source-file" type="file" accept="application/pdf,.pdf" />
+        <span data-reader-i18n="loadReplace">Load sources</span>
+        <input id="reader-source-file" type="file" multiple accept="application/pdf,.pdf,.md,.markdown,text/markdown,text/plain" />
       </label>
     </div>
   </header>
@@ -64,8 +64,11 @@ const {
 
 <script is:inline define:vars={{ noteId, printedPageStart, pdfPageStart, appendixPrintedPageStart, appendixPdfPageStart }}>
 (() => {
-  const DB_NAME = 'kaize-paper-reader-v1';
-  const STORE_NAME = 'pdfs';
+  /* v2 intentionally leaves the old 13-page local source cache behind. The
+     current Reader expects the appendix-inclusive PDF + Markdown pair. */
+  const DB_NAME = 'kaize-paper-reader-v2';
+  const STORE_NAME = 'sources';
+  const SOURCE_VERSION = 'huang-2008-full-appendix-20260904';
   const SPLIT_KEY = `kaize-reader-split:${noteId}`;
   const MODE_KEY = `kaize-reader-source-mode:${noteId}`;
   const DB_TIMEOUT = 2500;
@@ -95,18 +98,19 @@ const {
     notes: ['Notes', '笔记'],
     source: ['Source', '原文'],
     exit: ['Exit', '退出'],
-    loadReplace: ['Load / Replace', '载入 / 替换'],
-    pdfWaiting: ['PDF will load when Reader opens.', '进入对照阅读后再载入 PDF。'],
-    markdownWaiting: ['Markdown will load when selected.', '切换到 Markdown 后再载入。'],
+    loadReplace: ['Load sources', '载入原文'],
+    pdfWaiting: ['Load the appendix-inclusive PDF once; it will stay in this browser.', '载入一次带附录的最新版 PDF；之后会保存在此浏览器。'],
+    markdownWaiting: ['Load the appendix-inclusive Markdown once; it will stay in this browser.', '载入一次带附录的最新版 Markdown；之后会保存在此浏览器。'],
     restoringPdf: ['Restoring saved PDF…', '正在读取已保存的 PDF…'],
     restoringMarkdown: ['Restoring saved Markdown…', '正在读取已保存的 Markdown…'],
-    pdfReady: ['PDF · saved in this browser', 'PDF · 已保存在此浏览器'],
-    markdownReady: ['Markdown · saved in this browser', 'Markdown · 已保存在此浏览器'],
-    pdfMissing: ['No saved PDF. Use Load / Replace.', '没有找到已保存的 PDF，可用“载入 / 替换”选择文件。'],
-    markdownMissing: ['No saved Markdown. Use Load / Replace.', '没有找到已保存的 Markdown，可用“载入 / 替换”选择文件。'],
-    sourceTimeout: ['Local source storage did not respond. You can still exit Reader or load the file again.', '本地原文存储没有响应。你仍可退出对照阅读，或重新载入文件。'],
-    sourceError: ['Could not read the saved source. Load the file again if needed.', '无法读取已保存的原文，如有需要请重新载入文件。'],
-    saving: ['Saving locally…', '正在保存到本地…']
+    pdfReady: ['PDF · full article + appendix · saved locally', 'PDF · 正文 + 附录 · 已保存在此浏览器'],
+    markdownReady: ['Markdown · full article + appendix · saved locally', 'Markdown · 正文 + 附录 · 已保存在此浏览器'],
+    pdfMissing: ['Load the latest appendix-inclusive PDF.', '请载入最新版带附录 PDF。'],
+    markdownMissing: ['Load the latest appendix-inclusive Markdown.', '请载入最新版带附录 Markdown。'],
+    sourceTimeout: ['Local source storage did not respond. You can still exit Reader or load the files again.', '本地原文存储没有响应。你仍可退出对照阅读，或重新载入文件。'],
+    sourceError: ['Could not read the saved source. Load the files again if needed.', '无法读取已保存的原文，如有需要请重新载入文件。'],
+    saving: ['Saving sources locally…', '正在把原文保存在本地…'],
+    savedBoth: ['PDF + Markdown saved locally.', 'PDF + Markdown 已保存在此浏览器。']
   };
   const lang = () => window.__kaizeUi?.language === 'zh' ? 'zh' : 'en';
   const tr = key => (i18n[key] || [key, key])[lang() === 'zh' ? 1 : 0];
@@ -213,6 +217,8 @@ const {
   };
 
   const isTrimmedName = name => /(?:reader|clean|trim|no[-_ ]?cover)/i.test(String(name || ''));
+  const isMarkdownFile = file => /\.(?:md|markdown)$/i.test(file?.name || '') || /(?:markdown|text\/plain)/i.test(file?.type || '');
+  const isPdfFile = file => /\.pdf$/i.test(file?.name || '') || file?.type === 'application/pdf';
   const mainPdfStart = () => Math.max(1, Number(pdfPageStart) - (pdfTrimmed ? 1 : 0));
   const appendixPdfStart = () => Math.max(1, Number(appendixPdfPageStart) - (pdfTrimmed ? 1 : 0));
   const pdfPageForToken = token => {
@@ -398,8 +404,8 @@ const {
     syncStatus();
     pdfPromise = (async () => {
       try {
-        const saved = await dbGet(`${noteId}:pdf`) || await dbGet(noteId);
-        if (saved?.blob) showPdf(saved.blob, saved.name || 'paper.pdf', Boolean(saved.trimmed));
+        const saved = await dbGet(`${noteId}:pdf`);
+        if (saved?.blob && saved.sourceVersion === SOURCE_VERSION) showPdf(saved.blob, saved.name || 'paper.pdf', Boolean(saved.trimmed));
         else { pdfState = 'missing'; syncStatus(); }
       } catch (error) {
         handleLoadFailure('pdf', error);
@@ -418,7 +424,7 @@ const {
     markdownPromise = (async () => {
       try {
         const saved = await dbGet(`${noteId}:markdown`);
-        if (saved?.text) await showMarkdown(saved.text, saved.name || 'paper.md');
+        if (saved?.text && saved.sourceVersion === SOURCE_VERSION) await showMarkdown(saved.text, saved.name || 'paper.md');
         else { markdownState = 'missing'; syncStatus(); }
       } catch (error) {
         handleLoadFailure('markdown', error);
@@ -442,7 +448,6 @@ const {
     });
     document.querySelector('[data-source-stage="pdf"]')?.toggleAttribute('hidden', activeMode !== 'pdf');
     mdStage.toggleAttribute('hidden', activeMode !== 'markdown');
-    fileInput.accept = activeMode === 'markdown' ? '.md,.markdown,text/markdown,text/plain' : 'application/pdf,.pdf';
     syncStatus();
     if (shouldLoad && document.body.classList.contains('paper-reader-active')) scheduleSource(activeMode);
   };
@@ -566,26 +571,36 @@ const {
   document.querySelectorAll('[data-reader-exit]').forEach(button => button.addEventListener('click', closeReader));
 
   fileInput.addEventListener('change', async () => {
-    const file = fileInput.files?.[0];
-    if (!file) return;
+    const files = [...(fileInput.files || [])];
+    if (!files.length) return;
     if (status) status.textContent = tr('saving');
+    let loadedPdf = false;
+    let loadedMarkdown = false;
     try {
-      if (activeMode === 'markdown') {
-        const text = await file.text();
-        await dbPut({ id: `${noteId}:markdown`, name: file.name, text, savedAt: Date.now() });
-        markdownState = 'loading';
-        await showMarkdown(text, file.name);
-      } else {
-        const blob = file.slice(0, file.size, file.type || 'application/pdf');
-        const trimmed = isTrimmedName(file.name);
-        await dbPut({ id: `${noteId}:pdf`, name: file.name, blob, trimmed, savedAt: Date.now() });
-        showPdf(blob, file.name, trimmed);
+      for (const file of files) {
+        if (isPdfFile(file)) {
+          const blob = file.slice(0, file.size, file.type || 'application/pdf');
+          const trimmed = isTrimmedName(file.name);
+          await dbPut({ id: `${noteId}:pdf`, sourceVersion: SOURCE_VERSION, name: file.name, blob, trimmed, savedAt: Date.now() });
+          loadedPdf = true;
+          if (activeMode === 'pdf') showPdf(blob, file.name, trimmed);
+          else pdfState = 'idle';
+          continue;
+        }
+        if (isMarkdownFile(file)) {
+          const text = await file.text();
+          await dbPut({ id: `${noteId}:markdown`, sourceVersion: SOURCE_VERSION, name: file.name, text, savedAt: Date.now() });
+          loadedMarkdown = true;
+          if (activeMode === 'markdown') await showMarkdown(text, file.name);
+          else markdownState = 'idle';
+        }
       }
+      if (loadedPdf && loadedMarkdown && status) status.textContent = tr('savedBoth');
+      else syncStatus();
     } catch (error) {
       handleLoadFailure(activeMode, error);
     } finally {
       fileInput.value = '';
-      syncStatus();
     }
   });
 
