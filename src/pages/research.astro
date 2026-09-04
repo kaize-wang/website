@@ -10,13 +10,17 @@ const areaRoutes = [
     ...site.researchAreas[0],
     index: '01',
     slug: 'inventory-warranty',
+    nameZh: '库存与保修',
+    descriptionZh: '研究替换保修产生的未来服务需求如何改变库存决策，以及决策者究竟需要保留哪些关于在保产品群体的信息。',
     label: 'Installed base · failures · service demand',
-    labelZh: '装机群体 · 失效 · 保修需求'
+    labelZh: '在保群体 · 失效 · 保修需求'
   },
   {
     ...site.researchAreas[1],
     index: '02',
     slug: 'stochastic-optimization',
+    nameZh: '随机优化',
+    descriptionZh: '研究不确定环境下的动态决策，重点关注状态设计、策略结构，以及精确计算与近似计算之间的边界。',
     label: 'State · uncertainty · dynamic decisions',
     labelZh: '状态 · 不确定性 · 动态决策'
   },
@@ -24,6 +28,8 @@ const areaRoutes = [
     ...site.researchAreas[2],
     index: '03',
     slug: 'operations-research',
+    nameZh: '运筹学',
+    descriptionZh: '用模型、概率与算法理解序贯决策、库存控制及相关运营系统，并把理论结果转化为可解释的决策规则。',
     label: 'Models · algorithms · operational systems',
     labelZh: '模型 · 算法 · 运营系统'
   }
@@ -42,7 +48,7 @@ const areaRoutes = [
         {areaRoutes.map(area => (
           <a href={withBase(`/research/${area.slug}`)}>
             <b>{area.index}</b>
-            <span>{area.name}</span>
+            <span><span class="ui-copy-en">{area.name}</span><span class="ui-copy-zh">{area.nameZh}</span></span>
           </a>
         ))}
       </nav>
@@ -84,8 +90,8 @@ const areaRoutes = [
         {areaRoutes.map(area => (
           <a class="research-card research-area-card" href={withBase(`/research/${area.slug}`)}>
             <div class="research-card-kicker"><span>{area.index}</span><i></i></div>
-            <h3>{area.name}</h3>
-            <p>{area.description}</p>
+            <h3><span class="ui-copy-en">{area.name}</span><span class="ui-copy-zh">{area.nameZh}</span></h3>
+            <p><span class="ui-copy-en">{area.description}</span><span class="ui-copy-zh">{area.descriptionZh}</span></p>
             <span class="research-card-open">
               <span class="ui-copy-en">{area.label}</span>
               <span class="ui-copy-zh">{area.labelZh}</span>
