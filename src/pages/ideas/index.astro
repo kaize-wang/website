@@ -7,333 +7,823 @@ import { withBase } from '@/utils/url';
 
 const ideas = (await getCollection('ideas', ({ data }) => !data.draft))
   .sort((a, b) => (b.data.updatedDate ?? b.data.createdDate).valueOf() - (a.data.updatedDate ?? a.data.createdDate).valueOf());
-const stages = ['Active', 'Exploring', 'Spark', 'Realized', 'Parked'] as const;
-const areas = ['Research', 'Build', 'Life', 'Writing', 'Learning'] as const;
-const stageZh: Record<string, string> = {
-  Active: '推进中',
-  Exploring: '酝酿中',
-  Spark: '灵感',
-  Realized: '已落地',
-  Parked: '已搁置'
-};
-const areaZh: Record<string, string> = {
-  Research: '研究',
-  Build: '构建',
-  Life: '生活',
-  Writing: '写作',
-  Learning: '学习'
-};
-const counts = Object.fromEntries(stages.map(stage => [stage, ideas.filter(idea => idea.data.stage === stage).length]));
-const activeIdeas = ideas.filter(idea => idea.data.stage === 'Active');
-const exploringIdeas = ideas.filter(idea => idea.data.stage === 'Exploring');
-const sparkIdeas = ideas.filter(idea => idea.data.stage === 'Spark');
-const realizedIdeas = ideas.filter(idea => idea.data.stage === 'Realized');
-const parkedIdeas = ideas.filter(idea => idea.data.stage === 'Parked');
-const fmtEn = (date: Date) => new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric' }).format(date);
-const fmtZh = (date: Date) => new Intl.DateTimeFormat('zh-CN', { month: 'numeric', day: 'numeric' }).format(date);
-const progressOf = (idea: typeof ideas[number]) => {
-  const total = idea.data.milestones.length;
-  const done = idea.data.milestones.filter(item => item.done).length;
-  return { total, done, pct: total ? Math.round((done / total) * 100) : 0 };
-};
+
+const seedIdeas = ideas.map(idea => ({
+  id: idea.id,
+  href: withBase(`/ideas/${idea.id}/`),
+  title: idea.data.title,
+  titleZh: idea.data.titleZh || idea.data.title,
+  summary: idea.data.summary,
+  summaryZh: idea.data.summaryZh || idea.data.summary,
+  area: idea.data.area,
+  stage: idea.data.stage,
+  createdDate: idea.data.createdDate.toISOString(),
+  updatedDate: (idea.data.updatedDate ?? idea.data.createdDate).toISOString(),
+  nextAction: idea.data.nextAction || '',
+  nextActionZh: idea.data.nextActionZh || idea.data.nextAction || '',
+  whyNow: idea.data.whyNow || '',
+  whyNowZh: idea.data.whyNowZh || idea.data.whyNow || '',
+  milestones: idea.data.milestones.map(item => ({
+    text: item.text,
+    textZh: item.textZh || item.text,
+    done: item.done
+  })),
+  progress: idea.data.progress.map(item => ({
+    date: item.date.toISOString(),
+    note: item.note,
+    noteZh: item.noteZh || item.note
+  })),
+  tags: idea.data.tags
+}));
 ---
+
 <BaseLayout title="Ideas" active="Ideas">
-  <main class="site-shell ideas-page">
-    <header class="page-hero ideas-hero">
-      <div class="ideas-hero-row">
-        <div class="ideas-hero-copy">
-          <div class="eyebrow"><span class="ui-copy-en">Ideas · from thought to action</span><span class="ui-copy-zh">想法 · 从念头走向行动</span></div>
-          <h1><span class="ui-copy-en">Ideas</span><span class="ui-copy-zh">想法</span></h1>
-          <p>
-            <span class="ui-copy-en">A working space for thoughts that may become research, writing, tools, habits, or real projects. Capture first; choose carefully; keep the next step visible.</span>
-            <span class="ui-copy-zh">一个让想法暂时落脚、逐渐澄清并真正推进的工作空间。先接住念头，再筛选值得做的事，并始终看得见下一步。</span>
-          </p>
-        </div>
-        <button class="ideas-capture-trigger" id="idea-capture-trigger" type="button">
-          <span class="ui-copy-en">Capture idea</span><span class="ui-copy-zh">记下想法</span>
-        </button>
+  <main class="site-shell ideas-studio">
+    <header class="ideas-studio-hero">
+      <div class="ideas-studio-heading">
+        <div class="eyebrow"><span class="ui-copy-en">Ideas · working studio</span><span class="ui-copy-zh">想法 · 工作台</span></div>
+        <h1><span class="ui-copy-en">Ideas</span><span class="ui-copy-zh">想法</span></h1>
+        <p>
+          <span class="ui-copy-en">Capture quickly. Develop deliberately. Keep the next move visible.</span>
+          <span class="ui-copy-zh">先快速接住念头，再认真发展，并始终看得见下一步。</span>
+        </p>
       </div>
+      <button class="studio-capture-button" id="idea-capture-trigger" type="button">
+        <span class="studio-capture-plus">+</span>
+        <span><span class="ui-copy-en">Capture</span><span class="ui-copy-zh">记下想法</span></span>
+        <kbd>C</kbd>
+      </button>
     </header>
 
-    <section class="idea-dashboard" aria-label="Idea overview">
-      <div class="idea-overview">
-        <div class="idea-overview-top">
-          <div>
-            <span class="idea-overview-kicker"><span class="ui-copy-en">Idea pipeline</span><span class="ui-copy-zh">想法管线</span></span>
-            <h2><span class="ui-copy-en">Keep the few things in motion visible.</span><span class="ui-copy-zh">把真正正在推进的少数事情留在视野里。</span></h2>
-            <p class="idea-overview-note">
-              <span class="ui-copy-en">The dashboard is deliberately biased toward action: Active ideas come first, while sparks stay quiet until they earn more attention.</span>
-              <span class="ui-copy-zh">这个面板刻意偏向“推进”：正在做的事情永远在前面，而灵感安静地待着，直到它值得更多注意。</span>
-            </p>
+    <nav class="idea-view-switcher" aria-label="Ideas views">
+      <button class="idea-view-tab active" type="button" data-idea-view="cockpit" aria-pressed="true">
+        <span class="ui-copy-en">Cockpit</span><span class="ui-copy-zh">控制台</span>
+      </button>
+      <button class="idea-view-tab" type="button" data-idea-view="board" aria-pressed="false">
+        <span class="ui-copy-en">Board</span><span class="ui-copy-zh">推进板</span>
+      </button>
+      <button class="idea-view-tab" type="button" data-idea-view="library" aria-pressed="false">
+        <span class="ui-copy-en">Library</span><span class="ui-copy-zh">资料库</span>
+      </button>
+      <span class="idea-view-status" id="idea-view-status"></span>
+    </nav>
+
+    <section class="idea-view-panel active" id="idea-view-cockpit" data-idea-view-panel="cockpit">
+      <div class="cockpit-grid">
+        <section class="cockpit-motion" aria-labelledby="motion-title">
+          <div class="studio-section-head">
+            <div>
+              <span class="studio-section-kicker"><span class="ui-copy-en">Now</span><span class="ui-copy-zh">现在</span></span>
+              <h2 id="motion-title"><span class="ui-copy-en">In motion</span><span class="ui-copy-zh">正在推进</span></h2>
+            </div>
+            <span class="studio-section-note"><span class="ui-copy-en">Keep this list short.</span><span class="ui-copy-zh">这里应该始终很短。</span></span>
           </div>
-        </div>
-        <div class="idea-stage-track" aria-label="Idea stages">
-          <div class="idea-stage-node"><strong>{counts.Active}</strong><span><span class="ui-copy-en">Active</span><span class="ui-copy-zh">推进中</span></span></div>
-          <div class="idea-stage-node"><strong>{counts.Exploring}</strong><span><span class="ui-copy-en">Exploring</span><span class="ui-copy-zh">酝酿中</span></span></div>
-          <div class="idea-stage-node"><strong>{counts.Spark}</strong><span><span class="ui-copy-en">Sparks</span><span class="ui-copy-zh">灵感</span></span></div>
-          <div class="idea-stage-node"><strong>{counts.Realized}</strong><span><span class="ui-copy-en">Realized</span><span class="ui-copy-zh">已落地</span></span></div>
-        </div>
+          <div class="motion-list" id="idea-motion-list"></div>
+        </section>
+
+        <aside class="cockpit-inbox" aria-labelledby="inbox-title">
+          <div class="studio-section-head is-compact">
+            <div>
+              <span class="studio-section-kicker"><span class="ui-copy-en">Local only</span><span class="ui-copy-zh">仅本机</span></span>
+              <h2 id="inbox-title"><span class="ui-copy-en">Inbox</span><span class="ui-copy-zh">收件箱</span></h2>
+            </div>
+            <button class="studio-inline-action" id="idea-inbox-capture" type="button" aria-label="Capture an idea">+</button>
+          </div>
+          <p class="cockpit-inbox-intro">
+            <span class="ui-copy-en">Rough thoughts land here first. No category or status required.</span>
+            <span class="ui-copy-zh">粗糙念头先落在这里，不要求分类，也不要求状态。</span>
+          </p>
+          <div class="cockpit-inbox-list" id="idea-inbox-list"></div>
+          <button class="inbox-empty-capture" id="idea-empty-capture" type="button" hidden>
+            <span class="ui-copy-en">+ Capture the first thought</span><span class="ui-copy-zh">+ 记下第一个念头</span>
+          </button>
+        </aside>
       </div>
 
-      <aside class="idea-inbox-panel" aria-labelledby="private-inbox-title">
-        <span class="idea-overview-kicker"><span class="ui-copy-en">Local only</span><span class="ui-copy-zh">仅本机</span></span>
-        <h3 id="private-inbox-title"><span class="ui-copy-en">Private Inbox</span><span class="ui-copy-zh">私人收件箱</span></h3>
-        <p><span class="ui-copy-en">Fast, rough captures stored only in this browser. Good for thoughts that are too early—or too private—to publish.</span><span class="ui-copy-zh">快速记录还很粗糙、或暂时不适合公开的念头。只保存在当前浏览器，不上传到网站。</span></p>
-        <div class="idea-inbox-list" id="idea-inbox-list"></div>
-        <div class="idea-inbox-count" id="idea-inbox-count"><span class="ui-copy-en">No local captures yet.</span><span class="ui-copy-zh">还没有本地记录。</span></div>
-      </aside>
+      <section class="resurface-strip" id="idea-resurface" aria-labelledby="resurface-title">
+        <div class="resurface-label">
+          <span class="studio-section-kicker"><span class="ui-copy-en">Resurface</span><span class="ui-copy-zh">重新浮现</span></span>
+          <h2 id="resurface-title"><span class="ui-copy-en">Worth another look?</span><span class="ui-copy-zh">这个还值得再看一眼吗？</span></h2>
+        </div>
+        <div class="resurface-content" id="idea-resurface-content"></div>
+      </section>
     </section>
 
-    <section class="section" aria-labelledby="ideas-board-title">
-      <div class="section-head">
-        <h2 id="ideas-board-title"><span class="ui-copy-en">Idea board</span><span class="ui-copy-zh">想法面板</span></h2>
-        <span class="section-kicker"><span class="ui-copy-en">Filter without turning it into a task manager</span><span class="ui-copy-zh">可以筛选，但不要把它变成任务管理器</span></span>
+    <section class="idea-view-panel" id="idea-view-board" data-idea-view-panel="board" hidden>
+      <div class="board-intro">
+        <div>
+          <span class="studio-section-kicker"><span class="ui-copy-en">Move ideas, not metadata</span><span class="ui-copy-zh">移动想法，而不是修改元数据</span></span>
+          <h2><span class="ui-copy-en">Drag an idea as its role changes.</span><span class="ui-copy-zh">想法变了，就直接把它拖过去。</span></h2>
+        </div>
+        <p><span class="ui-copy-en">Changes here are private to this browser. Public Markdown stays untouched until you choose to edit it.</span><span class="ui-copy-zh">这里的变化只保存在当前浏览器。公开 Markdown 不会被自动修改。</span></p>
       </div>
 
-      <div class="idea-toolbar">
-        <div class="idea-filter-group" aria-label="Filter ideas">
-          <button class="idea-filter active" type="button" data-idea-filter="all"><span class="ui-copy-en">All</span><span class="ui-copy-zh">全部</span></button>
-          <button class="idea-filter" type="button" data-idea-filter="Active"><span class="ui-copy-en">Active</span><span class="ui-copy-zh">推进中</span></button>
-          <button class="idea-filter" type="button" data-idea-filter="Exploring"><span class="ui-copy-en">Exploring</span><span class="ui-copy-zh">酝酿中</span></button>
-          <button class="idea-filter" type="button" data-idea-filter="Spark"><span class="ui-copy-en">Sparks</span><span class="ui-copy-zh">灵感</span></button>
-          {areas.map(area => (
-            <button class="idea-filter" type="button" data-idea-filter={area}>
-              <span class="ui-copy-en">{area}</span><span class="ui-copy-zh">{areaZh[area]}</span>
-            </button>
-          ))}
+      <div class="board-scroll" tabindex="0">
+        <div class="idea-board" id="idea-board">
+          <section class="board-lane" data-board-lane="Spark">
+            <header><span class="board-lane-index">01</span><h3><span class="ui-copy-en">Inbox</span><span class="ui-copy-zh">收件箱</span></h3><strong data-lane-count="Spark">0</strong></header>
+            <p><span class="ui-copy-en">Captured, not committed.</span><span class="ui-copy-zh">先接住，还没有承诺。</span></p>
+            <div class="board-dropzone" data-drop-stage="Spark"></div>
+          </section>
+          <section class="board-lane" data-board-lane="Exploring">
+            <header><span class="board-lane-index">02</span><h3><span class="ui-copy-en">Explore</span><span class="ui-copy-zh">探索</span></h3><strong data-lane-count="Exploring">0</strong></header>
+            <p><span class="ui-copy-en">Interesting enough to think again.</span><span class="ui-copy-zh">值得再想一轮。</span></p>
+            <div class="board-dropzone" data-drop-stage="Exploring"></div>
+          </section>
+          <section class="board-lane" data-board-lane="Active">
+            <header><span class="board-lane-index">03</span><h3><span class="ui-copy-en">In motion</span><span class="ui-copy-zh">推进中</span></h3><strong data-lane-count="Active">0</strong></header>
+            <p><span class="ui-copy-en">Has a concrete next move.</span><span class="ui-copy-zh">已经有明确下一步。</span></p>
+            <div class="board-dropzone" data-drop-stage="Active"></div>
+          </section>
+          <section class="board-lane" data-board-lane="Realized">
+            <header><span class="board-lane-index">04</span><h3><span class="ui-copy-en">Realized</span><span class="ui-copy-zh">已落地</span></h3><strong data-lane-count="Realized">0</strong></header>
+            <p><span class="ui-copy-en">Became something real.</span><span class="ui-copy-zh">已经变成真实成果。</span></p>
+            <div class="board-dropzone" data-drop-stage="Realized"></div>
+          </section>
         </div>
-        <span class="idea-visible-count" id="idea-visible-count"><span class="ui-copy-en">{ideas.length} ideas</span><span class="ui-copy-zh">{ideas.length} 个想法</span></span>
       </div>
+      <div class="board-footnote">
+        <span><span class="ui-copy-en">Tip: click any card for details. On touch devices, change stage from the side panel.</span><span class="ui-copy-zh">提示：点击卡片查看详情；触屏设备可在右侧面板中修改状态。</span></span>
+        <button id="show-parked" type="button"><span class="ui-copy-en">Show parked</span><span class="ui-copy-zh">查看搁置项</span></button>
+      </div>
+      <div class="parked-shelf" id="parked-shelf" hidden></div>
+    </section>
 
-      {activeIdeas.length > 0 && (
-        <div class="idea-section" data-idea-section>
-          <div class="idea-section-head"><h2><span class="ui-copy-en">In motion</span><span class="ui-copy-zh">正在推进</span></h2><span><span class="ui-copy-en">Make the next action obvious</span><span class="ui-copy-zh">下一步必须足够明确</span></span></div>
-          <div class="idea-grid">
-            {activeIdeas.map(idea => {
-              const progress = progressOf(idea);
-              const date = idea.data.updatedDate ?? idea.data.createdDate;
-              return (
-                <a class="idea-card" data-idea-card data-stage={idea.data.stage} data-area={idea.data.area} href={withBase(`/ideas/${idea.id}/`)}>
-                  <div class="idea-card-top">
-                    <span class="idea-card-stage"><span class="ui-copy-en">{idea.data.stage}</span><span class="ui-copy-zh">{stageZh[idea.data.stage]}</span></span>
-                    <span class="idea-card-area"><span class="ui-copy-en">{idea.data.area}</span><span class="ui-copy-zh">{areaZh[idea.data.area]}</span></span>
-                  </div>
-                  <h3><span class="ui-copy-en">{idea.data.title}</span><span class="ui-copy-zh">{idea.data.titleZh || idea.data.title}</span></h3>
-                  <p class="idea-card-summary"><span class="ui-copy-en">{idea.data.summary}</span><span class="ui-copy-zh">{idea.data.summaryZh || idea.data.summary}</span></p>
-                  {idea.data.nextAction && (
-                    <div class="idea-next">
-                      <span><span class="ui-copy-en">Next</span><span class="ui-copy-zh">下一步</span></span>
-                      <strong><span class="ui-copy-en">{idea.data.nextAction}</span><span class="ui-copy-zh">{idea.data.nextActionZh || idea.data.nextAction}</span></strong>
-                    </div>
-                  )}
-                  <div class="idea-card-footer">
-                    <div class="idea-progress-line"><span style={`width:${progress.pct}%`}></span></div>
-                    <div class="idea-progress-meta">
-                      <span>
-                        {progress.total ? <><span class="ui-copy-en">{progress.done} / {progress.total} milestones</span><span class="ui-copy-zh">{progress.done} / {progress.total} 个里程碑</span></> : <><span class="ui-copy-en">No milestones yet</span><span class="ui-copy-zh">还没有里程碑</span></>}
-                      </span>
-                      <span><span class="ui-copy-en">{fmtEn(date)}</span><span class="ui-copy-zh">{fmtZh(date)}</span></span>
-                    </div>
-                  </div>
-                </a>
-              );
-            })}
-          </div>
+    <section class="idea-view-panel" id="idea-view-library" data-idea-view-panel="library" hidden>
+      <div class="library-head">
+        <div>
+          <span class="studio-section-kicker"><span class="ui-copy-en">Archive without ceremony</span><span class="ui-copy-zh">不用仪式感的归档</span></span>
+          <h2><span class="ui-copy-en">Find an old thought quickly.</span><span class="ui-copy-zh">快速找回以前的念头。</span></h2>
         </div>
-      )}
-
-      {exploringIdeas.length > 0 && (
-        <div class="idea-section" data-idea-section>
-          <div class="idea-section-head"><h2><span class="ui-copy-en">Exploring</span><span class="ui-copy-zh">酝酿中</span></h2><span><span class="ui-copy-en">Worth another look</span><span class="ui-copy-zh">值得再想一想</span></span></div>
-          <div class="idea-grid">
-            {exploringIdeas.map(idea => {
-              const progress = progressOf(idea);
-              const date = idea.data.updatedDate ?? idea.data.createdDate;
-              return (
-                <a class="idea-card is-compact" data-idea-card data-stage={idea.data.stage} data-area={idea.data.area} href={withBase(`/ideas/${idea.id}/`)}>
-                  <div class="idea-card-top">
-                    <span class="idea-card-stage"><span class="ui-copy-en">{idea.data.stage}</span><span class="ui-copy-zh">{stageZh[idea.data.stage]}</span></span>
-                    <span class="idea-card-area"><span class="ui-copy-en">{idea.data.area}</span><span class="ui-copy-zh">{areaZh[idea.data.area]}</span></span>
-                  </div>
-                  <h3><span class="ui-copy-en">{idea.data.title}</span><span class="ui-copy-zh">{idea.data.titleZh || idea.data.title}</span></h3>
-                  <p class="idea-card-summary"><span class="ui-copy-en">{idea.data.summary}</span><span class="ui-copy-zh">{idea.data.summaryZh || idea.data.summary}</span></p>
-                  {idea.data.nextAction && (
-                    <div class="idea-next">
-                      <span><span class="ui-copy-en">Next</span><span class="ui-copy-zh">下一步</span></span>
-                      <strong><span class="ui-copy-en">{idea.data.nextAction}</span><span class="ui-copy-zh">{idea.data.nextActionZh || idea.data.nextAction}</span></strong>
-                    </div>
-                  )}
-                  <div class="idea-card-footer">
-                    <div class="idea-progress-line"><span style={`width:${progress.pct}%`}></span></div>
-                    <div class="idea-progress-meta">
-                      <span>{progress.total ? <><span class="ui-copy-en">{progress.done} / {progress.total} milestones</span><span class="ui-copy-zh">{progress.done} / {progress.total} 个里程碑</span></> : <><span class="ui-copy-en">Still taking shape</span><span class="ui-copy-zh">还在成形</span></>}</span>
-                      <span><span class="ui-copy-en">{fmtEn(date)}</span><span class="ui-copy-zh">{fmtZh(date)}</span></span>
-                    </div>
-                  </div>
-                </a>
-              );
-            })}
-          </div>
+        <div class="library-tools">
+          <input id="idea-library-search" type="search" autocomplete="off" placeholder="Search ideas…" aria-label="Search ideas" />
+          <select id="idea-library-stage" aria-label="Filter by stage"></select>
+          <select id="idea-library-area" aria-label="Filter by area"></select>
         </div>
-      )}
-
-      {sparkIdeas.length > 0 && (
-        <div class="idea-section" data-idea-section>
-          <div class="idea-section-head"><h2><span class="ui-copy-en">Sparks</span><span class="ui-copy-zh">灵感</span></h2><span><span class="ui-copy-en">No commitment required</span><span class="ui-copy-zh">先记录，不承诺</span></span></div>
-          <div class="idea-grid">
-            {sparkIdeas.map(idea => (
-              <a class="idea-card is-compact" data-idea-card data-stage={idea.data.stage} data-area={idea.data.area} href={withBase(`/ideas/${idea.id}/`)}>
-                <div class="idea-card-top"><span class="idea-card-stage"><span class="ui-copy-en">{idea.data.stage}</span><span class="ui-copy-zh">{stageZh[idea.data.stage]}</span></span><span class="idea-card-area"><span class="ui-copy-en">{idea.data.area}</span><span class="ui-copy-zh">{areaZh[idea.data.area]}</span></span></div>
-                <h3><span class="ui-copy-en">{idea.data.title}</span><span class="ui-copy-zh">{idea.data.titleZh || idea.data.title}</span></h3>
-                <p class="idea-card-summary"><span class="ui-copy-en">{idea.data.summary}</span><span class="ui-copy-zh">{idea.data.summaryZh || idea.data.summary}</span></p>
-                {idea.data.nextAction && <div class="idea-next"><span><span class="ui-copy-en">Next</span><span class="ui-copy-zh">下一步</span></span><strong><span class="ui-copy-en">{idea.data.nextAction}</span><span class="ui-copy-zh">{idea.data.nextActionZh || idea.data.nextAction}</span></strong></div>}
-                <div class="idea-card-footer"><div class="idea-progress-meta"><span><span class="ui-copy-en">Captured</span><span class="ui-copy-zh">记录于</span></span><span><span class="ui-copy-en">{fmtEn(idea.data.createdDate)}</span><span class="ui-copy-zh">{fmtZh(idea.data.createdDate)}</span></span></div></div>
-              </a>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {(realizedIdeas.length > 0 || parkedIdeas.length > 0) && (
-        <div class="idea-section" data-idea-section>
-          <div class="idea-section-head"><h2><span class="ui-copy-en">Elsewhere</span><span class="ui-copy-zh">其他状态</span></h2><span><span class="ui-copy-en">Completed or intentionally quiet</span><span class="ui-copy-zh">已经落地，或有意暂时搁置</span></span></div>
-          <div class="idea-grid">
-            {[...realizedIdeas, ...parkedIdeas].map(idea => (
-              <a class="idea-card is-compact" data-idea-card data-stage={idea.data.stage} data-area={idea.data.area} href={withBase(`/ideas/${idea.id}/`)}>
-                <div class="idea-card-top"><span class="idea-card-stage"><span class="ui-copy-en">{idea.data.stage}</span><span class="ui-copy-zh">{stageZh[idea.data.stage]}</span></span><span class="idea-card-area"><span class="ui-copy-en">{idea.data.area}</span><span class="ui-copy-zh">{areaZh[idea.data.area]}</span></span></div>
-                <h3><span class="ui-copy-en">{idea.data.title}</span><span class="ui-copy-zh">{idea.data.titleZh || idea.data.title}</span></h3>
-                <p class="idea-card-summary"><span class="ui-copy-en">{idea.data.summary}</span><span class="ui-copy-zh">{idea.data.summaryZh || idea.data.summary}</span></p>
-              </a>
-            ))}
-          </div>
-        </div>
-      )}
+      </div>
+      <div class="idea-library-list" id="idea-library-list"></div>
+      <div class="library-empty" id="idea-library-empty" hidden></div>
     </section>
   </main>
 
-  <dialog class="idea-capture-dialog" id="idea-capture-dialog">
-    <div class="idea-capture-head"><strong><span class="ui-copy-en">Capture before it disappears</span><span class="ui-copy-zh">先把念头接住</span></strong><button class="idea-dialog-close" id="idea-dialog-close" type="button" aria-label="Close">×</button></div>
-    <form class="idea-capture-form" id="idea-capture-form" method="dialog">
-      <div class="idea-field">
-        <label for="idea-title"><span class="ui-copy-en">Idea</span><span class="ui-copy-zh">想法</span></label>
-        <input id="idea-title" name="title" required maxlength="120" data-placeholder-en="One sentence is enough…" data-placeholder-zh="一句话也完全可以……" placeholder="One sentence is enough…" />
+  <dialog class="quick-capture-dialog" id="idea-capture-dialog">
+    <form id="idea-capture-form" method="dialog">
+      <div class="quick-capture-head">
+        <span><span class="ui-copy-en">Capture before it disappears</span><span class="ui-copy-zh">趁它还没消失，先记下来</span></span>
+        <button class="quick-capture-close" id="idea-capture-close" type="button" aria-label="Close">×</button>
       </div>
-      <div class="idea-form-row">
-        <div class="idea-field"><label for="idea-area"><span class="ui-copy-en">Area</span><span class="ui-copy-zh">领域</span></label><select id="idea-area" name="area"><option value="Research" data-en="Research" data-zh="研究">Research</option><option value="Build" data-en="Build" data-zh="构建">Build</option><option value="Life" data-en="Life" data-zh="生活">Life</option><option value="Writing" data-en="Writing" data-zh="写作">Writing</option><option value="Learning" data-en="Learning" data-zh="学习">Learning</option></select></div>
-        <div class="idea-field"><label for="idea-stage"><span class="ui-copy-en">Initial state</span><span class="ui-copy-zh">初始状态</span></label><select id="idea-stage" name="stage"><option value="Spark" data-en="Spark" data-zh="灵感">Spark</option><option value="Exploring" data-en="Exploring" data-zh="酝酿中">Exploring</option></select></div>
+      <label class="quick-capture-line" for="idea-capture-title">
+        <span aria-hidden="true">→</span>
+        <input id="idea-capture-title" name="title" required maxlength="160" autocomplete="off" placeholder="One sentence is enough…" />
+      </label>
+      <details class="quick-capture-more">
+        <summary><span class="ui-copy-en">Add context</span><span class="ui-copy-zh">补一点上下文</span></summary>
+        <div class="quick-capture-fields">
+          <label>
+            <span><span class="ui-copy-en">Area</span><span class="ui-copy-zh">领域</span></span>
+            <select id="idea-capture-area" name="area"></select>
+          </label>
+          <label>
+            <span><span class="ui-copy-en">Quick note</span><span class="ui-copy-zh">随手记</span></span>
+            <textarea id="idea-capture-note" name="note" maxlength="1200" placeholder="Why did this feel worth keeping?"></textarea>
+          </label>
+        </div>
+      </details>
+      <div class="quick-capture-foot">
+        <small><span class="ui-copy-en">Private · saved only in this browser</span><span class="ui-copy-zh">私密 · 只保存在当前浏览器</span></small>
+        <button type="submit"><span class="ui-copy-en">Save to Inbox</span><span class="ui-copy-zh">存入收件箱</span><kbd>Enter</kbd></button>
       </div>
-      <div class="idea-field">
-        <label for="idea-note"><span class="ui-copy-en">Quick note</span><span class="ui-copy-zh">随手记</span></label>
-        <textarea id="idea-note" name="note" maxlength="800" data-placeholder-en="What made this worth capturing?" data-placeholder-zh="是什么让这个念头值得先记下来？" placeholder="What made this worth capturing?"></textarea>
-      </div>
-      <p class="idea-capture-note"><span class="ui-copy-en">Private by default: this capture stays in localStorage on this browser and is never committed to the public site.</span><span class="ui-copy-zh">默认私密：这条记录只保存在当前浏览器的 localStorage，不会提交到公开网站。</span></p>
-      <div class="idea-form-actions"><button type="button" id="idea-cancel"><span class="ui-copy-en">Cancel</span><span class="ui-copy-zh">取消</span></button><button type="submit"><span class="ui-copy-en">Save locally</span><span class="ui-copy-zh">保存到本机</span></button></div>
     </form>
   </dialog>
 
+  <div class="idea-peek-backdrop" id="idea-peek-backdrop" hidden></div>
+  <aside class="idea-peek" id="idea-peek" aria-hidden="true" aria-label="Idea details">
+    <div class="idea-peek-inner" id="idea-peek-inner"></div>
+  </aside>
+
+  <div class="idea-toast" id="idea-toast" role="status" aria-live="polite"></div>
+
   <SiteExtras />
 
-  <script is:inline>
+  <script is:inline define:vars={{ seedIdeas }}>
     (() => {
-      const filters = [...document.querySelectorAll('[data-idea-filter]')];
-      const cards = [...document.querySelectorAll('[data-idea-card]')];
-      const sections = [...document.querySelectorAll('[data-idea-section]')];
-      const count = document.getElementById('idea-visible-count');
-      let currentFilter = 'all';
-      const isZh = () => document.documentElement.dataset.uiLanguage === 'zh';
-      const stageZh = { Active: '推进中', Exploring: '酝酿中', Spark: '灵感', Realized: '已落地', Parked: '已搁置' };
-      const areaZh = { Research: '研究', Build: '构建', Life: '生活', Writing: '写作', Learning: '学习' };
+      const INBOX_KEY = 'kaize-private-idea-inbox-v2';
+      const LEGACY_INBOX_KEY = 'kaize-private-idea-inbox-v1';
+      const WORKBENCH_KEY = 'kaize-idea-workbench-v2';
+      const VIEW_KEY = 'kaize-idea-view-v2';
+      const stageOrder = ['Spark', 'Exploring', 'Active', 'Realized'];
+      const areas = ['Unsorted', 'Research', 'Build', 'Life', 'Writing', 'Learning'];
+      const areaZh = { Unsorted:'未分类', Research:'研究', Build:'构建', Life:'生活', Writing:'写作', Learning:'学习' };
+      const stageZh = { Spark:'收件箱', Exploring:'探索', Active:'推进中', Realized:'已落地', Parked:'已搁置' };
+      const stageEn = { Spark:'Inbox', Exploring:'Explore', Active:'In motion', Realized:'Realized', Parked:'Parked' };
 
-      const setFilter = value => {
-        currentFilter = value;
-        filters.forEach(button => button.classList.toggle('active', button.dataset.ideaFilter === value));
-        let visible = 0;
-        cards.forEach(card => {
-          const show = value === 'all' || card.dataset.stage === value || card.dataset.area === value;
-          card.hidden = !show;
-          if (show) visible += 1;
-        });
-        sections.forEach(section => {
-          const hasVisible = [...section.querySelectorAll('[data-idea-card]')].some(card => !card.hidden);
-          section.hidden = !hasVisible;
-        });
-        if (count) count.textContent = isZh() ? `${visible} 个想法` : `${visible} ${visible === 1 ? 'idea' : 'ideas'}`;
+      const $ = selector => document.querySelector(selector);
+      const $$ = selector => [...document.querySelectorAll(selector)];
+      const language = () => window.__kaizeUi?.language === 'zh' ? 'zh' : 'en';
+      const t = (en, zh) => language() === 'zh' ? (zh || en) : en;
+      const escapeText = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[char]));
+      const formatDate = value => new Intl.DateTimeFormat(language() === 'zh' ? 'zh-CN' : 'en', language() === 'zh' ? { month:'numeric', day:'numeric' } : { month:'short', day:'numeric' }).format(new Date(value));
+      const safeJson = (key, fallback) => {
+        try { return JSON.parse(localStorage.getItem(key) || '') ?? fallback; } catch { return fallback; }
       };
-      filters.forEach(button => button.addEventListener('click', () => setFilter(button.dataset.ideaFilter || 'all')));
+      const saveJson = (key, value) => {
+        try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
+      };
 
-      const STORAGE_KEY = 'kaize-private-idea-inbox-v1';
-      const dialog = document.getElementById('idea-capture-dialog');
-      const trigger = document.getElementById('idea-capture-trigger');
-      const close = document.getElementById('idea-dialog-close');
-      const cancel = document.getElementById('idea-cancel');
-      const form = document.getElementById('idea-capture-form');
-      const list = document.getElementById('idea-inbox-list');
-      const inboxCount = document.getElementById('idea-inbox-count');
-      const titleInput = document.getElementById('idea-title');
-      const noteInput = document.getElementById('idea-note');
-      const readInbox = () => {
-        try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; }
+      let privateIdeas = safeJson(INBOX_KEY, null);
+      if (!Array.isArray(privateIdeas)) {
+        const legacy = safeJson(LEGACY_INBOX_KEY, []);
+        privateIdeas = Array.isArray(legacy) ? legacy.map((item, index) => ({
+          id: item.id || `local-${Date.now()}-${index}`,
+          title: String(item.title || '').trim(),
+          note: String(item.note || '').trim(),
+          area: item.area || 'Unsorted',
+          stage: ['Spark','Exploring','Active','Realized','Parked'].includes(item.stage) ? item.stage : 'Spark',
+          nextAction: '',
+          createdAt: item.createdAt || new Date().toISOString(),
+          updatedAt: item.createdAt || new Date().toISOString(),
+          progress: []
+        })).filter(item => item.title) : [];
+        saveJson(INBOX_KEY, privateIdeas);
+      }
+
+      let workbench = safeJson(WORKBENCH_KEY, {});
+      workbench.stage ||= {};
+      workbench.next ||= {};
+      workbench.scratch ||= {};
+      workbench.milestones ||= {};
+      workbench.progress ||= {};
+      workbench.resurfaceIndex ||= 0;
+      let currentView = localStorage.getItem(VIEW_KEY) || 'cockpit';
+      if (!['cockpit','board','library'].includes(currentView)) currentView = 'cockpit';
+      let openIdeaId = null;
+      let draggingId = null;
+      let dragMoved = false;
+      let parkedVisible = false;
+
+      const publicById = new Map(seedIdeas.map(item => [item.id, item]));
+      const findPrivate = id => privateIdeas.find(item => item.id === id);
+      const savePrivate = () => saveJson(INBOX_KEY, privateIdeas);
+      const saveWorkbench = () => saveJson(WORKBENCH_KEY, workbench);
+
+      const getStage = item => item.source === 'private' ? item.stage : (workbench.stage[item.id] || item.stage);
+      const getNext = item => item.source === 'private' ? (item.nextAction || '') : (workbench.next[item.id] ?? item.nextAction ?? '');
+      const getTitle = item => item.source === 'private' ? item.title : t(item.title, item.titleZh);
+      const getSummary = item => item.source === 'private' ? (item.note || t('Private capture', '私人记录')) : t(item.summary, item.summaryZh);
+      const getAreaLabel = area => t(area, areaZh[area] || area);
+      const getStageLabel = stage => t(stageEn[stage] || stage, stageZh[stage] || stage);
+
+      const publicItems = () => seedIdeas.map(item => ({ ...item, source:'public' }));
+      const privateItems = () => privateIdeas.map(item => ({ ...item, source:'private', summary:item.note || '', summaryZh:item.note || '', updatedDate:item.updatedAt || item.createdAt, createdDate:item.createdAt, milestones:[], tags:[] }));
+      const allItems = () => [...publicItems(), ...privateItems()];
+      const byId = id => {
+        const local = findPrivate(id);
+        if (local) return { ...local, source:'private', summary:local.note || '', summaryZh:local.note || '', updatedDate:local.updatedAt || local.createdAt, createdDate:local.createdAt, milestones:[], tags:[] };
+        const pub = publicById.get(id);
+        return pub ? { ...pub, source:'public' } : null;
       };
-      const writeInbox = items => {
-        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); } catch {}
+
+      const milestoneState = item => {
+        if (item.source === 'private') return [];
+        const overrides = workbench.milestones[item.id] || {};
+        return item.milestones.map((milestone, index) => ({ ...milestone, done: Object.prototype.hasOwnProperty.call(overrides, index) ? Boolean(overrides[index]) : milestone.done, index }));
       };
-      const escapeText = value => String(value || '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-      const localizedArea = value => isZh() ? (areaZh[value] || value) : value;
-      const localizedStage = value => isZh() ? (stageZh[value] || value) : value;
-      const syncCaptureLanguage = () => {
-        document.querySelectorAll('#idea-capture-dialog option[data-en]').forEach(option => {
-          option.textContent = isZh() ? option.dataset.zh : option.dataset.en;
+      const progressPct = item => {
+        const milestones = milestoneState(item);
+        if (!milestones.length) return null;
+        const done = milestones.filter(m => m.done).length;
+        return { done, total:milestones.length, pct:Math.round(done / milestones.length * 100) };
+      };
+
+      const updateStatusLine = () => {
+        const items = allItems();
+        const active = items.filter(item => getStage(item) === 'Active').length;
+        const inbox = privateIdeas.filter(item => item.stage === 'Spark').length;
+        $('#idea-view-status').textContent = t(`${active} in motion · ${inbox} inbox`, `${active} 个推进中 · ${inbox} 个收件箱`);
+      };
+
+      const motionRow = (item, index) => {
+        const next = getNext(item);
+        const progress = progressPct(item);
+        const updated = item.source === 'private' ? item.updatedAt || item.createdAt : item.updatedDate;
+        return `
+          <button class="motion-row${index === 0 ? ' is-leading' : ''}" type="button" data-open-idea="${escapeText(item.id)}">
+            <span class="motion-index">${String(index + 1).padStart(2,'0')}</span>
+            <span class="motion-main">
+              <span class="motion-meta">${escapeText(getAreaLabel(item.area || 'Unsorted'))} · ${escapeText(item.source === 'private' ? t('Private', '私密') : t('Public', '公开'))}</span>
+              <strong>${escapeText(getTitle(item))}</strong>
+              <span class="motion-summary">${escapeText(getSummary(item))}</span>
+            </span>
+            <span class="motion-next">
+              <small>${escapeText(t('Next', '下一步'))}</small>
+              <span>${escapeText(next || t('Define the next concrete move.', '先定义一个具体的下一步。'))}</span>
+            </span>
+            <span class="motion-progress">
+              ${progress ? `<span class="motion-progress-line"><i style="width:${progress.pct}%"></i></span><small>${progress.done}/${progress.total}</small>` : `<small>${escapeText(formatDate(updated))}</small>`}
+            </span>
+          </button>`;
+      };
+
+      const renderCockpit = () => {
+        const items = allItems();
+        const active = items.filter(item => getStage(item) === 'Active').sort((a,b) => new Date(b.updatedDate || b.updatedAt || b.createdDate) - new Date(a.updatedDate || a.updatedAt || a.createdDate));
+        const motion = $('#idea-motion-list');
+        if (motion) {
+          motion.innerHTML = active.length ? active.slice(0, 4).map(motionRow).join('') : `
+            <div class="studio-empty-state">
+              <strong>${escapeText(t('Nothing is in motion.', '现在没有正在推进的想法。'))}</strong>
+              <p>${escapeText(t('Move one idea into “In motion” when you know its next action.', '当你知道一个想法的下一步时，再把它移到“推进中”。'))}</p>
+              <button type="button" data-switch-view="board">${escapeText(t('Open Board →', '打开推进板 →'))}</button>
+            </div>`;
+        }
+
+        const localInbox = privateIdeas.filter(item => item.stage === 'Spark').sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+        const inbox = $('#idea-inbox-list');
+        const emptyCapture = $('#idea-empty-capture');
+        if (inbox) {
+          inbox.innerHTML = localInbox.slice(0, 7).map(item => `
+            <button class="inbox-slip" type="button" data-open-idea="${escapeText(item.id)}">
+              <span class="inbox-slip-dot"></span>
+              <span><strong>${escapeText(item.title)}</strong><small>${escapeText(getAreaLabel(item.area || 'Unsorted'))} · ${escapeText(formatDate(item.createdAt))}</small></span>
+              <span class="inbox-slip-arrow">↗</span>
+            </button>`).join('');
+        }
+        if (emptyCapture) emptyCapture.hidden = localInbox.length > 0;
+        renderResurface();
+      };
+
+      const resurfaceCandidates = () => allItems().filter(item => {
+        const stage = getStage(item);
+        return stage === 'Exploring' || (stage === 'Spark' && item.source === 'public');
+      });
+      const renderResurface = () => {
+        const container = $('#idea-resurface-content');
+        if (!container) return;
+        const candidates = resurfaceCandidates();
+        if (!candidates.length) {
+          container.innerHTML = `<p class="resurface-empty">${escapeText(t('Nothing waiting to resurface right now.', '现在没有需要重新浮现的想法。'))}</p>`;
+          return;
+        }
+        const index = Math.abs(Number(workbench.resurfaceIndex || 0)) % candidates.length;
+        const item = candidates[index];
+        const stage = getStage(item);
+        const primaryLabel = stage === 'Spark' ? t('Develop', '继续发展') : t('Move to In motion', '开始推进');
+        const targetStage = stage === 'Spark' ? 'Exploring' : 'Active';
+        container.innerHTML = `
+          <button class="resurface-idea" type="button" data-open-idea="${escapeText(item.id)}">
+            <span class="resurface-quote">“</span>
+            <span><strong>${escapeText(getTitle(item))}</strong><small>${escapeText(getSummary(item))}</small></span>
+          </button>
+          <div class="resurface-actions">
+            <button type="button" data-resurface-move="${targetStage}" data-resurface-id="${escapeText(item.id)}">${escapeText(primaryLabel)}</button>
+            <button type="button" data-resurface-park="${escapeText(item.id)}">${escapeText(t('Park', '搁置'))}</button>
+            <button type="button" data-resurface-another>${escapeText(t('Another ↻', '换一个 ↻'))}</button>
+          </div>`;
+      };
+
+      const boardCard = item => {
+        const next = getNext(item);
+        const progress = progressPct(item);
+        return `
+          <article class="board-card${item.source === 'private' ? ' is-private' : ''}" draggable="true" data-drag-idea="${escapeText(item.id)}" data-open-idea="${escapeText(item.id)}" tabindex="0" role="button">
+            <div class="board-card-top"><span>${escapeText(getAreaLabel(item.area || 'Unsorted'))}</span><span class="board-grip" aria-hidden="true">⠿</span></div>
+            <h4>${escapeText(getTitle(item))}</h4>
+            ${next ? `<p><span>${escapeText(t('Next', '下一步'))}</span>${escapeText(next)}</p>` : `<p class="board-card-summary">${escapeText(getSummary(item))}</p>`}
+            <div class="board-card-foot">
+              <span>${item.source === 'private' ? escapeText(t('Private', '私密')) : escapeText(t('Public', '公开'))}</span>
+              ${progress ? `<span>${progress.done}/${progress.total}</span>` : ''}
+            </div>
+          </article>`;
+      };
+
+      const renderBoard = () => {
+        const items = allItems();
+        stageOrder.forEach(stage => {
+          const zone = document.querySelector(`[data-drop-stage="${stage}"]`);
+          const matches = items.filter(item => getStage(item) === stage);
+          const count = document.querySelector(`[data-lane-count="${stage}"]`);
+          if (count) count.textContent = String(matches.length);
+          if (zone) zone.innerHTML = matches.map(boardCard).join('') || `<div class="board-lane-empty">${escapeText(t('Drop here', '拖到这里'))}</div>`;
         });
-        if (titleInput) titleInput.placeholder = isZh() ? titleInput.dataset.placeholderZh : titleInput.dataset.placeholderEn;
-        if (noteInput) noteInput.placeholder = isZh() ? noteInput.dataset.placeholderZh : noteInput.dataset.placeholderEn;
+
+        const parked = items.filter(item => getStage(item) === 'Parked');
+        const shelf = $('#parked-shelf');
+        if (shelf) {
+          shelf.hidden = !parkedVisible;
+          shelf.innerHTML = parkedVisible ? `
+            <div class="parked-head"><span>${escapeText(t('Parked ideas', '已搁置想法'))}</span><strong>${parked.length}</strong></div>
+            <div class="parked-list">${parked.map(item => `<button type="button" data-open-idea="${escapeText(item.id)}"><span>${escapeText(getTitle(item))}</span><small>${escapeText(getAreaLabel(item.area || 'Unsorted'))}</small></button>`).join('') || `<p>${escapeText(t('No parked ideas.', '没有已搁置想法。'))}</p>`}</div>` : '';
+        }
       };
-      const renderInbox = () => {
-        const items = readInbox();
-        if (!list || !inboxCount) return;
-        list.innerHTML = items.slice(0, 4).map((item, index) => `<div class="idea-inbox-item"><div><strong>${escapeText(item.title)}</strong><small>${escapeText(localizedArea(item.area))} · ${escapeText(localizedStage(item.stage))}</small></div><button class="idea-inbox-remove" type="button" data-inbox-remove="${index}" aria-label="Remove">×</button></div>`).join('');
-        inboxCount.textContent = items.length ? (isZh() ? `${items.length} 条本地记录 · 仅此浏览器` : `${items.length} local ${items.length === 1 ? 'capture' : 'captures'} · browser only`) : (isZh() ? '还没有本地记录。' : 'No local captures yet.');
-        list.querySelectorAll('[data-inbox-remove]').forEach(button => button.addEventListener('click', () => {
-          const current = readInbox();
-          current.splice(Number(button.dataset.inboxRemove), 1);
-          writeInbox(current); renderInbox();
+
+      const renderLibraryControls = () => {
+        const stageSelect = $('#idea-library-stage');
+        const areaSelect = $('#idea-library-area');
+        const captureArea = $('#idea-capture-area');
+        if (stageSelect) {
+          const current = stageSelect.value || 'all';
+          stageSelect.innerHTML = `<option value="all">${escapeText(t('All stages', '全部状态'))}</option>${['Spark','Exploring','Active','Realized','Parked'].map(stage => `<option value="${stage}">${escapeText(getStageLabel(stage))}</option>`).join('')}`;
+          stageSelect.value = [...stageSelect.options].some(option => option.value === current) ? current : 'all';
+        }
+        if (areaSelect) {
+          const current = areaSelect.value || 'all';
+          areaSelect.innerHTML = `<option value="all">${escapeText(t('All areas', '全部领域'))}</option>${areas.map(area => `<option value="${area}">${escapeText(getAreaLabel(area))}</option>`).join('')}`;
+          areaSelect.value = [...areaSelect.options].some(option => option.value === current) ? current : 'all';
+        }
+        if (captureArea) {
+          const current = captureArea.value || 'Unsorted';
+          captureArea.innerHTML = areas.map(area => `<option value="${area}">${escapeText(getAreaLabel(area))}</option>`).join('');
+          captureArea.value = [...captureArea.options].some(option => option.value === current) ? current : 'Unsorted';
+        }
+        const search = $('#idea-library-search');
+        if (search) search.placeholder = t('Search ideas…', '搜索想法…');
+        const captureTitle = $('#idea-capture-title');
+        if (captureTitle) captureTitle.placeholder = t('One sentence is enough…', '一句话就够了……');
+        const captureNote = $('#idea-capture-note');
+        if (captureNote) captureNote.placeholder = t('Why did this feel worth keeping?', '为什么这个念头值得留下？');
+      };
+
+      const renderLibrary = () => {
+        renderLibraryControls();
+        const query = String($('#idea-library-search')?.value || '').trim().toLowerCase();
+        const stageFilter = $('#idea-library-stage')?.value || 'all';
+        const areaFilter = $('#idea-library-area')?.value || 'all';
+        const items = allItems().filter(item => {
+          const haystack = [item.title, item.titleZh, item.summary, item.summaryZh, item.note, item.area, ...(item.tags || [])].filter(Boolean).join(' ').toLowerCase();
+          return (!query || haystack.includes(query)) && (stageFilter === 'all' || getStage(item) === stageFilter) && (areaFilter === 'all' || (item.area || 'Unsorted') === areaFilter);
+        }).sort((a,b) => new Date(b.updatedDate || b.updatedAt || b.createdDate) - new Date(a.updatedDate || a.updatedAt || a.createdDate));
+
+        const list = $('#idea-library-list');
+        const empty = $('#idea-library-empty');
+        if (list) {
+          list.innerHTML = items.map(item => {
+            const date = item.updatedDate || item.updatedAt || item.createdDate;
+            return `
+              <button class="library-row" type="button" data-open-idea="${escapeText(item.id)}">
+                <time>${escapeText(formatDate(date))}</time>
+                <span class="library-row-copy"><strong>${escapeText(getTitle(item))}</strong><small>${escapeText(getSummary(item))}</small></span>
+                <span class="library-row-area">${escapeText(getAreaLabel(item.area || 'Unsorted'))}</span>
+                <span class="library-row-stage">${escapeText(getStageLabel(getStage(item)))}</span>
+                <span class="library-row-source">${escapeText(item.source === 'private' ? t('private', '私密') : t('public', '公开'))}</span>
+                <span class="library-row-arrow">→</span>
+              </button>`;
+          }).join('');
+        }
+        if (empty) {
+          empty.hidden = items.length > 0;
+          empty.textContent = t('No ideas match this view.', '没有符合当前条件的想法。');
+        }
+      };
+
+      const stageSelectMarkup = (item, currentStage) => `
+        <label class="peek-field">
+          <span>${escapeText(t('Stage', '状态'))}</span>
+          <select id="peek-stage-select">
+            ${['Spark','Exploring','Active','Realized','Parked'].map(stage => `<option value="${stage}"${stage === currentStage ? ' selected' : ''}>${escapeText(getStageLabel(stage))}</option>`).join('')}
+          </select>
+        </label>`;
+
+      const areaSelectMarkup = item => `
+        <label class="peek-field">
+          <span>${escapeText(t('Area', '领域'))}</span>
+          <select id="peek-area-select">
+            ${areas.map(area => `<option value="${area}"${area === (item.area || 'Unsorted') ? ' selected' : ''}>${escapeText(getAreaLabel(area))}</option>`).join('')}
+          </select>
+        </label>`;
+
+      const renderPeek = id => {
+        const item = byId(id);
+        const inner = $('#idea-peek-inner');
+        if (!item || !inner) return closePeek();
+        openIdeaId = id;
+        const currentStage = getStage(item);
+        const next = getNext(item);
+        const publicMilestones = milestoneState(item);
+        const staticProgress = item.source === 'public' ? item.progress || [] : item.progress || [];
+        const localProgress = item.source === 'public' ? (workbench.progress[item.id] || []) : (item.progress || []);
+        const combinedProgress = item.source === 'public' ? [...localProgress.map(entry => ({ ...entry, local:true })), ...staticProgress] : staticProgress;
+        const scratch = item.source === 'public' ? (workbench.scratch[item.id] || '') : (item.note || '');
+
+        inner.innerHTML = `
+          <div class="peek-topbar">
+            <span class="peek-source">${escapeText(item.source === 'private' ? t('PRIVATE CAPTURE', '私人记录') : t('PUBLIC IDEA · LOCAL WORKBENCH', '公开想法 · 本地工作台'))}</span>
+            <button class="peek-close" id="peek-close" type="button" aria-label="Close">×</button>
+          </div>
+          <header class="peek-header">
+            <div class="peek-meta">${escapeText(getAreaLabel(item.area || 'Unsorted'))} · ${escapeText(getStageLabel(currentStage))}</div>
+            ${item.source === 'private' ? `<input class="peek-title-input" id="peek-private-title" value="${escapeText(item.title)}" maxlength="160" aria-label="Idea title" />` : `<h2>${escapeText(getTitle(item))}</h2>`}
+            <p>${escapeText(getSummary(item))}</p>
+          </header>
+
+          <div class="peek-fields-row">
+            ${stageSelectMarkup(item, currentStage)}
+            ${item.source === 'private' ? areaSelectMarkup(item) : `<div class="peek-field is-static"><span>${escapeText(t('Area', '领域'))}</span><strong>${escapeText(getAreaLabel(item.area))}</strong></div>`}
+          </div>
+
+          <section class="peek-section">
+            <div class="peek-section-head"><span>${escapeText(t('Next action', '下一步'))}</span><small>${escapeText(t('local', '本地'))}</small></div>
+            <textarea class="peek-next-input" id="peek-next-input" rows="2" placeholder="${escapeText(t('What is the next concrete move?', '下一步最具体的动作是什么？'))}">${escapeText(next)}</textarea>
+          </section>
+
+          <section class="peek-section">
+            <div class="peek-section-head"><span>${escapeText(item.source === 'private' ? t('Quick note', '随手记') : t('Local scratchpad', '本地草稿'))}</span><small>${escapeText(t('browser only', '仅本机'))}</small></div>
+            <textarea class="peek-scratch-input" id="peek-scratch-input" rows="5" placeholder="${escapeText(t('Think here without publishing anything…', '可以在这里继续想，不会公开……'))}">${escapeText(scratch)}</textarea>
+          </section>
+
+          ${publicMilestones.length ? `
+            <section class="peek-section">
+              <div class="peek-section-head"><span>${escapeText(t('Milestones', '里程碑'))}</span><small>${publicMilestones.filter(m => m.done).length}/${publicMilestones.length}</small></div>
+              <div class="peek-milestones">
+                ${publicMilestones.map(milestone => `<label><input type="checkbox" data-peek-milestone="${milestone.index}"${milestone.done ? ' checked' : ''} /><span>${escapeText(t(milestone.text, milestone.textZh))}</span></label>`).join('')}
+              </div>
+            </section>` : ''}
+
+          <section class="peek-section">
+            <div class="peek-section-head"><span>${escapeText(t('Progress log', '推进记录'))}</span><small>${combinedProgress.length}</small></div>
+            <div class="peek-progress-list">
+              ${combinedProgress.slice().sort((a,b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt)).map(entry => `<div><time>${escapeText(formatDate(entry.date || entry.createdAt))}</time><p>${escapeText(entry.local || item.source === 'private' ? entry.note : t(entry.note, entry.noteZh))}</p></div>`).join('') || `<p class="peek-empty-copy">${escapeText(t('No updates yet.', '还没有推进记录。'))}</p>`}
+            </div>
+            <form class="peek-add-progress" id="peek-progress-form">
+              <input id="peek-progress-input" maxlength="300" placeholder="${escapeText(t('Add a short update…', '补一条简短进展……'))}" />
+              <button type="submit">+</button>
+            </form>
+          </section>
+
+          <footer class="peek-footer">
+            ${item.source === 'public' ? `<a href="${escapeText(item.href)}">${escapeText(t('Open full page ↗', '打开完整页面 ↗'))}</a>` : `<button class="peek-delete" id="peek-delete-private" type="button">${escapeText(t('Delete capture', '删除记录'))}</button>`}
+            <span>${escapeText(t('Local edits never change the public site.', '本地修改不会自动改变公开网站。'))}</span>
+          </footer>`;
+
+        $('#idea-peek').setAttribute('aria-hidden', 'false');
+        $('#idea-peek').classList.add('open');
+        $('#idea-peek-backdrop').hidden = false;
+        document.body.classList.add('idea-peek-open');
+        bindPeek(item);
+      };
+
+      const bindPeek = item => {
+        $('#peek-close')?.addEventListener('click', closePeek);
+        $('#peek-stage-select')?.addEventListener('change', event => setStage(item.id, event.target.value, { reopen:true }));
+        $('#peek-area-select')?.addEventListener('change', event => {
+          if (item.source !== 'private') return;
+          const local = findPrivate(item.id);
+          if (!local) return;
+          local.area = event.target.value;
+          local.updatedAt = new Date().toISOString();
+          savePrivate(); renderAll(); renderPeek(item.id);
+        });
+        $('#peek-private-title')?.addEventListener('input', event => {
+          const local = findPrivate(item.id);
+          if (!local) return;
+          local.title = event.target.value;
+          local.updatedAt = new Date().toISOString();
+          savePrivate();
+        });
+        $('#peek-private-title')?.addEventListener('change', () => renderAll());
+        $('#peek-next-input')?.addEventListener('input', event => {
+          if (item.source === 'private') {
+            const local = findPrivate(item.id);
+            if (!local) return;
+            local.nextAction = event.target.value;
+            local.updatedAt = new Date().toISOString();
+            savePrivate();
+          } else {
+            workbench.next[item.id] = event.target.value;
+            saveWorkbench();
+          }
+        });
+        $('#peek-next-input')?.addEventListener('change', renderAll);
+        $('#peek-scratch-input')?.addEventListener('input', event => {
+          if (item.source === 'private') {
+            const local = findPrivate(item.id);
+            if (!local) return;
+            local.note = event.target.value;
+            local.updatedAt = new Date().toISOString();
+            savePrivate();
+          } else {
+            workbench.scratch[item.id] = event.target.value;
+            saveWorkbench();
+          }
+        });
+        $$('[data-peek-milestone]').forEach(checkbox => checkbox.addEventListener('change', event => {
+          workbench.milestones[item.id] ||= {};
+          workbench.milestones[item.id][event.target.dataset.peekMilestone] = event.target.checked;
+          saveWorkbench(); renderAll(); renderPeek(item.id);
         }));
+        $('#peek-progress-form')?.addEventListener('submit', event => {
+          event.preventDefault();
+          const input = $('#peek-progress-input');
+          const note = String(input?.value || '').trim();
+          if (!note) return;
+          const entry = { date:new Date().toISOString(), note };
+          if (item.source === 'private') {
+            const local = findPrivate(item.id);
+            if (!local) return;
+            local.progress ||= [];
+            local.progress.unshift(entry);
+            local.updatedAt = entry.date;
+            savePrivate();
+          } else {
+            workbench.progress[item.id] ||= [];
+            workbench.progress[item.id].unshift(entry);
+            saveWorkbench();
+          }
+          renderAll(); renderPeek(item.id); toast(t('Progress saved locally.', '推进记录已保存在本机。'));
+        });
+        $('#peek-delete-private')?.addEventListener('click', () => {
+          privateIdeas = privateIdeas.filter(local => local.id !== item.id);
+          savePrivate(); closePeek(); renderAll(); toast(t('Capture deleted.', '记录已删除。'));
+        });
       };
-      trigger?.addEventListener('click', () => dialog?.showModal());
-      close?.addEventListener('click', () => dialog?.close());
-      cancel?.addEventListener('click', () => dialog?.close());
-      dialog?.addEventListener('click', event => {
-        const rect = dialog.getBoundingClientRect();
+
+      const openPeek = id => renderPeek(id);
+      const closePeek = () => {
+        openIdeaId = null;
+        $('#idea-peek')?.classList.remove('open');
+        $('#idea-peek')?.setAttribute('aria-hidden', 'true');
+        $('#idea-peek-backdrop').hidden = true;
+        document.body.classList.remove('idea-peek-open');
+      };
+
+      const setStage = (id, stage, options = {}) => {
+        const local = findPrivate(id);
+        if (local) {
+          local.stage = stage;
+          local.updatedAt = new Date().toISOString();
+          savePrivate();
+        } else if (publicById.has(id)) {
+          workbench.stage[id] = stage;
+          saveWorkbench();
+        }
+        renderAll();
+        if (options.reopen && openIdeaId === id) renderPeek(id);
+        toast(t(`Moved to ${stageEn[stage] || stage}.`, `已移动到${stageZh[stage] || stage}。`));
+      };
+
+      const setView = view => {
+        if (!['cockpit','board','library'].includes(view)) return;
+        currentView = view;
+        try { localStorage.setItem(VIEW_KEY, view); } catch {}
+        $$('[data-idea-view]').forEach(button => {
+          const active = button.dataset.ideaView === view;
+          button.classList.toggle('active', active);
+          button.setAttribute('aria-pressed', active ? 'true' : 'false');
+        });
+        $$('[data-idea-view-panel]').forEach(panel => {
+          const active = panel.dataset.ideaViewPanel === view;
+          panel.hidden = !active;
+          panel.classList.toggle('active', active);
+        });
+        if (view === 'board') renderBoard();
+        if (view === 'library') renderLibrary();
+      };
+
+      const captureDialog = $('#idea-capture-dialog');
+      const captureForm = $('#idea-capture-form');
+      const captureTitle = $('#idea-capture-title');
+      const openCapture = () => {
+        renderLibraryControls();
+        if (!captureDialog) return;
+        captureDialog.showModal();
+        requestAnimationFrame(() => captureTitle?.focus());
+      };
+      const closeCapture = () => captureDialog?.close();
+
+      const toast = message => {
+        const node = $('#idea-toast');
+        if (!node) return;
+        node.textContent = message;
+        node.classList.add('visible');
+        clearTimeout(toast.timer);
+        toast.timer = setTimeout(() => node.classList.remove('visible'), 2100);
+      };
+
+      const renderAll = () => {
+        updateStatusLine();
+        renderCockpit();
+        renderBoard();
+        renderLibrary();
+        bindDynamicOpeners();
+      };
+
+      const bindDynamicOpeners = () => {
+        $$('[data-open-idea]').forEach(element => {
+          if (element.dataset.boundOpen) return;
+          element.dataset.boundOpen = '1';
+          element.addEventListener('click', event => {
+            if (dragMoved) { dragMoved = false; return; }
+            event.preventDefault();
+            openPeek(element.dataset.openIdea);
+          });
+          element.addEventListener('keydown', event => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault(); openPeek(element.dataset.openIdea);
+            }
+          });
+        });
+        $$('[data-switch-view]').forEach(button => button.addEventListener('click', () => setView(button.dataset.switchView)));
+        $$('[data-resurface-move]').forEach(button => button.addEventListener('click', () => setStage(button.dataset.resurfaceId, button.dataset.resurfaceMove)));
+        $$('[data-resurface-park]').forEach(button => button.addEventListener('click', () => setStage(button.dataset.resurfacePark, 'Parked')));
+        $$('[data-resurface-another]').forEach(button => button.addEventListener('click', () => {
+          const count = resurfaceCandidates().length || 1;
+          workbench.resurfaceIndex = (Number(workbench.resurfaceIndex || 0) + 1) % count;
+          saveWorkbench(); renderResurface(); bindDynamicOpeners();
+        }));
+
+        $$('[data-drag-idea]').forEach(card => {
+          if (card.dataset.boundDrag) return;
+          card.dataset.boundDrag = '1';
+          card.addEventListener('dragstart', event => {
+            draggingId = card.dataset.dragIdea;
+            dragMoved = true;
+            card.classList.add('dragging');
+            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.setData('text/plain', draggingId || '');
+          });
+          card.addEventListener('dragend', () => {
+            card.classList.remove('dragging');
+            draggingId = null;
+            $$('.board-dropzone').forEach(zone => zone.classList.remove('drag-over'));
+            setTimeout(() => { dragMoved = false; }, 50);
+          });
+        });
+      };
+
+      $$('.board-dropzone').forEach(zone => {
+        zone.addEventListener('dragover', event => { event.preventDefault(); zone.classList.add('drag-over'); event.dataTransfer.dropEffect = 'move'; });
+        zone.addEventListener('dragleave', event => { if (!zone.contains(event.relatedTarget)) zone.classList.remove('drag-over'); });
+        zone.addEventListener('drop', event => {
+          event.preventDefault();
+          zone.classList.remove('drag-over');
+          const id = draggingId || event.dataTransfer.getData('text/plain');
+          if (id) setStage(id, zone.dataset.dropStage);
+        });
+      });
+
+      $$('[data-idea-view]').forEach(button => button.addEventListener('click', () => setView(button.dataset.ideaView)));
+      $('#idea-capture-trigger')?.addEventListener('click', openCapture);
+      $('#idea-inbox-capture')?.addEventListener('click', openCapture);
+      $('#idea-empty-capture')?.addEventListener('click', openCapture);
+      $('#idea-capture-close')?.addEventListener('click', closeCapture);
+      $('#idea-peek-backdrop')?.addEventListener('click', closePeek);
+      $('#show-parked')?.addEventListener('click', () => { parkedVisible = !parkedVisible; renderBoard(); bindDynamicOpeners(); });
+      $('#idea-library-search')?.addEventListener('input', renderLibrary);
+      $('#idea-library-stage')?.addEventListener('change', renderLibrary);
+      $('#idea-library-area')?.addEventListener('change', renderLibrary);
+
+      captureDialog?.addEventListener('click', event => {
+        const rect = captureDialog.getBoundingClientRect();
         const inside = event.clientX >= rect.left && event.clientX <= rect.right && event.clientY >= rect.top && event.clientY <= rect.bottom;
-        if (!inside) dialog.close();
+        if (!inside) closeCapture();
       });
-      form?.addEventListener('submit', event => {
+      captureForm?.addEventListener('submit', event => {
         event.preventDefault();
-        const data = new FormData(form);
-        const item = {
-          title: String(data.get('title') || '').trim(),
-          area: String(data.get('area') || 'Build'),
-          stage: String(data.get('stage') || 'Spark'),
-          note: String(data.get('note') || '').trim(),
-          createdAt: new Date().toISOString()
-        };
-        if (!item.title) return;
-        const items = readInbox();
-        items.unshift(item);
-        writeInbox(items.slice(0, 50));
-        form.reset();
-        syncCaptureLanguage();
-        dialog?.close();
-        renderInbox();
+        const data = new FormData(captureForm);
+        const title = String(data.get('title') || '').trim();
+        if (!title) return;
+        const now = new Date().toISOString();
+        privateIdeas.unshift({
+          id:`local-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,
+          title,
+          note:String(data.get('note') || '').trim(),
+          area:String(data.get('area') || 'Unsorted'),
+          stage:'Spark',
+          nextAction:'',
+          createdAt:now,
+          updatedAt:now,
+          progress:[]
+        });
+        savePrivate();
+        captureForm.reset();
+        closeCapture();
+        renderAll();
+        toast(t('Saved to your private Inbox.', '已存入你的私人收件箱。'));
       });
+
+      document.addEventListener('keydown', event => {
+        const tag = document.activeElement?.tagName?.toLowerCase();
+        const editing = ['input','textarea','select'].includes(tag) || document.activeElement?.isContentEditable;
+        if (event.key === 'Escape') {
+          if (openIdeaId) { event.preventDefault(); closePeek(); return; }
+          if (captureDialog?.open) { event.preventDefault(); closeCapture(); return; }
+        }
+        if (!editing && !event.metaKey && !event.ctrlKey && !event.altKey && event.key.toLowerCase() === 'c') {
+          event.preventDefault(); openCapture();
+        }
+      });
+
       document.addEventListener('kaize:ui-language', () => {
-        setFilter(currentFilter);
-        syncCaptureLanguage();
-        renderInbox();
+        renderAll();
+        renderLibraryControls();
+        if (openIdeaId) renderPeek(openIdeaId);
       });
-      setFilter('all');
-      syncCaptureLanguage();
-      renderInbox();
-      if (new URLSearchParams(window.location.search).get('capture') === '1') requestAnimationFrame(() => dialog?.showModal());
+
+      renderLibraryControls();
+      setView(currentView);
+      renderAll();
+
+      const params = new URLSearchParams(location.search);
+      if (params.get('capture') === '1') setTimeout(openCapture, 80);
     })();
   </script>
 </BaseLayout>
