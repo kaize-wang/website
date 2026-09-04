@@ -1,6 +1,7 @@
 ---
 import PaperReaderWorkspace from '@/components/PaperReaderWorkspace.astro';
 import IdeaOwnerBridge from '@/components/IdeaOwnerBridge.astro';
+import IdeaSaveReceipt from '@/components/IdeaSaveReceipt.astro';
 import '@/styles/article-reading-polish.css';
 import '@/styles/editorial-lighting.css';
 import '@/styles/ideas-drag-polish.css';
@@ -20,6 +21,7 @@ const isHuangReader = Astro.url.pathname.endsWith('/notes/paper-reading-huang-20
 )}
 
 <IdeaOwnerBridge />
+<IdeaSaveReceipt />
 
 <script is:inline>
 (() => {
