@@ -17,14 +17,19 @@
   flex: none;
   min-width: 148px;
   padding: 10px 14px;
-  border: 1px solid var(--line);
-  background: var(--paper);
+  border: 1px solid color-mix(in srgb, var(--accent) 42%, var(--line));
+  background: color-mix(in srgb, var(--accent) 6%, var(--paper));
   color: var(--text);
   cursor: pointer;
   font-size: 12px;
+  transition: border-color .14s ease, color .14s ease, background .14s ease;
 }
 .ideas-capture-trigger::before { content: '+ '; color: var(--accent); }
-.ideas-capture-trigger:hover { border-color: var(--accent); color: var(--accent); }
+.ideas-capture-trigger:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 9%, var(--paper));
+}
 
 .idea-dashboard {
   display: grid;
@@ -323,6 +328,26 @@
 }
 .idea-form-actions button[type='submit'] { border-color: var(--accent); color: var(--accent); }
 
+.home-ideas-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+.home-idea-capture-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 3px 9px;
+  border: 1px solid color-mix(in srgb, var(--accent) 36%, var(--line));
+  border-radius: 999px;
+  color: var(--accent);
+  font-size: 10px;
+  line-height: 1;
+}
+.home-idea-capture-link:hover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 6%, var(--paper));
+}
 .home-ideas-preview { display: grid; border: 1px solid var(--line); background: var(--paper); }
 .home-idea-row {
   display: grid;
@@ -344,6 +369,14 @@
 .idea-detail-meta { display: flex; flex-wrap: wrap; gap: 8px 14px; margin: 14px 0 0; color: var(--muted); font-size: 10px; }
 .idea-detail-summary { max-width: 700px; color: var(--muted); font-size: 17px; }
 .idea-detail-grid { display: grid; grid-template-columns: minmax(0,1fr) 250px; gap: 46px; margin-top: 38px; }
+.idea-detail-content-label {
+  margin-bottom: 12px;
+  color: var(--accent);
+  font-size: 9px;
+  font-weight: 650;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+}
 .idea-detail-main .prose { font-size: 17px; }
 .idea-detail-side { display: grid; align-content: start; gap: 12px; }
 .idea-side-card { padding: 15px; border: 1px solid var(--line); background: var(--paper); }
@@ -376,4 +409,5 @@
   .idea-form-row { grid-template-columns: 1fr; }
   .idea-detail-shell { width: min(calc(100% - 38px), 920px); padding-top: 48px; }
   .idea-progress-entry { grid-template-columns: 1fr; gap: 3px; }
+  .home-ideas-actions { flex-wrap: wrap; justify-content: flex-end; }
 }
