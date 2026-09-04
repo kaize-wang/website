@@ -103,7 +103,7 @@ const githubUsername = site.github?.split('/').filter(Boolean).pop() || 'kaize-w
           <div class="github-calendar" data-github-calendar data-github-username={githubUsername}>
             <div class="github-calendar-head">
               <span data-github-calendar-total><span class="ui-copy-en">Loading contribution data…</span><span class="ui-copy-zh">正在读取贡献数据……</span></span>
-              <small><span class="ui-copy-en">GitHub profile data · site-styled</span><span class="ui-copy-zh">GitHub 主页数据 · 本站样式</span></small>
+              <small><span class="ui-copy-en">Public GitHub data · redrawn for this site</span><span class="ui-copy-zh">GitHub 公开数据 · 按本站风格重新绘制</span></small>
             </div>
             <div class="github-calendar-scroll">
               <div class="github-calendar-canvas" data-github-calendar-canvas aria-label="GitHub contribution calendar">
@@ -117,7 +117,7 @@ const githubUsername = site.github?.split('/').filter(Boolean).pop() || 'kaize-w
               </div>
             </div>
             <div class="github-calendar-foot">
-              <span data-github-calendar-freshness><span class="ui-copy-en">Contribution levels follow GitHub's public profile data.</span><span class="ui-copy-zh">贡献等级跟随 GitHub 公开主页数据。</span></span>
+              <span data-github-calendar-freshness><span class="ui-copy-en">Contribution data is refreshed when this page is revisited.</span><span class="ui-copy-zh">重新打开或回到本页时会刷新贡献数据。</span></span>
               <span class="github-calendar-legend" aria-label="Contribution intensity legend">
                 <small><span class="ui-copy-en">Less</span><span class="ui-copy-zh">少</span></small>
                 <i data-level="0"></i><i data-level="1"></i><i data-level="2"></i><i data-level="3"></i><i data-level="4"></i>
@@ -125,7 +125,7 @@ const githubUsername = site.github?.split('/').filter(Boolean).pop() || 'kaize-w
               </span>
             </div>
           </div>
-          <span class="github-activity-note"><span class="ui-copy-en">Past-year public contributions · source refreshed about hourly.</span><span class="ui-copy-zh">过去一年的公开贡献 · 数据源约每小时刷新。</span></span>
+          <span class="github-activity-note"><span class="ui-copy-en">Past-year public contributions. Geometry is GitHub-like; color and layout follow this site.</span><span class="ui-copy-zh">过去一年的公开贡献。格子逻辑参考 GitHub，颜色与版式沿用本站风格。</span></span>
         </a>
       </section>
     )}
@@ -141,14 +141,30 @@ const githubUsername = site.github?.split('/').filter(Boolean).pop() || 'kaize-w
       const username = calendar.dataset.githubUsername;
       const grid = calendar.querySelector('[data-github-calendar-grid]');
       const months = calendar.querySelector('[data-github-calendar-months]');
+      const scroll = calendar.querySelector('.github-calendar-scroll');
       const totalNode = calendar.querySelector('[data-github-calendar-total]');
       const freshness = calendar.querySelector('[data-github-calendar-freshness]');
       let contributions = null;
       let total = 0;
+      let lastLoadedHour = '';
 
       const language = () => window.__kaizeUi?.language === 'zh' ? 'zh' : 'en';
       const t = (en, zh) => language() === 'zh' ? zh : en;
       const parseDate = value => new Date(`${value}T00:00:00Z`);
+      const hourKey = () => new Date().toISOString().slice(0, 13);
+
+      const measureGrid = weeks => {
+        const available = Math.max(0, (scroll?.clientWidth || calendar.clientWidth || 760) - 34);
+        const cell = Math.max(9, Math.min(13, Math.floor(available / Math.max(weeks + (weeks - 1) * .34, 1))));
+        const rawGap = weeks > 1 ? (available - weeks * cell) / (weeks - 1) : 3;
+        const gap = Math.max(2, Math.min(6, rawGap));
+        const width = Math.round(weeks * cell + (weeks - 1) * gap);
+        calendar.style.setProperty('--github-cell-size', `${cell}px`);
+        calendar.style.setProperty('--github-cell-gap', `${gap}px`);
+        calendar.style.setProperty('--github-grid-width', `${width}px`);
+        grid.style.gridTemplateColumns = `repeat(${weeks}, ${cell}px)`;
+        months.style.gridTemplateColumns = `repeat(${weeks}, ${cell}px)`;
+      };
 
       const render = () => {
         if (!contributions?.length || !grid || !months) return;
@@ -159,9 +175,7 @@ const githubUsername = site.github?.split('/').filter(Boolean).pop() || 'kaize-w
         const offset = first.getUTCDay();
         const weeks = Math.ceil((offset + contributions.length) / 7);
         calendar.style.setProperty('--github-weeks', String(weeks));
-        calendar.style.setProperty('--github-grid-width', `${Math.max(680, weeks * 13 - 3)}px`);
-        grid.style.gridTemplateColumns = `repeat(${weeks}, 10px)`;
-        months.style.gridTemplateColumns = `repeat(${weeks}, 10px)`;
+        measureGrid(weeks);
 
         let lastMonth = -1;
         contributions.forEach((entry, index) => {
@@ -191,31 +205,53 @@ const githubUsername = site.github?.split('/').filter(Boolean).pop() || 'kaize-w
         });
 
         if (totalNode) totalNode.textContent = t(`${total.toLocaleString()} contributions in the past year`, `过去一年 ${total.toLocaleString()} 次贡献`);
-        if (freshness) freshness.textContent = t('Contribution levels follow GitHub public profile data · refreshed about hourly.', '贡献等级跟随 GitHub 公开主页数据 · 约每小时刷新。');
+        if (freshness) {
+          const stamp = new Intl.DateTimeFormat(language() === 'zh' ? 'zh-CN' : 'en', { hour: '2-digit', minute: '2-digit' }).format(new Date());
+          freshness.textContent = t(`Public contribution feed · checked ${stamp}`, `公开贡献数据 · ${stamp} 已检查`);
+        }
         calendar.classList.add('is-ready');
         calendar.classList.remove('is-error');
       };
 
-      const load = async () => {
+      const load = async (force = false) => {
+        const key = hourKey();
+        if (!force && contributions?.length && lastLoadedHour === key) {
+          render();
+          return;
+        }
         try {
-          const response = await fetch(`https://github-contributions-api.jogruber.de/v4/${encodeURIComponent(username)}?y=last`, { cache: 'no-store' });
+          const response = await fetch(`https://github-contributions-api.jogruber.de/v4/${encodeURIComponent(username)}?y=last&_=${encodeURIComponent(key)}`, { cache: 'no-store' });
           if (!response.ok) throw new Error(`GitHub contribution data ${response.status}`);
           const data = await response.json();
           contributions = Array.isArray(data?.contributions) ? data.contributions : [];
           total = Number(data?.total?.lastYear);
           if (!Number.isFinite(total)) total = contributions.reduce((sum, item) => sum + Number(item.count || 0), 0);
           if (!contributions.length) throw new Error('No contribution data');
+          lastLoadedHour = key;
           render();
         } catch (error) {
           calendar.classList.add('is-error');
           if (totalNode) totalNode.textContent = t('GitHub calendar temporarily unavailable', 'GitHub 热图暂时无法读取');
-          if (freshness) freshness.textContent = t('Open the GitHub profile to see the current contribution graph.', '可以点击打开 GitHub 主页查看当前贡献图。');
+          if (freshness) freshness.textContent = t('Open the GitHub profile to see GitHub’s current native graph.', '可以点击 GitHub 主页查看当前原生热图。');
           console.warn('[github-calendar]', error);
         }
       };
 
+      const resizeObserver = 'ResizeObserver' in window ? new ResizeObserver(() => {
+        if (!contributions?.length) return;
+        const first = parseDate(contributions[0].date);
+        const weeks = Math.ceil((first.getUTCDay() + contributions.length) / 7);
+        measureGrid(weeks);
+      }) : null;
+      if (resizeObserver && scroll) resizeObserver.observe(scroll);
+
       document.addEventListener('kaize:ui-language', render);
-      load();
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) load(false);
+      });
+      window.addEventListener('pageshow', () => load(false));
+      setInterval(() => load(false), 15 * 60 * 1000);
+      load(true);
     })();
   </script>
 </BaseLayout>
