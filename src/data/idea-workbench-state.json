@@ -1,8 +1,16 @@
 {
   "version": 1,
-  "updatedAt": null,
-  "stage": {},
+  "updatedAt": "2026-09-04T10:36:28.779Z",
+  "stage": {
+    "english-reading-writing-ritual": "Active",
+    "idea-library": "Active",
+    "article-interactive-figure": "Active"
+  },
   "next": {},
-  "milestones": {},
+  "milestones": {
+    "idea-library": {
+      "2": false
+    }
+  },
   "progress": {}
 }
