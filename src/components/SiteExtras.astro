@@ -231,7 +231,7 @@ const isHuangReader = Astro.url.pathname.endsWith('/notes/paper-reading-huang-20
 
       event.preventDefault();
       event.stopPropagation();
-      swallowClickUntil = performance.now() + 650;
+      swallowClickUntil = performance.now() + 380;
       cleanup();
 
       if (cancelled || !zone) return;
