@@ -39,7 +39,23 @@ const { citation = { plain: '', markdown: '', bibtex: '' } } = Astro.props;
   const detailsPattern = /^\s*\[!details(?:\s+([^\]]+))?\]\s*/i;
   const blockPattern = /^\s*\[!(definition|theorem|lemma|proposition|corollary|proof|assumption|notation)(?:\s+id=([^\]\s|]+))?(?:\s*\|\s*([^\]]+))?\]\s*/i;
 
-  const makeDetails = ({ quote, first, className, titleText, id = '', crossrefKey = '', crossrefLabel = '' }) => {
+  // KaTeX keeps both an accessibility tree and a visible HTML tree. Reading
+  // textContent directly therefore duplicates inline math (for example GGG).
+  // Use only the visible KaTeX branch whenever interface copy is derived from
+  // rendered article text.
+  const visibleText = element => {
+    if (!element) return '';
+    const clone = element.cloneNode(true);
+    clone.querySelectorAll?.('.katex-mathml').forEach(node => node.remove());
+    return (clone.textContent || '').replace(/\s+/g, ' ').trim();
+  };
+
+  const detailsTitleReplacements = new Map([
+    ['把 G 写成“当前成本 + 下一期状态”的紧凑读法', 'Bellman 递推的紧凑表示'],
+    ['把 G 写成“当前成本 + 下一期状态” 的紧凑读法', 'Bellman 递推的紧凑表示']
+  ]);
+
+  const makeDetails = ({ quote, className, titleText, id = '', crossrefKey = '', crossrefLabel = '' }) => {
     const details = document.createElement('details');
     details.className = className;
     if (id) details.id = id;
@@ -53,7 +69,6 @@ const { citation = { plain: '', markdown: '', bibtex: '' } } = Astro.props;
     summary.append(title, affordance);
     const body = document.createElement('div');
     body.className = 'scholarly-details-body';
-    if (first && !first.textContent?.trim() && first.children.length === 0) first.remove();
     while (quote.firstChild) body.appendChild(quote.firstChild);
     details.append(summary, body);
     quote.replaceWith(details);
@@ -63,12 +78,14 @@ const { citation = { plain: '', markdown: '', bibtex: '' } } = Astro.props;
 
   [...prose.querySelectorAll('blockquote')].forEach(quote => {
     const first = quote.querySelector('p');
-    const text = first?.textContent || '';
     if (!first) return;
+    const text = visibleText(first);
     const detailsMatch = text.match(detailsPattern);
     if (detailsMatch) {
-      first.innerHTML = first.innerHTML.replace(detailsPattern, '');
-      makeDetails({ quote, first, className: 'scholarly-details', titleText: (detailsMatch[1] || '').trim() || 'Details' });
+      const rawTitle = (detailsMatch[1] || '').trim() || 'Details';
+      const titleText = detailsTitleReplacements.get(rawTitle) || rawTitle;
+      first.remove();
+      makeDetails({ quote, className: 'scholarly-details', titleText });
       return;
     }
     const match = text.match(blockPattern);
@@ -76,9 +93,9 @@ const { citation = { plain: '', markdown: '', bibtex: '' } } = Astro.props;
     const kind = match[1].toLowerCase();
     const id = (match[2] || '').trim();
     const customLabel = (match[3] || '').trim();
-    first.innerHTML = first.innerHTML.replace(blockPattern, '');
+    first.remove();
     if (kind === 'proof') {
-      makeDetails({ quote, first, className: 'scholarly-proof', titleText: customLabel || 'Proof' });
+      makeDetails({ quote, className: 'scholarly-proof', titleText: customLabel || 'Proof' });
       return;
     }
     const config = kindConfig[kind];
@@ -88,7 +105,6 @@ const { citation = { plain: '', markdown: '', bibtex: '' } } = Astro.props;
       const label = customLabel || config.label;
       makeDetails({
         quote,
-        first,
         className: `scholarly-details scholarly-inline-block scholarly-${kind}`,
         titleText: label,
         id: anchorId,
@@ -111,6 +127,18 @@ const { citation = { plain: '', markdown: '', bibtex: '' } } = Astro.props;
     }
   });
 
+  const wrapEquationNumber = (display, numberText, extraClass = '') => {
+    if (!display || display.parentElement?.classList.contains('equation-layout')) return;
+    const row = document.createElement('div');
+    row.className = `equation-layout${extraClass ? ` ${extraClass}` : ''}`;
+    const number = document.createElement('span');
+    number.className = 'equation-number';
+    number.textContent = numberText;
+    display.classList.add('equation-scroll-cell');
+    display.replaceWith(row);
+    row.append(display, number);
+  };
+
   let numberedEquationCount = 0;
   [...prose.querySelectorAll('.katex-display')].forEach(display => {
     const next = display.nextElementSibling;
@@ -123,11 +151,32 @@ const { citation = { plain: '', markdown: '', bibtex: '' } } = Astro.props;
     display.classList.add('numbered-equation');
     display.id = `eq-${id}`;
     next.classList.add('equation-marker');
-    const marker = document.createElement('span');
-    marker.className = 'equation-number';
-    marker.textContent = `(${number})`;
-    display.appendChild(marker);
+    wrapEquationNumber(display, `(${number})`, 'equation-layout-generated');
     crossrefs.set(`eq:${id}`, { href: `#eq-${id}`, label: `Equation (${number})` });
+  });
+
+  // Detach KaTeX's native \tag{...} from the horizontally scrollable formula.
+  // The number gets its own fixed column, so scrolling a long equation can never
+  // put the number on top of the mathematics.
+  [...prose.querySelectorAll('.katex-display')].forEach(display => {
+    if (display.parentElement?.classList.contains('equation-layout')) return;
+    const nativeTag = display.querySelector('.katex-html > .tag');
+    if (!nativeTag) return;
+    const numberText = (nativeTag.textContent || '').trim();
+    if (!numberText) return;
+    nativeTag.remove();
+    wrapEquationNumber(display, numberText, 'equation-layout-native');
+  });
+
+  // Very long displays keep their original size when possible and step down only
+  // slightly when their natural width is much larger than the viewport cell.
+  requestAnimationFrame(() => {
+    prose.querySelectorAll('.katex-display').forEach(display => {
+      const width = display.clientWidth || 1;
+      const ratio = display.scrollWidth / width;
+      if (ratio > 1.55) display.classList.add('math-very-wide');
+      else if (ratio > 1.18) display.classList.add('math-wide');
+    });
   });
 
   const refPattern = /\[\[(eq|def|thm|lem|prop|cor|assumption|notation):([^\]]+)\]\]/g;
@@ -176,11 +225,11 @@ const { citation = { plain: '', markdown: '', bibtex: '' } } = Astro.props;
     ['3. 完整 Bellman 递推：大 G 到底是什么', '3. Bellman 递推与 action-value 函数']
   ]);
   prose.querySelectorAll('h2,h3').forEach(heading => {
-    const plain = (heading.textContent || '').trim();
+    const plain = visibleText(heading);
     if (replacements.has(plain)) heading.textContent = replacements.get(plain);
   });
   prose.querySelectorAll('p').forEach(p => {
-    const text = p.textContent || '';
+    const text = visibleText(p);
     if (text.startsWith('中文理解是：')) p.firstChild && (p.firstChild.textContent = (p.firstChild.textContent || '').replace(/^中文理解是：\s*/, ''));
     if (text.startsWith('中文看这个定理，最重要的不是')) p.firstChild && (p.firstChild.textContent = (p.firstChild.textContent || '').replace(/^中文看这个定理，最重要的不是/, '这个定理的关键不是'));
   });
@@ -190,7 +239,7 @@ const { citation = { plain: '', markdown: '', bibtex: '' } } = Astro.props;
       const id = decodeURIComponent((link.getAttribute('href') || '').replace(/^#/, ''));
       if (!id) return;
       const target = document.getElementById(id);
-      if (target) link.textContent = target.textContent || link.textContent;
+      if (target) link.textContent = visibleText(target) || link.textContent;
     });
   };
   syncOutlineCopy();
