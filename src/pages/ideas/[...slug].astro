@@ -1,0 +1,70 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import SiteExtras from '@/components/SiteExtras.astro';
+import '@/styles/ideas.css';
+import { withBase } from '@/utils/url';
+
+export async function getStaticPaths() {
+  const ideas = await getCollection('ideas', ({ data }) => !data.draft);
+  return ideas.map(idea => ({ params: { slug: idea.id }, props: { idea } }));
+}
+
+const { idea } = Astro.props;
+const { Content } = await render(idea);
+const updated = idea.data.updatedDate ?? idea.data.createdDate;
+const formatDate = (date: Date) => new Intl.DateTimeFormat('en', { year: 'numeric', month: 'short', day: 'numeric' }).format(date);
+const total = idea.data.milestones.length;
+const done = idea.data.milestones.filter(item => item.done).length;
+const pct = total ? Math.round(done / total * 100) : 0;
+---
+<BaseLayout title={idea.data.title}>
+  <main class="idea-detail-shell">
+    <header>
+      <div class="eyebrow">{idea.data.area} · {idea.data.stage}</div>
+      <h1>{idea.data.title}</h1>
+      <p class="idea-detail-summary">{idea.data.summary}</p>
+      <div class="idea-detail-meta">
+        <span><span class="ui-copy-en">Created</span><span class="ui-copy-zh">创建于</span> {formatDate(idea.data.createdDate)}</span>
+        <span><span class="ui-copy-en">Updated</span><span class="ui-copy-zh">更新于</span> {formatDate(updated)}</span>
+        {idea.data.tags.length > 0 && <span>{idea.data.tags.join(' · ')}</span>}
+      </div>
+    </header>
+
+    <div class="idea-detail-grid">
+      <div class="idea-detail-main">
+        <div class="prose"><Content /></div>
+
+        {idea.data.progress.length > 0 && (
+          <section class="idea-progress-log" aria-labelledby="idea-progress-log-title">
+            <h2 id="idea-progress-log-title"><span class="ui-copy-en">Progress log</span><span class="ui-copy-zh">推进记录</span></h2>
+            {[...idea.data.progress].sort((a,b) => b.date.valueOf() - a.date.valueOf()).map(entry => (
+              <div class="idea-progress-entry"><time>{formatDate(entry.date)}</time><p>{entry.note}</p></div>
+            ))}
+          </section>
+        )}
+
+        <div class="backline"><a href={withBase('/ideas')}>← <span class="ui-copy-en">Back to Ideas</span><span class="ui-copy-zh">返回 Ideas</span></a></div>
+      </div>
+
+      <aside class="idea-detail-side">
+        {idea.data.nextAction && (
+          <section class="idea-side-card"><span>Next</span><strong>{idea.data.nextAction}</strong></section>
+        )}
+        {idea.data.whyNow && (
+          <section class="idea-side-card"><span><span class="ui-copy-en">Why now</span><span class="ui-copy-zh">为什么现在做</span></span><strong>{idea.data.whyNow}</strong></section>
+        )}
+        {total > 0 && (
+          <section class="idea-side-card">
+            <span><span class="ui-copy-en">Milestones</span><span class="ui-copy-zh">里程碑</span> · {done}/{total}</span>
+            <div class="idea-progress-line" style="margin:8px 0 13px"><span style={`width:${pct}%`}></span></div>
+            <ul class="idea-milestones">
+              {idea.data.milestones.map(item => <li class={item.done ? 'done' : ''}><span class="idea-milestones-mark">{item.done ? '✓' : '○'}</span><span>{item.text}</span></li>)}
+            </ul>
+          </section>
+        )}
+      </aside>
+    </div>
+  </main>
+  <SiteExtras />
+</BaseLayout>
