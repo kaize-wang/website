@@ -2,111 +2,169 @@
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import SiteExtras from '@/components/SiteExtras.astro';
 import '@/styles/research-primer.css';
+import '@/styles/research-field-guide.css';
 import { withBase } from '@/utils/url';
 ---
 <BaseLayout title="Operations Research" active="Research">
-  <main class="site-shell research-primer-page">
+  <main class="site-shell research-primer-page field-guide-page">
     <header class="page-hero">
-      <div class="eyebrow"><span class="ui-copy-en">Research primer · 03</span><span class="ui-copy-zh">研究科普 · 03</span></div>
+      <div class="eyebrow"><span class="ui-copy-en">Field guide · 03</span><span class="ui-copy-zh">领域导览 · 03</span></div>
       <h1>Operations Research</h1>
-      <p class="research-primer-lede">
-        <span class="ui-copy-en">Operations research turns a real decision system into a mathematical object that can be reasoned about, optimized, computed, and tested. The goal is not a beautiful model by itself; the goal is a better decision.</span>
-        <span class="ui-copy-zh">运筹学把真实世界里的决策系统转化成可以分析、优化、计算与检验的数学对象。目标并不是“模型本身漂亮”，而是最终能得到更好的决策。</span>
+      <p class="field-guide-lede">
+        <span class="ui-copy-en">Operations research is the science of making better decisions in complex systems. It turns real operational choices into models that can be analyzed, optimized, simulated, and tested — then brings the result back to the system as a policy, schedule, allocation, route, design, or strategic recommendation.</span>
+        <span class="ui-copy-zh">运筹学研究怎样在复杂系统中做出更好的决策。它把现实中的运营选择转化成可以分析、优化、仿真与检验的模型，再把结果带回真实系统，形成策略、排程、资源分配、路径、系统设计或战略建议。</span>
       </p>
-      <div class="research-primer-meta">
-        <span><span class="ui-copy-en">Mathematical modelling</span><span class="ui-copy-zh">数学建模</span></span>
+      <div class="field-guide-meta">
         <span><span class="ui-copy-en">Optimization</span><span class="ui-copy-zh">优化</span></span>
-        <span><span class="ui-copy-en">Probability</span><span class="ui-copy-zh">概率</span></span>
-        <span><span class="ui-copy-en">Algorithms</span><span class="ui-copy-zh">算法</span></span>
+        <span><span class="ui-copy-en">Stochastic models</span><span class="ui-copy-zh">随机模型</span></span>
+        <span><span class="ui-copy-en">Simulation</span><span class="ui-copy-zh">仿真</span></span>
+        <span><span class="ui-copy-en">Decision science</span><span class="ui-copy-zh">决策科学</span></span>
       </div>
     </header>
 
-    <section class="primer-flow" aria-label="Operations research mental model">
-      <div class="primer-flow-track" style="--flow-count:5">
-        <div class="primer-flow-step"><b>01</b><span><span class="ui-copy-en">Real system</span><span class="ui-copy-zh">真实系统</span></span></div>
-        <div class="primer-flow-step"><b>02</b><span><span class="ui-copy-en">Mathematical model</span><span class="ui-copy-zh">数学模型</span></span></div>
-        <div class="primer-flow-step is-focus"><b>03</b><span><span class="ui-copy-en">Optimize</span><span class="ui-copy-zh">求解优化</span></span></div>
-        <div class="primer-flow-step"><b>04</b><span><span class="ui-copy-en">Decision rule</span><span class="ui-copy-zh">形成决策规则</span></span></div>
-        <div class="primer-flow-step"><b>05</b><span><span class="ui-copy-en">Validate</span><span class="ui-copy-zh">验证效果</span></span></div>
-      </div>
+    <section class="field-guide-orientation">
+      <span>30,000 FT</span>
+      <p>
+        <span class="ui-copy-en">If statistics often asks “what can we learn from data?” and prediction asks “what is likely to happen?”, operations research is most recognizable when it asks “given our goals, constraints, uncertainty, and alternatives, what should we do?”</span>
+        <span class="ui-copy-zh">如果统计学常问“我们能从数据中学到什么”，预测常问“接下来可能发生什么”，那么运筹学最典型的问题是：在目标、约束、不确定性与备选方案都存在的情况下，我们究竟应该怎么做？</span>
+      </p>
     </section>
 
-    <section class="primer-section">
-      <div class="primer-section-head">
-        <span class="primer-section-index">01</span>
+    <section class="field-guide-section">
+      <div class="field-guide-section-head">
+        <span class="field-guide-index">01</span>
         <div>
-          <h2><span class="ui-copy-en">What does operations research actually do?</span><span class="ui-copy-zh">运筹学到底是在做什么？</span></h2>
-          <p><span class="ui-copy-en">It creates a disciplined bridge between a messy operational system and a decision that can be justified.</span><span class="ui-copy-zh">它做的事情，是在复杂、混乱的真实运营系统和一个可以被解释、被证明、被计算的决策之间搭桥。</span></p>
+          <h2><span class="ui-copy-en">What kind of problems does O.R. solve?</span><span class="ui-copy-zh">运筹学到底在解决什么问题？</span></h2>
+          <p><span class="ui-copy-en">The application areas are extremely broad, but the underlying questions repeat across industries.</span><span class="ui-copy-zh">它的应用行业非常广，但底层决策问题会不断重复出现。</span></p>
         </div>
       </div>
-      <div class="primer-prose">
-        <p><span class="ui-copy-en">A factory must decide production quantities, a hospital must schedule resources, a retailer must replenish inventory, a logistics network must route flows. These problems look different on the surface, but operations research asks a common set of questions: what are the decisions, what is uncertain, what is constrained, and what does “better” mean?</span><span class="ui-copy-zh">工厂要决定生产多少，医院要安排资源，零售商要补多少库存，物流网络要怎样分配路径。表面上它们完全不同，但运筹学会用一套共同的问题去拆解：什么是决策变量？什么存在不确定性？有哪些约束？所谓“更好”到底是什么意思？</span></p>
-        <p><span class="ui-copy-en">The power of the discipline comes from abstraction. A good model removes details that do not matter for the decision while preserving the mechanisms that do.</span><span class="ui-copy-zh">这个学科的力量来自抽象。好的模型会删掉与决策无关的细节，同时尽可能保留真正决定系统行为的机制。</span></p>
-      </div>
-      <div class="primer-concepts">
-        <article class="primer-concept"><span>A</span><h3><span class="ui-copy-en">Decision variables</span><span class="ui-copy-zh">决策变量</span></h3><p><span class="ui-copy-en">The quantities the decision maker controls: order quantities, schedules, allocations, routes, capacities, and policies.</span><span class="ui-copy-zh">真正由决策者控制的量，例如订货量、排程、资源分配、路径、容量或策略。</span></p></article>
-        <article class="primer-concept"><span>B</span><h3><span class="ui-copy-en">Objective</span><span class="ui-copy-zh">目标函数</span></h3><p><span class="ui-copy-en">A quantitative expression of what the system is trying to improve—cost, service, delay, risk, profit, or a combination.</span><span class="ui-copy-zh">把“我们想优化什么”定量化，例如成本、服务水平、延迟、风险、利润，或它们的组合。</span></p></article>
-        <article class="primer-concept"><span>C</span><h3><span class="ui-copy-en">Constraints</span><span class="ui-copy-zh">约束</span></h3><p><span class="ui-copy-en">The physical, informational, financial, or logical limits that make a mathematically attractive action actually feasible—or not.</span><span class="ui-copy-zh">现实中的物理、信息、资金或逻辑限制，它们决定一个数学上漂亮的方案究竟能不能真正执行。</span></p></article>
+      <div class="field-guide-question-grid">
+        <article class="field-guide-question"><span>Q1</span><strong><span class="ui-copy-en">Allocate</span><span class="ui-copy-zh">资源怎么分？</span></strong><p><span class="ui-copy-en">How should scarce money, staff, machines, beds, capacity, or inventory be allocated across competing uses?</span><span class="ui-copy-zh">有限的资金、人员、机器、床位、产能或库存，应该怎样分配给相互竞争的用途？</span></p></article>
+        <article class="field-guide-question"><span>Q2</span><strong><span class="ui-copy-en">Schedule</span><span class="ui-copy-zh">事情怎么排？</span></strong><p><span class="ui-copy-en">In what order and at what times should jobs, surgeries, flights, crews, production tasks, or projects be performed?</span><span class="ui-copy-zh">作业、手术、航班、人员、生产任务或项目，应该按照什么顺序、在什么时间执行？</span></p></article>
+        <article class="field-guide-question"><span>Q3</span><strong><span class="ui-copy-en">Route & match</span><span class="ui-copy-zh">怎样走、怎样匹配？</span></strong><p><span class="ui-copy-en">How should vehicles move, flows travel through networks, or customers, workers, organs, schools, and resources be matched?</span><span class="ui-copy-zh">车辆应该怎样走，网络流应该怎样分配，顾客、人员、器官、学校和资源应该怎样匹配？</span></p></article>
+        <article class="field-guide-question"><span>Q4</span><strong><span class="ui-copy-en">Plan under uncertainty</span><span class="ui-copy-zh">不确定时怎么计划？</span></strong><p><span class="ui-copy-en">How should a system prepare when demand, failures, arrivals, travel times, prices, or future information are uncertain?</span><span class="ui-copy-zh">当需求、失效、到达、旅行时间、价格或未来信息存在随机性时，系统应该怎样提前准备？</span></p></article>
+        <article class="field-guide-question"><span>Q5</span><strong><span class="ui-copy-en">Design systems</span><span class="ui-copy-zh">系统应该怎样设计？</span></strong><p><span class="ui-copy-en">How many facilities, servers, vehicles, warehouses, or service channels should exist, and where should they be located?</span><span class="ui-copy-zh">应该建设多少设施、服务器、车辆、仓库或服务通道，又应该放在哪里？</span></p></article>
+        <article class="field-guide-question"><span>Q6</span><strong><span class="ui-copy-en">Choose policies</span><span class="ui-copy-zh">长期规则怎么定？</span></strong><p><span class="ui-copy-en">What decision rule should be used repeatedly as the system evolves, rather than solving every situation from scratch?</span><span class="ui-copy-zh">随着系统不断变化，应该采用什么可以长期重复执行的决策规则，而不是每次都从头求解？</span></p></article>
       </div>
     </section>
 
-    <section class="primer-section">
-      <div class="primer-section-head">
-        <span class="primer-section-index">02</span>
+    <section class="field-guide-section">
+      <div class="field-guide-section-head">
+        <span class="field-guide-index">02</span>
         <div>
-          <h2><span class="ui-copy-en">A modelling pipeline</span><span class="ui-copy-zh">一个典型的建模流程</span></h2>
-          <p><span class="ui-copy-en">The hardest step is often not solving the optimization problem. It is deciding what problem should be solved in the first place.</span><span class="ui-copy-zh">很多时候最难的并不是“把优化模型求出来”，而是先判断究竟应该求解哪一个问题。</span></p>
+          <h2><span class="ui-copy-en">The field atlas: major method families</span><span class="ui-copy-zh">一张运筹学方法地图</span></h2>
+          <p><span class="ui-copy-en">O.R. is not one algorithm. It is a toolbox and modelling language built from several major mathematical traditions.</span><span class="ui-copy-zh">运筹学不是某一种算法，而是一套由多个数学传统共同构成的建模语言与方法工具箱。</span></p>
         </div>
       </div>
-      <div class="primer-question-list">
-        <article class="primer-question"><span>01</span><div><strong><span class="ui-copy-en">Observe the mechanism</span><span class="ui-copy-zh">先看真实机制</span></strong><p><span class="ui-copy-en">Which flows, delays, failures, queues, replenishments, or interactions actually drive the system?</span><span class="ui-copy-zh">系统真正由哪些流、延迟、失效、排队、补货或相互作用推动？</span></p></div></article>
-        <article class="primer-question"><span>02</span><div><strong><span class="ui-copy-en">Choose the abstraction</span><span class="ui-copy-zh">选择抽象层次</span></strong><p><span class="ui-copy-en">Keep what changes decisions; discard what only adds realism without changing the policy.</span><span class="ui-copy-zh">保留真正会改变决策的因素，删掉只是“更像现实”却不改变策略的细节。</span></p></div></article>
-        <article class="primer-question"><span>03</span><div><strong><span class="ui-copy-en">Build objective and constraints</span><span class="ui-copy-zh">写出目标与约束</span></strong><p><span class="ui-copy-en">This is where practical priorities become mathematical trade-offs.</span><span class="ui-copy-zh">这一步把现实中的优先级转化成可以权衡的数学目标。</span></p></div></article>
-        <article class="primer-question"><span>04</span><div><strong><span class="ui-copy-en">Solve or approximate</span><span class="ui-copy-zh">精确求解或近似</span></strong><p><span class="ui-copy-en">Depending on the model, this may mean linear programming, dynamic programming, simulation, decomposition, heuristics, or learning-based methods.</span><span class="ui-copy-zh">根据模型不同，可能使用线性规划、动态规划、仿真、分解、启发式方法或学习方法。</span></p></div></article>
-        <article class="primer-question"><span>05</span><div><strong><span class="ui-copy-en">Interpret and validate</span><span class="ui-copy-zh">解释并验证</span></strong><p><span class="ui-copy-en">A solution is useful only if we understand when it works, how sensitive it is, and whether it survives contact with the real system.</span><span class="ui-copy-zh">一个解只有在我们知道它什么时候成立、对参数有多敏感、放回真实系统后是否仍然有效时，才真正有价值。</span></p></div></article>
+      <div class="field-guide-atlas">
+        <article class="field-guide-card"><small>01 · optimization</small><h3><span class="ui-copy-en">Mathematical programming</span><span class="ui-copy-zh">数学规划</span></h3><p><span class="ui-copy-en">Linear, integer, mixed-integer, nonlinear, convex, conic, and combinatorial optimization turn objectives and constraints into computable decision problems.</span><span class="ui-copy-zh">线性规划、整数规划、混合整数规划、非线性优化、凸优化、锥优化与组合优化，把目标和约束转化成可计算的决策问题。</span></p></article>
+        <article class="field-guide-card"><small>02 · networks</small><h3><span class="ui-copy-en">Flows, routing & matching</span><span class="ui-copy-zh">网络流、路径与匹配</span></h3><p><span class="ui-copy-en">Shortest paths, network flows, assignment, matching, vehicle routing, and location models exploit the structure of networks and discrete choices.</span><span class="ui-copy-zh">最短路、网络流、指派、匹配、车辆路径与设施选址利用网络结构和离散选择进行决策。</span></p></article>
+        <article class="field-guide-card"><small>03 · uncertainty</small><h3><span class="ui-copy-en">Stochastic models</span><span class="ui-copy-zh">随机模型</span></h3><p><span class="ui-copy-en">Queueing, inventory, reliability, stochastic programming, Markov chains, and dynamic programming model systems whose evolution contains uncertainty.</span><span class="ui-copy-zh">排队、库存、可靠性、随机规划、马尔可夫链与动态规划描述系统在随机环境下怎样演化和决策。</span></p></article>
+        <article class="field-guide-card"><small>04 · time</small><h3><span class="ui-copy-en">Scheduling & dynamic decisions</span><span class="ui-copy-zh">排程与动态决策</span></h3><p><span class="ui-copy-en">Jobs compete for machines, patients for rooms, aircraft for gates, and decisions for future capacity. Timing becomes a decision variable.</span><span class="ui-copy-zh">作业争夺机器、患者争夺资源、飞机争夺登机口，当前决策还会影响未来产能。时间本身成为决策变量。</span></p></article>
+        <article class="field-guide-card"><small>05 · experiments</small><h3><span class="ui-copy-en">Simulation & simulation optimization</span><span class="ui-copy-zh">仿真与仿真优化</span></h3><p><span class="ui-copy-en">When an analytical model is too complicated, simulation reproduces system behavior computationally; optimization can then search over designs or policies using those experiments.</span><span class="ui-copy-zh">当解析模型过于复杂时，可以用计算机仿真复现系统行为，再通过大量实验搜索更好的系统设计或决策策略。</span></p></article>
+        <article class="field-guide-card"><small>06 · decisions + data</small><h3><span class="ui-copy-en">Data-driven O.R.</span><span class="ui-copy-zh">数据驱动运筹</span></h3><p><span class="ui-copy-en">Prediction, estimation, causal information, online learning, and machine learning are connected to optimization so that data changes decisions rather than stopping at forecasts.</span><span class="ui-copy-zh">把预测、估计、因果信息、在线学习和机器学习与优化结合，让数据最终改变行动，而不是停留在预测结果上。</span></p></article>
+        <article class="field-guide-card"><small>07 · incentives</small><h3><span class="ui-copy-en">Games, markets & mechanisms</span><span class="ui-copy-zh">博弈、市场与机制</span></h3><p><span class="ui-copy-en">When multiple decision makers respond strategically, optimization interacts with game theory, auctions, pricing, market design, and mechanism design.</span><span class="ui-copy-zh">当多个决策者会策略性回应彼此时，优化会与博弈论、拍卖、定价、市场设计和机制设计发生交叉。</span></p></article>
+        <article class="field-guide-card"><small>08 · performance</small><h3><span class="ui-copy-en">Queueing & service systems</span><span class="ui-copy-zh">排队与服务系统</span></h3><p><span class="ui-copy-en">Arrival variability, waiting, congestion, staffing, and service capacity are modeled to understand both performance and design.</span><span class="ui-copy-zh">到达波动、等待、拥堵、人员配置与服务能力被建模，用来理解系统表现并指导系统设计。</span></p></article>
+        <article class="field-guide-card"><small>09 · decisions in context</small><h3><span class="ui-copy-en">Decision & management science</span><span class="ui-copy-zh">决策科学与管理科学</span></h3><p><span class="ui-copy-en">O.R. overlaps heavily with management science and decision science, especially when quantitative models are used to support organizational and policy choices.</span><span class="ui-copy-zh">运筹学与管理科学、决策科学高度重叠，尤其是在定量模型用于支持组织与政策决策时。</span></p></article>
       </div>
     </section>
 
-    <section class="primer-section">
-      <div class="primer-section-head">
-        <span class="primer-section-index">03</span>
+    <section class="field-guide-section">
+      <div class="field-guide-section-head">
+        <span class="field-guide-index">03</span>
         <div>
-          <h2><span class="ui-copy-en">Where inventory theory fits</span><span class="ui-copy-zh">库存理论在运筹学里处于什么位置？</span></h2>
-          <p><span class="ui-copy-en">Inventory is one of the classic operational systems because it makes uncertainty, timing, cost, and information interact in a clean but nontrivial way.</span><span class="ui-copy-zh">库存是运筹学里最经典的系统之一，因为它把不确定性、时间、成本与信息放进了一个结构清晰、但绝不简单的问题里。</span></p>
+          <h2><span class="ui-copy-en">What an O.R. project actually looks like</span><span class="ui-copy-zh">一个真正的运筹学项目是怎样推进的？</span></h2>
+          <p><span class="ui-copy-en">The hardest work often happens before and after the solver. Formulating the right decision problem and validating it against reality are part of the discipline.</span><span class="ui-copy-zh">真正困难的工作往往发生在“调用求解器”之前和之后。把现实问题抽象成正确的决策问题，以及把模型重新放回现实中验证，本身就是运筹学的一部分。</span></p>
         </div>
       </div>
-      <div class="primer-equations">
-        <div class="primer-equation"><code>system → state → action → outcome</code><span><span class="ui-copy-en">A compact way to describe a sequential operational system.</span><span class="ui-copy-zh">描述序贯运营系统的一条最简主线。</span></span></div>
-        <div class="primer-equation"><code>cost = holding + shortage + ordering + service + …</code><span><span class="ui-copy-en">The objective combines operational consequences that pull the decision in different directions.</span><span class="ui-copy-zh">目标函数把多个方向相反的运营后果放在一起权衡。</span></span></div>
-        <div class="primer-equation"><code>model value ≠ model realism</code><span><span class="ui-copy-en">A more detailed model is not automatically a better decision model; the important question is whether the added detail changes decisions meaningfully.</span><span class="ui-copy-zh">更详细的模型并不自动等于更好的决策模型；真正重要的是新增细节是否会实质改变决策。</span></span></div>
+      <div class="field-guide-process" style="--guide-steps:6">
+        <div class="field-guide-step"><b>01</b><span><span class="ui-copy-en">Understand the system</span><span class="ui-copy-zh">理解真实系统</span></span></div>
+        <div class="field-guide-step"><b>02</b><span><span class="ui-copy-en">Choose abstraction</span><span class="ui-copy-zh">选择抽象层次</span></span></div>
+        <div class="field-guide-step"><b>03</b><span><span class="ui-copy-en">Model decisions & constraints</span><span class="ui-copy-zh">写出决策与约束</span></span></div>
+        <div class="field-guide-step is-focus"><b>04</b><span><span class="ui-copy-en">Solve / simulate</span><span class="ui-copy-zh">求解或仿真</span></span></div>
+        <div class="field-guide-step"><b>05</b><span><span class="ui-copy-en">Stress-test & interpret</span><span class="ui-copy-zh">压力测试与解释</span></span></div>
+        <div class="field-guide-step"><b>06</b><span><span class="ui-copy-en">Deploy & learn</span><span class="ui-copy-zh">部署并继续学习</span></span></div>
       </div>
-      <div class="primer-prose" style="margin-top:27px">
-        <p><span class="ui-copy-en">My warranty-inventory work sits naturally here. The real system is a service operation with uncertain product failures. The modelling challenge is to represent warranty memory. The optimization challenge is to decide replenishment. The theoretical challenge is to understand policy structure. The computational challenge appears when the state becomes too rich.</span><span class="ui-copy-zh">我的保修库存研究正好处在这条链条里：真实系统是存在随机产品失效的售后运营；建模问题是怎样表达保修“记忆”；优化问题是如何补货；理论问题是策略具有什么结构；而当状态变得过于丰富时，计算问题就会随之出现。</span></p>
+      <div class="field-guide-prose" style="margin-top:34px">
+        <p><span class="ui-copy-en">The abstraction step is especially important. A model is deliberately incomplete. It should omit details that do not materially change the decision, while preserving mechanisms that do. Adding realism is useful only when the added detail changes what the model recommends or how confidently we can use it.</span><span class="ui-copy-zh">其中“选择抽象层次”尤其重要。模型本来就应该是不完整的。它需要删掉不会实质改变决策的细节，同时保留真正推动系统行为的机制。增加现实细节只有在它确实改变决策建议，或者改变我们对建议的可信度时，才真正有价值。</span></p>
+        <p><span class="ui-copy-en">This is why O.R. sits between mathematics, computation, and domain knowledge. A mathematically elegant model that answers the wrong operational question can be less useful than a simpler model built around the actual decision.</span><span class="ui-copy-zh">所以运筹学天然位于数学、计算与领域知识之间。一个数学上非常漂亮、却回答了错误运营问题的模型，可能还不如一个围绕真实决策建立的简单模型有价值。</span></p>
       </div>
     </section>
 
-    <section class="primer-section">
-      <div class="primer-section-head">
-        <span class="primer-section-index">04</span>
+    <section class="field-guide-section">
+      <div class="field-guide-section-head">
+        <span class="field-guide-index">04</span>
         <div>
-          <h2><span class="ui-copy-en">What I want from an OR model</span><span class="ui-copy-zh">我希望一个运筹模型最终能给我什么？</span></h2>
-          <p><span class="ui-copy-en">Not only a number. Ideally, a model should reveal why a decision changes and which mechanism is responsible.</span><span class="ui-copy-zh">不只是一个最优数值。我更希望模型能够告诉我们：决策为什么变化，究竟是哪一种机制推动了这种变化。</span></p>
+          <h2><span class="ui-copy-en">Where O.R. appears in the real world</span><span class="ui-copy-zh">现实世界里哪里有运筹学？</span></h2>
+          <p><span class="ui-copy-en">The field is unusually broad because the same decision structures appear in very different systems.</span><span class="ui-copy-zh">这个领域的应用范围异常广，因为同一种决策结构会反复出现在完全不同的系统中。</span></p>
         </div>
       </div>
-      <div class="primer-question-list">
-        <article class="primer-question"><span>Q1</span><div><strong><span class="ui-copy-en">Structure before computation</span><span class="ui-copy-zh">先理解结构，再谈计算</span></strong><p><span class="ui-copy-en">Can we prove monotonicity, thresholds, bounds, or comparative statics before relying on numerical output?</span><span class="ui-copy-zh">在依赖数值结果之前，能否先证明单调性、阈值、界或比较静态性质？</span></p></div></article>
-        <article class="primer-question"><span>Q2</span><div><strong><span class="ui-copy-en">Mechanism before complexity</span><span class="ui-copy-zh">先抓机制，再加复杂度</span></strong><p><span class="ui-copy-en">Which modelling ingredient creates the phenomenon we see, and which details can safely be removed?</span><span class="ui-copy-zh">究竟是哪一个建模因素产生了我们看到的现象？哪些细节可以安全删掉？</span></p></div></article>
-        <article class="primer-question"><span>Q3</span><div><strong><span class="ui-copy-en">Decision value before prediction score</span><span class="ui-copy-zh">先看决策价值，再看预测分数</span></strong><p><span class="ui-copy-en">When data or learning enters the model, I care about how much the resulting information improves the operational decision.</span><span class="ui-copy-zh">当数据与学习进入模型时，我更关心新增信息到底给运营决策带来了多少真正价值。</span></p></div></article>
-      </div>
-      <div class="primer-related">
-        <a href={withBase('/research/inventory-warranty')}><small>01 · Application</small><strong>Inventory & Warranty</strong><span><span class="ui-copy-en">The operational system currently at the center of my work.</span><span class="ui-copy-zh">我目前研究最集中的具体运营系统。</span></span></a>
-        <a href={withBase('/research/stochastic-optimization')}><small>02 · Method</small><strong>Stochastic Optimization</strong><span><span class="ui-copy-en">The machinery for sequential decisions under uncertainty.</span><span class="ui-copy-zh">处理不确定环境下序贯决策的核心方法体系。</span></span></a>
+      <div class="field-guide-atlas">
+        <article class="field-guide-card"><small>transport</small><h3><span class="ui-copy-en">Airlines & mobility</span><span class="ui-copy-zh">航空与交通</span></h3><p><span class="ui-copy-en">Crew scheduling, fleet assignment, routing, revenue management, airport capacity, ride matching, and network design.</span><span class="ui-copy-zh">机组排班、机队分配、路径、收益管理、机场容量、出行匹配与交通网络设计。</span></p></article>
+        <article class="field-guide-card"><small>supply chain</small><h3><span class="ui-copy-en">Manufacturing & logistics</span><span class="ui-copy-zh">制造与物流</span></h3><p><span class="ui-copy-en">Production planning, inventory, warehouse location, transportation, procurement, capacity, and resilient network design.</span><span class="ui-copy-zh">生产计划、库存、仓库选址、运输、采购、产能和供应链韧性设计。</span></p></article>
+        <article class="field-guide-card"><small>health</small><h3><span class="ui-copy-en">Healthcare</span><span class="ui-copy-zh">医疗系统</span></h3><p><span class="ui-copy-en">Operating-room schedules, staff rosters, bed capacity, appointment systems, organ allocation, emergency flow, and public-health logistics.</span><span class="ui-copy-zh">手术室排程、人员配置、床位容量、预约系统、器官分配、急诊流与公共卫生物流。</span></p></article>
+        <article class="field-guide-card"><small>digital</small><h3><span class="ui-copy-en">Platforms & technology</span><span class="ui-copy-zh">平台与科技</span></h3><p><span class="ui-copy-en">Cloud resource allocation, ad auctions, recommendations, marketplace matching, experimentation, content delivery, and online decision systems.</span><span class="ui-copy-zh">云资源分配、广告拍卖、推荐、平台匹配、在线试验、内容分发与实时决策系统。</span></p></article>
+        <article class="field-guide-card"><small>public systems</small><h3><span class="ui-copy-en">Policy & public services</span><span class="ui-copy-zh">公共政策与公共服务</span></h3><p><span class="ui-copy-en">Emergency response, school assignment, infrastructure, disaster logistics, environmental policy, policing, and humanitarian operations.</span><span class="ui-copy-zh">应急响应、学校分配、基础设施、灾害物流、环境政策、治安与人道主义运营。</span></p></article>
+        <article class="field-guide-card"><small>finance & energy</small><h3><span class="ui-copy-en">Markets, finance & energy</span><span class="ui-copy-zh">市场、金融与能源</span></h3><p><span class="ui-copy-en">Portfolio optimization, risk, power-system operation, electricity markets, storage, renewable integration, and asset planning.</span><span class="ui-copy-zh">投资组合优化、风险、电力系统运行、电力市场、储能、可再生能源接入与资产规划。</span></p></article>
       </div>
     </section>
 
-    <div class="research-primer-back">
-      <a href={withBase('/research')}>← <span class="ui-copy-en">Back to Research</span><span class="ui-copy-zh">返回研究主页</span></a>
-      <a href={withBase('/ideas')}><span class="ui-copy-en">See ideas in motion →</span><span class="ui-copy-zh">看看正在推进的想法 →</span></a>
+    <section class="field-guide-section">
+      <div class="field-guide-section-head">
+        <span class="field-guide-index">05</span>
+        <div>
+          <h2><span class="ui-copy-en">How O.R. relates to nearby fields</span><span class="ui-copy-zh">运筹学和周围学科是什么关系？</span></h2>
+          <p><span class="ui-copy-en">The boundaries are porous. O.R. often contributes the prescriptive layer: turning knowledge about a system into a decision.</span><span class="ui-copy-zh">这些学科之间没有绝对边界。运筹学很常见的角色，是承担“处方性”那一层，把对系统的认识进一步转化成行动。</span></p>
+        </div>
+      </div>
+      <div class="field-guide-spectrum">
+        <div class="field-guide-spectrum-row"><strong><span class="ui-copy-en">Statistics</span><span class="ui-copy-zh">统计学</span></strong><p><span class="ui-copy-en">Estimates unknown quantities and quantifies uncertainty. O.R. asks how those estimates should change an action when costs and constraints matter.</span><span class="ui-copy-zh">统计学估计未知量并量化不确定性；运筹学进一步问，当成本与约束存在时，这些估计应该怎样改变行动。</span></p><small>inference</small></div>
+        <div class="field-guide-spectrum-row"><strong><span class="ui-copy-en">Machine learning</span><span class="ui-copy-zh">机器学习</span></strong><p><span class="ui-copy-en">Learns predictive representations, patterns, or policies from data. Modern O.R. increasingly integrates those predictions directly into optimization and sequential decisions.</span><span class="ui-copy-zh">机器学习从数据中学习预测、表征或策略。现代运筹研究越来越强调把这些预测直接嵌入优化与序贯决策。</span></p><small>learning</small></div>
+        <div class="field-guide-spectrum-row"><strong><span class="ui-copy-en">Computer science</span><span class="ui-copy-zh">计算机科学</span></strong><p><span class="ui-copy-en">Shares algorithms, complexity, approximation, online decision making, graphs, and combinatorial structure with O.R.</span><span class="ui-copy-zh">在算法、复杂性、近似方法、在线决策、图与组合结构等方面与运筹学有大量共同区域。</span></p><small>algorithms</small></div>
+        <div class="field-guide-spectrum-row"><strong><span class="ui-copy-en">Economics</span><span class="ui-copy-zh">经济学</span></strong><p><span class="ui-copy-en">Adds incentives, equilibrium, welfare, strategic behavior, and market structure. The overlap is especially strong in pricing, auctions, matching, and market design.</span><span class="ui-copy-zh">经济学强调激励、均衡、福利、策略行为与市场结构，在定价、拍卖、匹配和市场设计等领域与运筹学高度重叠。</span></p><small>incentives</small></div>
+        <div class="field-guide-spectrum-row"><strong><span class="ui-copy-en">Control</span><span class="ui-copy-zh">控制理论</span></strong><p><span class="ui-copy-en">Studies how actions influence dynamical systems over time. The boundary with dynamic programming and stochastic control is particularly close.</span><span class="ui-copy-zh">控制理论研究行动如何随时间影响动态系统，与动态规划和随机控制的边界尤其接近。</span></p><small>dynamics</small></div>
+        <div class="field-guide-spectrum-row"><strong><span class="ui-copy-en">Operations management</span><span class="ui-copy-zh">运营管理</span></strong><p><span class="ui-copy-en">Focuses on how firms design and manage operational processes. O.R. provides much of the formal quantitative machinery used to study those decisions.</span><span class="ui-copy-zh">运营管理关注企业怎样设计和管理运营流程，而运筹学提供了其中大量正式的定量建模与决策工具。</span></p><small>management</small></div>
+      </div>
+    </section>
+
+    <section class="field-guide-section">
+      <div class="field-guide-section-head">
+        <span class="field-guide-index">06</span>
+        <div>
+          <h2><span class="ui-copy-en">What does good O.R. research try to reveal?</span><span class="ui-copy-zh">好的运筹研究希望最终揭示什么？</span></h2>
+          <p><span class="ui-copy-en">A strong paper usually offers more than a lower objective value. It explains a mechanism, a structure, a limit, an algorithmic idea, or a decision consequence that travels beyond one numerical instance.</span><span class="ui-copy-zh">一篇好的运筹论文通常不只是把某个目标函数算得更低。它会进一步揭示一种机制、一种结构、一个极限、一种算法思想，或者一个能够超越单个数值例子的决策后果。</span></p>
+        </div>
+      </div>
+      <div class="field-guide-question-grid">
+        <article class="field-guide-question"><span>R1</span><strong><span class="ui-copy-en">Structure</span><span class="ui-copy-zh">结构</span></strong><p><span class="ui-copy-en">Can the optimal solution be characterized by monotonicity, thresholds, indices, convexity, decompositions, or other interpretable structure?</span><span class="ui-copy-zh">最优解能否被单调性、阈值、指数、凸性、分解或其他可解释结构刻画？</span></p></article>
+        <article class="field-guide-question"><span>R2</span><strong><span class="ui-copy-en">Mechanism</span><span class="ui-copy-zh">机制</span></strong><p><span class="ui-copy-en">Which feature of the system actually creates the phenomenon, and what changes when that feature is removed or strengthened?</span><span class="ui-copy-zh">系统中的哪一种机制真正产生了我们看到的现象？如果把它去掉或加强，结果会怎样改变？</span></p></article>
+        <article class="field-guide-question"><span>R3</span><strong><span class="ui-copy-en">Algorithms</span><span class="ui-copy-zh">算法</span></strong><p><span class="ui-copy-en">Can a problem be solved faster, at larger scale, with guarantees, or with a decomposition that exposes useful structure?</span><span class="ui-copy-zh">问题能否被更快、更大规模地求解？能否给出性能保证？能否通过分解暴露可利用的结构？</span></p></article>
+        <article class="field-guide-question"><span>R4</span><strong><span class="ui-copy-en">Decision value</span><span class="ui-copy-zh">决策价值</span></strong><p><span class="ui-copy-en">Does extra data, a richer model, or a more accurate prediction materially change what the decision maker should do?</span><span class="ui-copy-zh">更多数据、更复杂模型或更准确预测，究竟有没有实质改变决策者应该采取的行动？</span></p></article>
+      </div>
+    </section>
+
+    <section class="field-guide-section">
+      <div class="field-guide-section-head">
+        <span class="field-guide-index">07</span>
+        <div>
+          <h2><span class="ui-copy-en">Where my current work sits</span><span class="ui-copy-zh">我的当前研究落在这张地图的哪里？</span></h2>
+          <p><span class="ui-copy-en">Inventory with replacement warranty is one application problem that uses several O.R. traditions at once.</span><span class="ui-copy-zh">替换保修下的库存管理，只是运筹学大地图中的一个应用问题，而且同时借用了多个运筹传统。</span></p>
+        </div>
+      </div>
+      <div class="field-guide-callout">
+        <small><span class="ui-copy-en">My research lens</span><span class="ui-copy-zh">我的研究切口</span></small>
+        <strong><span class="ui-copy-en">An inventory problem becomes a state-design and sequential-decision problem.</span><span class="ui-copy-zh">一个库存问题进一步变成了状态设计与序贯决策问题。</span></strong>
+        <p><span class="ui-copy-en">The application is service inventory; the uncertainty comes from failures; the modelling issue is how much installed-base history matters; the theoretical issue is policy structure; and the computational issue appears when the exact state becomes too large. This is one small example of how O.R. connects a real mechanism to modelling, theory, and algorithms.</span><span class="ui-copy-zh">应用场景是售后备件库存，不确定性来自产品失效，建模问题是需要保留多少在役产品历史，理论问题是策略结构，而当精确状态过大时又会出现计算问题。这只是一个很小的例子，但很能体现运筹学怎样把现实机制、数学建模、理论结构与算法连接起来。</span></p>
+      </div>
+      <div class="field-guide-links">
+        <a href="https://www.informs.org/Explore/Operations-Research-Analytics" target="_blank" rel="noreferrer"><small>INFORMS</small><strong><span class="ui-copy-en">Operations Research & Analytics</span><span class="ui-copy-zh">运筹学与分析学科介绍</span></strong><span><span class="ui-copy-en">A professional-society overview of O.R., analytics, decision making, and applications.</span><span class="ui-copy-zh">由专业学会给出的运筹学、分析与决策应用概览。</span></span></a>
+        <a href="https://www.informs.org/Resource-Center/INFORMS-Student-Union/FAQs-About-O.R.-Analytics" target="_blank" rel="noreferrer"><small>INFORMS · FAQ</small><strong><span class="ui-copy-en">What operations researchers actually do</span><span class="ui-copy-zh">运筹研究者究竟在做什么</span></strong><span><span class="ui-copy-en">Problem types, methods, applications, and the relationship between O.R., analytics, and management science.</span><span class="ui-copy-zh">介绍问题类型、方法、应用，以及运筹学、分析与管理科学之间的关系。</span></span></a>
+      </div>
+    </section>
+
+    <div class="field-guide-back">
+      <a href={withBase('/research/stochastic-optimization')}>← <span class="ui-copy-en">Stochastic Optimization</span><span class="ui-copy-zh">随机优化</span></a>
+      <a href={withBase('/research')}><span class="ui-copy-en">Back to Research →</span><span class="ui-copy-zh">返回研究主页 →</span></a>
     </div>
   </main>
   <SiteExtras />
