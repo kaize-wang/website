@@ -3,6 +3,7 @@ import { getCollection } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import SiteExtras from '@/components/SiteExtras.astro';
 import '@/styles/ideas.css';
+import '@/styles/ideas-v3.css';
 import { withBase } from '@/utils/url';
 
 const ideas = (await getCollection('ideas', ({ data }) => !data.draft))
@@ -23,22 +24,14 @@ const seedIdeas = ideas.map(idea => ({
   nextActionZh: idea.data.nextActionZh || idea.data.nextAction || '',
   whyNow: idea.data.whyNow || '',
   whyNowZh: idea.data.whyNowZh || idea.data.whyNow || '',
-  milestones: idea.data.milestones.map(item => ({
-    text: item.text,
-    textZh: item.textZh || item.text,
-    done: item.done
-  })),
-  progress: idea.data.progress.map(item => ({
-    date: item.date.toISOString(),
-    note: item.note,
-    noteZh: item.noteZh || item.note
-  })),
+  milestones: idea.data.milestones.map(item => ({ text: item.text, textZh: item.textZh || item.text, done: item.done })),
+  progress: idea.data.progress.map(item => ({ date: item.date.toISOString(), note: item.note, noteZh: item.noteZh || item.note })),
   tags: idea.data.tags
 }));
 ---
 
 <BaseLayout title="Ideas" active="Ideas">
-  <main class="site-shell ideas-studio">
+  <main class="site-shell ideas-studio ideas-studio-v3">
     <header class="ideas-studio-hero">
       <div class="ideas-studio-heading">
         <div class="eyebrow"><span class="ui-copy-en">Ideas · working studio</span><span class="ui-copy-zh">想法 · 工作台</span></div>
@@ -56,19 +49,22 @@ const seedIdeas = ideas.map(idea => ({
     </header>
 
     <nav class="idea-view-switcher" aria-label="Ideas views">
-      <button class="idea-view-tab active" type="button" data-idea-view="cockpit" aria-pressed="true">
-        <span class="ui-copy-en">Cockpit</span><span class="ui-copy-zh">控制台</span>
-      </button>
-      <button class="idea-view-tab" type="button" data-idea-view="board" aria-pressed="false">
-        <span class="ui-copy-en">Board</span><span class="ui-copy-zh">推进板</span>
-      </button>
-      <button class="idea-view-tab" type="button" data-idea-view="library" aria-pressed="false">
-        <span class="ui-copy-en">Library</span><span class="ui-copy-zh">资料库</span>
-      </button>
+      <button class="idea-view-tab active" type="button" data-idea-view="cockpit" aria-pressed="true"><span class="ui-copy-en">Cockpit</span><span class="ui-copy-zh">控制台</span></button>
+      <button class="idea-view-tab" type="button" data-idea-view="board" aria-pressed="false"><span class="ui-copy-en">Board</span><span class="ui-copy-zh">推进板</span></button>
+      <button class="idea-view-tab" type="button" data-idea-view="library" aria-pressed="false"><span class="ui-copy-en">Library</span><span class="ui-copy-zh">资料库</span></button>
       <span class="idea-view-status" id="idea-view-status"></span>
     </nav>
 
     <section class="idea-view-panel active" id="idea-view-cockpit" data-idea-view-panel="cockpit">
+      <section class="idea-flow-panel" aria-labelledby="idea-flow-title">
+        <div class="idea-flow-copy">
+          <span class="studio-section-kicker"><span class="ui-copy-en">Idea flow</span><span class="ui-copy-zh">想法流</span></span>
+          <h2 id="idea-flow-title"><span class="ui-copy-en">From a spark to something real.</span><span class="ui-copy-zh">从一闪而过，到真正落地。</span></h2>
+          <p><span class="ui-copy-en">A quiet overview of where your attention is accumulating. Click a stage to open it on the Board.</span><span class="ui-copy-zh">一眼看出注意力正堆积在哪里。点击任一阶段，可直接在推进板中查看。</span></p>
+        </div>
+        <div class="idea-flow-visual" id="idea-flow-visual" aria-live="polite"></div>
+      </section>
+
       <div class="cockpit-grid">
         <section class="cockpit-motion" aria-labelledby="motion-title">
           <div class="studio-section-head">
@@ -85,18 +81,13 @@ const seedIdeas = ideas.map(idea => ({
           <div class="studio-section-head is-compact">
             <div>
               <span class="studio-section-kicker"><span class="ui-copy-en">Local only</span><span class="ui-copy-zh">仅本机</span></span>
-              <h2 id="inbox-title"><span class="ui-copy-en">Inbox</span><span class="ui-copy-zh">收件箱</span></h2>
+              <h2 id="inbox-title"><span class="ui-copy-en">Private Inbox</span><span class="ui-copy-zh">私人收件箱</span></h2>
             </div>
             <button class="studio-inline-action" id="idea-inbox-capture" type="button" aria-label="Capture an idea">+</button>
           </div>
-          <p class="cockpit-inbox-intro">
-            <span class="ui-copy-en">Rough thoughts land here first. No category or status required.</span>
-            <span class="ui-copy-zh">粗糙念头先落在这里，不要求分类，也不要求状态。</span>
-          </p>
+          <p class="cockpit-inbox-intro"><span class="ui-copy-en">Rough thoughts land here first. No category or status required.</span><span class="ui-copy-zh">粗糙念头先落在这里，不要求分类，也不要求状态。</span></p>
           <div class="cockpit-inbox-list" id="idea-inbox-list"></div>
-          <button class="inbox-empty-capture" id="idea-empty-capture" type="button" hidden>
-            <span class="ui-copy-en">+ Capture the first thought</span><span class="ui-copy-zh">+ 记下第一个念头</span>
-          </button>
+          <button class="inbox-empty-capture" id="idea-empty-capture" type="button" hidden><span class="ui-copy-en">+ Capture the first thought</span><span class="ui-copy-zh">+ 记下第一个念头</span></button>
         </aside>
       </div>
 
@@ -112,17 +103,17 @@ const seedIdeas = ideas.map(idea => ({
     <section class="idea-view-panel" id="idea-view-board" data-idea-view-panel="board" hidden>
       <div class="board-intro">
         <div>
-          <span class="studio-section-kicker"><span class="ui-copy-en">Move ideas, not metadata</span><span class="ui-copy-zh">移动想法，而不是修改元数据</span></span>
-          <h2><span class="ui-copy-en">Drag an idea as its role changes.</span><span class="ui-copy-zh">想法变了，就直接把它拖过去。</span></h2>
+          <span class="studio-section-kicker"><span class="ui-copy-en">Working state</span><span class="ui-copy-zh">工作状态</span></span>
+          <h2><span class="ui-copy-en">Move an idea when your intention changes.</span><span class="ui-copy-zh">当你的意图改变，就直接移动这个想法。</span></h2>
         </div>
-        <p><span class="ui-copy-en">Changes here are private to this browser. Public Markdown stays untouched until you choose to edit it.</span><span class="ui-copy-zh">这里的变化只保存在当前浏览器。公开 Markdown 不会被自动修改。</span></p>
+        <p><span class="ui-copy-en">Drag on desktop, or change stage from Peek on touch devices. Every move stays local to this browser.</span><span class="ui-copy-zh">桌面端可直接拖动；触屏设备可在 Peek 中改状态。所有移动只保存在当前浏览器。</span></p>
       </div>
 
-      <div class="board-scroll" tabindex="0">
+      <div class="board-scroll" id="idea-board-scroll" tabindex="0">
         <div class="idea-board" id="idea-board">
           <section class="board-lane" data-board-lane="Spark">
-            <header><span class="board-lane-index">01</span><h3><span class="ui-copy-en">Inbox</span><span class="ui-copy-zh">收件箱</span></h3><strong data-lane-count="Spark">0</strong></header>
-            <p><span class="ui-copy-en">Captured, not committed.</span><span class="ui-copy-zh">先接住，还没有承诺。</span></p>
+            <header><span class="board-lane-index">01</span><h3><span class="ui-copy-en">Sparks</span><span class="ui-copy-zh">灵感池</span></h3><strong data-lane-count="Spark">0</strong></header>
+            <p><span class="ui-copy-en">Captured, not committed.</span><span class="ui-copy-zh">已经记下，还没有承诺。</span></p>
             <div class="board-dropzone" data-drop-stage="Spark"></div>
           </section>
           <section class="board-lane" data-board-lane="Exploring">
@@ -143,8 +134,8 @@ const seedIdeas = ideas.map(idea => ({
         </div>
       </div>
       <div class="board-footnote">
-        <span><span class="ui-copy-en">Tip: click any card for details. On touch devices, change stage from the side panel.</span><span class="ui-copy-zh">提示：点击卡片查看详情；触屏设备可在右侧面板中修改状态。</span></span>
-        <button id="show-parked" type="button"><span class="ui-copy-en">Show parked</span><span class="ui-copy-zh">查看搁置项</span></button>
+        <span><span class="ui-copy-en">Click a card to work on it without leaving the Board.</span><span class="ui-copy-zh">点击卡片即可在不离开推进板的情况下继续处理。</span></span>
+        <button id="show-parked" type="button"></button>
       </div>
       <div class="parked-shelf" id="parked-shelf" hidden></div>
     </section>
@@ -179,14 +170,8 @@ const seedIdeas = ideas.map(idea => ({
       <details class="quick-capture-more">
         <summary><span class="ui-copy-en">Add context</span><span class="ui-copy-zh">补一点上下文</span></summary>
         <div class="quick-capture-fields">
-          <label>
-            <span><span class="ui-copy-en">Area</span><span class="ui-copy-zh">领域</span></span>
-            <select id="idea-capture-area" name="area"></select>
-          </label>
-          <label>
-            <span><span class="ui-copy-en">Quick note</span><span class="ui-copy-zh">随手记</span></span>
-            <textarea id="idea-capture-note" name="note" maxlength="1200" placeholder="Why did this feel worth keeping?"></textarea>
-          </label>
+          <label><span><span class="ui-copy-en">Area</span><span class="ui-copy-zh">领域</span></span><select id="idea-capture-area" name="area"></select></label>
+          <label><span><span class="ui-copy-en">Quick note</span><span class="ui-copy-zh">随手记</span></span><textarea id="idea-capture-note" name="note" maxlength="1200" placeholder="Why did this feel worth keeping?"></textarea></label>
         </div>
       </details>
       <div class="quick-capture-foot">
@@ -197,12 +182,8 @@ const seedIdeas = ideas.map(idea => ({
   </dialog>
 
   <div class="idea-peek-backdrop" id="idea-peek-backdrop" hidden></div>
-  <aside class="idea-peek" id="idea-peek" aria-hidden="true" aria-label="Idea details">
-    <div class="idea-peek-inner" id="idea-peek-inner"></div>
-  </aside>
-
+  <aside class="idea-peek" id="idea-peek" aria-hidden="true" aria-label="Idea details"><div class="idea-peek-inner" id="idea-peek-inner"></div></aside>
   <div class="idea-toast" id="idea-toast" role="status" aria-live="polite"></div>
-
   <SiteExtras />
 
   <script is:inline define:vars={{ seedIdeas }}>
@@ -211,82 +192,101 @@ const seedIdeas = ideas.map(idea => ({
       const LEGACY_INBOX_KEY = 'kaize-private-idea-inbox-v1';
       const WORKBENCH_KEY = 'kaize-idea-workbench-v2';
       const VIEW_KEY = 'kaize-idea-view-v2';
+      const validStages = ['Spark', 'Exploring', 'Active', 'Realized', 'Parked'];
       const stageOrder = ['Spark', 'Exploring', 'Active', 'Realized'];
       const areas = ['Unsorted', 'Research', 'Build', 'Life', 'Writing', 'Learning'];
       const areaZh = { Unsorted:'未分类', Research:'研究', Build:'构建', Life:'生活', Writing:'写作', Learning:'学习' };
-      const stageZh = { Spark:'收件箱', Exploring:'探索', Active:'推进中', Realized:'已落地', Parked:'已搁置' };
-      const stageEn = { Spark:'Inbox', Exploring:'Explore', Active:'In motion', Realized:'Realized', Parked:'Parked' };
+      const stageZh = { Spark:'灵感', Exploring:'探索', Active:'推进中', Realized:'已落地', Parked:'已搁置' };
+      const stageEn = { Spark:'Spark', Exploring:'Explore', Active:'In motion', Realized:'Realized', Parked:'Parked' };
+      const flowLabelEn = { Spark:'Spark', Exploring:'Explore', Active:'In motion', Realized:'Realized' };
+      const flowLabelZh = { Spark:'灵感', Exploring:'探索', Active:'推进中', Realized:'已落地' };
 
       const $ = selector => document.querySelector(selector);
       const $$ = selector => [...document.querySelectorAll(selector)];
       const language = () => window.__kaizeUi?.language === 'zh' ? 'zh' : 'en';
       const t = (en, zh) => language() === 'zh' ? (zh || en) : en;
       const escapeText = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[char]));
-      const formatDate = value => new Intl.DateTimeFormat(language() === 'zh' ? 'zh-CN' : 'en', language() === 'zh' ? { month:'numeric', day:'numeric' } : { month:'short', day:'numeric' }).format(new Date(value));
-      const safeJson = (key, fallback) => {
-        try { return JSON.parse(localStorage.getItem(key) || '') ?? fallback; } catch { return fallback; }
+      const safeGet = key => { try { return localStorage.getItem(key); } catch { return null; } };
+      const safeJson = (key, fallback) => { try { const raw = safeGet(key); return raw ? (JSON.parse(raw) ?? fallback) : fallback; } catch { return fallback; } };
+      const saveJson = (key, value) => { try { localStorage.setItem(key, JSON.stringify(value)); } catch {} };
+      const validDate = value => Number.isFinite(Date.parse(value || ''));
+      const nowIso = () => new Date().toISOString();
+      const normalizeStage = value => validStages.includes(value) ? value : 'Spark';
+      const normalizeArea = value => areas.includes(value) ? value : 'Unsorted';
+      const formatDate = value => {
+        if (!validDate(value)) return '—';
+        try { return new Intl.DateTimeFormat(language() === 'zh' ? 'zh-CN' : 'en', language() === 'zh' ? { month:'numeric', day:'numeric' } : { month:'short', day:'numeric' }).format(new Date(value)); }
+        catch { return '—'; }
       };
-      const saveJson = (key, value) => {
-        try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
+
+      const sanitizePrivateIdea = (item, index = 0) => {
+        const title = String(item?.title || '').trim();
+        if (!title) return null;
+        const createdAt = validDate(item?.createdAt) ? item.createdAt : nowIso();
+        const updatedAt = validDate(item?.updatedAt) ? item.updatedAt : createdAt;
+        const progress = Array.isArray(item?.progress) ? item.progress
+          .map(entry => ({ date: validDate(entry?.date || entry?.createdAt) ? (entry.date || entry.createdAt) : updatedAt, note:String(entry?.note || '').trim() }))
+          .filter(entry => entry.note) : [];
+        return {
+          id: String(item?.id || `local-${Date.now()}-${index}`),
+          title,
+          note: String(item?.note || '').trim(),
+          area: normalizeArea(item?.area),
+          stage: normalizeStage(item?.stage),
+          nextAction: String(item?.nextAction || '').trim(),
+          createdAt,
+          updatedAt,
+          progress
+        };
       };
 
       let privateIdeas = safeJson(INBOX_KEY, null);
-      if (!Array.isArray(privateIdeas)) {
-        const legacy = safeJson(LEGACY_INBOX_KEY, []);
-        privateIdeas = Array.isArray(legacy) ? legacy.map((item, index) => ({
-          id: item.id || `local-${Date.now()}-${index}`,
-          title: String(item.title || '').trim(),
-          note: String(item.note || '').trim(),
-          area: item.area || 'Unsorted',
-          stage: ['Spark','Exploring','Active','Realized','Parked'].includes(item.stage) ? item.stage : 'Spark',
-          nextAction: '',
-          createdAt: item.createdAt || new Date().toISOString(),
-          updatedAt: item.createdAt || new Date().toISOString(),
-          progress: []
-        })).filter(item => item.title) : [];
-        saveJson(INBOX_KEY, privateIdeas);
-      }
+      if (!Array.isArray(privateIdeas)) privateIdeas = safeJson(LEGACY_INBOX_KEY, []);
+      privateIdeas = (Array.isArray(privateIdeas) ? privateIdeas : []).map(sanitizePrivateIdea).filter(Boolean);
+      saveJson(INBOX_KEY, privateIdeas);
 
       let workbench = safeJson(WORKBENCH_KEY, {});
-      workbench.stage ||= {};
-      workbench.next ||= {};
-      workbench.scratch ||= {};
-      workbench.milestones ||= {};
-      workbench.progress ||= {};
-      workbench.resurfaceIndex ||= 0;
-      let currentView = localStorage.getItem(VIEW_KEY) || 'cockpit';
+      if (!workbench || typeof workbench !== 'object' || Array.isArray(workbench)) workbench = {};
+      workbench.stage = workbench.stage && typeof workbench.stage === 'object' ? workbench.stage : {};
+      workbench.next = workbench.next && typeof workbench.next === 'object' ? workbench.next : {};
+      workbench.scratch = workbench.scratch && typeof workbench.scratch === 'object' ? workbench.scratch : {};
+      workbench.milestones = workbench.milestones && typeof workbench.milestones === 'object' ? workbench.milestones : {};
+      workbench.progress = workbench.progress && typeof workbench.progress === 'object' ? workbench.progress : {};
+      workbench.resurfaceIndex = Number.isFinite(Number(workbench.resurfaceIndex)) ? Number(workbench.resurfaceIndex) : 0;
+      Object.keys(workbench.stage).forEach(id => { workbench.stage[id] = normalizeStage(workbench.stage[id]); });
+      saveJson(WORKBENCH_KEY, workbench);
+
+      let currentView = safeGet(VIEW_KEY) || 'cockpit';
       if (!['cockpit','board','library'].includes(currentView)) currentView = 'cockpit';
       let openIdeaId = null;
       let draggingId = null;
-      let dragMoved = false;
       let parkedVisible = false;
+      let suppressOpenUntil = 0;
+      let lastPeekTrigger = null;
 
       const publicById = new Map(seedIdeas.map(item => [item.id, item]));
       const findPrivate = id => privateIdeas.find(item => item.id === id);
       const savePrivate = () => saveJson(INBOX_KEY, privateIdeas);
       const saveWorkbench = () => saveJson(WORKBENCH_KEY, workbench);
-
-      const getStage = item => item.source === 'private' ? item.stage : (workbench.stage[item.id] || item.stage);
+      const getStage = item => normalizeStage(item.source === 'private' ? item.stage : (workbench.stage[item.id] || item.stage));
       const getNext = item => item.source === 'private' ? (item.nextAction || '') : (workbench.next[item.id] ?? item.nextAction ?? '');
       const getTitle = item => item.source === 'private' ? item.title : t(item.title, item.titleZh);
       const getSummary = item => item.source === 'private' ? (item.note || t('Private capture', '私人记录')) : t(item.summary, item.summaryZh);
-      const getAreaLabel = area => t(area, areaZh[area] || area);
-      const getStageLabel = stage => t(stageEn[stage] || stage, stageZh[stage] || stage);
-
+      const getAreaLabel = area => t(normalizeArea(area), areaZh[normalizeArea(area)] || normalizeArea(area));
+      const getStageLabel = stage => t(stageEn[normalizeStage(stage)] || stage, stageZh[normalizeStage(stage)] || stage);
       const publicItems = () => seedIdeas.map(item => ({ ...item, source:'public' }));
-      const privateItems = () => privateIdeas.map(item => ({ ...item, source:'private', summary:item.note || '', summaryZh:item.note || '', updatedDate:item.updatedAt || item.createdAt, createdDate:item.createdAt, milestones:[], tags:[] }));
+      const privateItems = () => privateIdeas.map(item => ({ ...item, source:'private', summary:item.note || '', summaryZh:item.note || '', updatedDate:item.updatedAt, createdDate:item.createdAt, milestones:[], tags:[] }));
       const allItems = () => [...publicItems(), ...privateItems()];
       const byId = id => {
         const local = findPrivate(id);
-        if (local) return { ...local, source:'private', summary:local.note || '', summaryZh:local.note || '', updatedDate:local.updatedAt || local.createdAt, createdDate:local.createdAt, milestones:[], tags:[] };
+        if (local) return { ...local, source:'private', summary:local.note || '', summaryZh:local.note || '', updatedDate:local.updatedAt, createdDate:local.createdAt, milestones:[], tags:[] };
         const pub = publicById.get(id);
         return pub ? { ...pub, source:'public' } : null;
       };
-
       const milestoneState = item => {
         if (item.source === 'private') return [];
         const overrides = workbench.milestones[item.id] || {};
-        return item.milestones.map((milestone, index) => ({ ...milestone, done: Object.prototype.hasOwnProperty.call(overrides, index) ? Boolean(overrides[index]) : milestone.done, index }));
+        return (item.milestones || []).map((milestone, index) => ({ ...milestone, done:Object.prototype.hasOwnProperty.call(overrides,index) ? Boolean(overrides[index]) : milestone.done, index }));
       };
       const progressPct = item => {
         const milestones = milestoneState(item);
@@ -295,59 +295,59 @@ const seedIdeas = ideas.map(idea => ({
         return { done, total:milestones.length, pct:Math.round(done / milestones.length * 100) };
       };
 
+      const progressOrbit = progress => progress ? `
+        <span class="idea-progress-orbit" title="${progress.done}/${progress.total}">
+          <svg viewBox="0 0 36 36" aria-hidden="true"><circle class="orbit-track" cx="18" cy="18" r="15.5"></circle><circle class="orbit-value" cx="18" cy="18" r="15.5" pathLength="100" stroke-dasharray="${progress.pct} 100"></circle></svg>
+          <small>${progress.done}/${progress.total}</small>
+        </span>` : '';
+
       const updateStatusLine = () => {
         const items = allItems();
         const active = items.filter(item => getStage(item) === 'Active').length;
-        const inbox = privateIdeas.filter(item => item.stage === 'Spark').length;
-        $('#idea-view-status').textContent = t(`${active} in motion · ${inbox} inbox`, `${active} 个推进中 · ${inbox} 个收件箱`);
+        const inbox = privateIdeas.filter(item => getStage(item) === 'Spark').length;
+        const node = $('#idea-view-status');
+        if (node) node.textContent = t(`${active} in motion · ${inbox} private inbox`, `${active} 个推进中 · ${inbox} 个私人收件箱`);
+      };
+
+      const renderFlow = () => {
+        const container = $('#idea-flow-visual');
+        if (!container) return;
+        const items = allItems();
+        container.innerHTML = `<div class="idea-flow-track">${stageOrder.map((stage, index) => {
+          const count = items.filter(item => getStage(item) === stage).length;
+          const dots = Array.from({ length:Math.min(count, 7) }, (_, dot) => `<i style="--dot:${dot}" aria-hidden="true"></i>`).join('');
+          const overflow = count > 7 ? `<em>+${count - 7}</em>` : '';
+          return `<button class="idea-flow-stage${stage === 'Active' ? ' is-focus' : ''}" type="button" data-flow-stage="${stage}" aria-label="${escapeText(t(flowLabelEn[stage], flowLabelZh[stage]))}: ${count}">
+            <span class="idea-flow-node"><b></b></span>
+            <span class="idea-flow-index">0${index + 1}</span>
+            <strong>${escapeText(t(flowLabelEn[stage], flowLabelZh[stage]))}</strong>
+            <span class="idea-flow-count">${count}</span>
+            <span class="idea-flow-dots">${dots}${overflow}</span>
+          </button>`;
+        }).join('')}</div>`;
       };
 
       const motionRow = (item, index) => {
         const next = getNext(item);
         const progress = progressPct(item);
-        const updated = item.source === 'private' ? item.updatedAt || item.createdAt : item.updatedDate;
-        return `
-          <button class="motion-row${index === 0 ? ' is-leading' : ''}" type="button" data-open-idea="${escapeText(item.id)}">
-            <span class="motion-index">${String(index + 1).padStart(2,'0')}</span>
-            <span class="motion-main">
-              <span class="motion-meta">${escapeText(getAreaLabel(item.area || 'Unsorted'))} · ${escapeText(item.source === 'private' ? t('Private', '私密') : t('Public', '公开'))}</span>
-              <strong>${escapeText(getTitle(item))}</strong>
-              <span class="motion-summary">${escapeText(getSummary(item))}</span>
-            </span>
-            <span class="motion-next">
-              <small>${escapeText(t('Next', '下一步'))}</small>
-              <span>${escapeText(next || t('Define the next concrete move.', '先定义一个具体的下一步。'))}</span>
-            </span>
-            <span class="motion-progress">
-              ${progress ? `<span class="motion-progress-line"><i style="width:${progress.pct}%"></i></span><small>${progress.done}/${progress.total}</small>` : `<small>${escapeText(formatDate(updated))}</small>`}
-            </span>
-          </button>`;
+        const updated = item.source === 'private' ? item.updatedAt : item.updatedDate;
+        return `<button class="motion-row${index === 0 ? ' is-leading' : ''}" type="button" data-open-idea="${escapeText(item.id)}">
+          <span class="motion-index">${String(index + 1).padStart(2,'0')}</span>
+          <span class="motion-main"><span class="motion-meta">${escapeText(getAreaLabel(item.area))} · ${escapeText(item.source === 'private' ? t('Private', '私密') : t('Public', '公开'))}</span><strong>${escapeText(getTitle(item))}</strong><span class="motion-summary">${escapeText(getSummary(item))}</span></span>
+          <span class="motion-next"><small>${escapeText(t('Next', '下一步'))}</small><span>${escapeText(next || t('Define the next concrete move.', '先定义一个具体的下一步。'))}</span></span>
+          <span class="motion-progress">${progress ? progressOrbit(progress) : `<span class="motion-date">${escapeText(formatDate(updated))}</span>`}</span>
+        </button>`;
       };
 
       const renderCockpit = () => {
-        const items = allItems();
-        const active = items.filter(item => getStage(item) === 'Active').sort((a,b) => new Date(b.updatedDate || b.updatedAt || b.createdDate) - new Date(a.updatedDate || a.updatedAt || a.createdDate));
+        const active = allItems().filter(item => getStage(item) === 'Active').sort((a,b) => Date.parse(b.updatedDate || b.updatedAt || b.createdDate) - Date.parse(a.updatedDate || a.updatedAt || a.createdDate));
         const motion = $('#idea-motion-list');
-        if (motion) {
-          motion.innerHTML = active.length ? active.slice(0, 4).map(motionRow).join('') : `
-            <div class="studio-empty-state">
-              <strong>${escapeText(t('Nothing is in motion.', '现在没有正在推进的想法。'))}</strong>
-              <p>${escapeText(t('Move one idea into “In motion” when you know its next action.', '当你知道一个想法的下一步时，再把它移到“推进中”。'))}</p>
-              <button type="button" data-switch-view="board">${escapeText(t('Open Board →', '打开推进板 →'))}</button>
-            </div>`;
-        }
+        if (motion) motion.innerHTML = active.length ? active.slice(0,4).map(motionRow).join('') : `<div class="studio-empty-state"><strong>${escapeText(t('Nothing is in motion.', '现在没有正在推进的想法。'))}</strong><p>${escapeText(t('Move one idea into “In motion” when you know its next action.', '当你知道一个想法的下一步时，再把它移到“推进中”。'))}</p><button type="button" data-switch-view="board">${escapeText(t('Open Board →', '打开推进板 →'))}</button></div>`;
 
-        const localInbox = privateIdeas.filter(item => item.stage === 'Spark').sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+        const localInbox = privateIdeas.filter(item => getStage(item) === 'Spark').sort((a,b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
         const inbox = $('#idea-inbox-list');
         const emptyCapture = $('#idea-empty-capture');
-        if (inbox) {
-          inbox.innerHTML = localInbox.slice(0, 7).map(item => `
-            <button class="inbox-slip" type="button" data-open-idea="${escapeText(item.id)}">
-              <span class="inbox-slip-dot"></span>
-              <span><strong>${escapeText(item.title)}</strong><small>${escapeText(getAreaLabel(item.area || 'Unsorted'))} · ${escapeText(formatDate(item.createdAt))}</small></span>
-              <span class="inbox-slip-arrow">↗</span>
-            </button>`).join('');
-        }
+        if (inbox) inbox.innerHTML = localInbox.slice(0,7).map(item => `<button class="inbox-slip" type="button" data-open-idea="${escapeText(item.id)}"><span class="inbox-slip-dot"></span><span><strong>${escapeText(item.title)}</strong><small>${escapeText(getAreaLabel(item.area))} · ${escapeText(formatDate(item.createdAt))}</small></span><span class="inbox-slip-arrow">↗</span></button>`).join('');
         if (emptyCapture) emptyCapture.hidden = localInbox.length > 0;
         renderResurface();
       };
@@ -360,40 +360,27 @@ const seedIdeas = ideas.map(idea => ({
         const container = $('#idea-resurface-content');
         if (!container) return;
         const candidates = resurfaceCandidates();
-        if (!candidates.length) {
-          container.innerHTML = `<p class="resurface-empty">${escapeText(t('Nothing waiting to resurface right now.', '现在没有需要重新浮现的想法。'))}</p>`;
-          return;
-        }
+        if (!candidates.length) { container.innerHTML = `<p class="resurface-empty">${escapeText(t('Nothing waiting to resurface right now.', '现在没有需要重新浮现的想法。'))}</p>`; return; }
         const index = Math.abs(Number(workbench.resurfaceIndex || 0)) % candidates.length;
         const item = candidates[index];
         const stage = getStage(item);
-        const primaryLabel = stage === 'Spark' ? t('Develop', '继续发展') : t('Move to In motion', '开始推进');
         const targetStage = stage === 'Spark' ? 'Exploring' : 'Active';
-        container.innerHTML = `
-          <button class="resurface-idea" type="button" data-open-idea="${escapeText(item.id)}">
-            <span class="resurface-quote">“</span>
-            <span><strong>${escapeText(getTitle(item))}</strong><small>${escapeText(getSummary(item))}</small></span>
-          </button>
-          <div class="resurface-actions">
-            <button type="button" data-resurface-move="${targetStage}" data-resurface-id="${escapeText(item.id)}">${escapeText(primaryLabel)}</button>
-            <button type="button" data-resurface-park="${escapeText(item.id)}">${escapeText(t('Park', '搁置'))}</button>
-            <button type="button" data-resurface-another>${escapeText(t('Another ↻', '换一个 ↻'))}</button>
-          </div>`;
+        const primaryLabel = stage === 'Spark' ? t('Develop', '继续发展') : t('Move to In motion', '开始推进');
+        container.innerHTML = `<button class="resurface-idea" type="button" data-open-idea="${escapeText(item.id)}"><span class="resurface-quote">“</span><span><strong>${escapeText(getTitle(item))}</strong><small>${escapeText(getSummary(item))}</small></span></button><div class="resurface-actions"><button type="button" data-resurface-move="${targetStage}" data-resurface-id="${escapeText(item.id)}">${escapeText(primaryLabel)}</button><button type="button" data-resurface-park="${escapeText(item.id)}">${escapeText(t('Park','搁置'))}</button><button type="button" data-resurface-another>${escapeText(t('Another ↻','换一个 ↻'))}</button></div>`;
       };
 
       const boardCard = item => {
         const next = getNext(item);
         const progress = progressPct(item);
-        return `
-          <article class="board-card${item.source === 'private' ? ' is-private' : ''}" draggable="true" data-drag-idea="${escapeText(item.id)}" data-open-idea="${escapeText(item.id)}" tabindex="0" role="button">
-            <div class="board-card-top"><span>${escapeText(getAreaLabel(item.area || 'Unsorted'))}</span><span class="board-grip" aria-hidden="true">⠿</span></div>
-            <h4>${escapeText(getTitle(item))}</h4>
-            ${next ? `<p><span>${escapeText(t('Next', '下一步'))}</span>${escapeText(next)}</p>` : `<p class="board-card-summary">${escapeText(getSummary(item))}</p>`}
-            <div class="board-card-foot">
-              <span>${item.source === 'private' ? escapeText(t('Private', '私密')) : escapeText(t('Public', '公开'))}</span>
-              ${progress ? `<span>${progress.done}/${progress.total}</span>` : ''}
-            </div>
-          </article>`;
+        const stage = getStage(item);
+        return `<article class="board-card${item.source === 'private' ? ' is-private' : ''}" draggable="true" data-stage="${stage}" data-drag-idea="${escapeText(item.id)}" data-open-idea="${escapeText(item.id)}" tabindex="0" role="button"><div class="board-card-top"><span>${escapeText(getAreaLabel(item.area))}</span><span class="board-grip" aria-hidden="true">⠿</span></div><h4>${escapeText(getTitle(item))}</h4>${next ? `<p><span>${escapeText(t('Next','下一步'))}</span>${escapeText(next)}</p>` : `<p class="board-card-summary">${escapeText(getSummary(item))}</p>`}<div class="board-card-foot"><span>${item.source === 'private' ? escapeText(t('Private','私密')) : escapeText(t('Public','公开'))}</span>${progress ? `<span class="board-mini-progress"><span><i style="width:${progress.pct}%"></i></span><b>${progress.done}/${progress.total}</b></span>` : ''}</div></article>`;
+      };
+
+      const syncParkedButton = () => {
+        const button = $('#show-parked');
+        if (!button) return;
+        button.textContent = parkedVisible ? t('Hide parked', '收起搁置项') : t('Show parked', '查看搁置项');
+        button.setAttribute('aria-expanded', parkedVisible ? 'true' : 'false');
       };
 
       const renderBoard = () => {
@@ -403,17 +390,15 @@ const seedIdeas = ideas.map(idea => ({
           const matches = items.filter(item => getStage(item) === stage);
           const count = document.querySelector(`[data-lane-count="${stage}"]`);
           if (count) count.textContent = String(matches.length);
-          if (zone) zone.innerHTML = matches.map(boardCard).join('') || `<div class="board-lane-empty">${escapeText(t('Drop here', '拖到这里'))}</div>`;
+          if (zone) zone.innerHTML = matches.map(boardCard).join('') || `<div class="board-lane-empty">${escapeText(t('No ideas here yet', '这里还没有想法'))}</div>`;
         });
-
         const parked = items.filter(item => getStage(item) === 'Parked');
         const shelf = $('#parked-shelf');
         if (shelf) {
           shelf.hidden = !parkedVisible;
-          shelf.innerHTML = parkedVisible ? `
-            <div class="parked-head"><span>${escapeText(t('Parked ideas', '已搁置想法'))}</span><strong>${parked.length}</strong></div>
-            <div class="parked-list">${parked.map(item => `<button type="button" data-open-idea="${escapeText(item.id)}"><span>${escapeText(getTitle(item))}</span><small>${escapeText(getAreaLabel(item.area || 'Unsorted'))}</small></button>`).join('') || `<p>${escapeText(t('No parked ideas.', '没有已搁置想法。'))}</p>`}</div>` : '';
+          shelf.innerHTML = parkedVisible ? `<div class="parked-head"><span>${escapeText(t('Parked ideas','已搁置想法'))}</span><strong>${parked.length}</strong></div><div class="parked-list">${parked.map(item => `<button type="button" data-open-idea="${escapeText(item.id)}"><span>${escapeText(getTitle(item))}</span><small>${escapeText(getAreaLabel(item.area))}</small></button>`).join('') || `<p>${escapeText(t('No parked ideas.','没有已搁置想法。'))}</p>`}</div>` : '';
         }
+        syncParkedButton();
       };
 
       const renderLibraryControls = () => {
@@ -422,12 +407,12 @@ const seedIdeas = ideas.map(idea => ({
         const captureArea = $('#idea-capture-area');
         if (stageSelect) {
           const current = stageSelect.value || 'all';
-          stageSelect.innerHTML = `<option value="all">${escapeText(t('All stages', '全部状态'))}</option>${['Spark','Exploring','Active','Realized','Parked'].map(stage => `<option value="${stage}">${escapeText(getStageLabel(stage))}</option>`).join('')}`;
+          stageSelect.innerHTML = `<option value="all">${escapeText(t('All stages','全部状态'))}</option>${validStages.map(stage => `<option value="${stage}">${escapeText(getStageLabel(stage))}</option>`).join('')}`;
           stageSelect.value = [...stageSelect.options].some(option => option.value === current) ? current : 'all';
         }
         if (areaSelect) {
           const current = areaSelect.value || 'all';
-          areaSelect.innerHTML = `<option value="all">${escapeText(t('All areas', '全部领域'))}</option>${areas.map(area => `<option value="${area}">${escapeText(getAreaLabel(area))}</option>`).join('')}`;
+          areaSelect.innerHTML = `<option value="all">${escapeText(t('All areas','全部领域'))}</option>${areas.map(area => `<option value="${area}">${escapeText(getAreaLabel(area))}</option>`).join('')}`;
           areaSelect.value = [...areaSelect.options].some(option => option.value === current) ? current : 'all';
         }
         if (captureArea) {
@@ -436,11 +421,11 @@ const seedIdeas = ideas.map(idea => ({
           captureArea.value = [...captureArea.options].some(option => option.value === current) ? current : 'Unsorted';
         }
         const search = $('#idea-library-search');
-        if (search) search.placeholder = t('Search ideas…', '搜索想法…');
+        if (search) search.placeholder = t('Search ideas…','搜索想法…');
         const captureTitle = $('#idea-capture-title');
-        if (captureTitle) captureTitle.placeholder = t('One sentence is enough…', '一句话就够了……');
+        if (captureTitle) captureTitle.placeholder = t('One sentence is enough…','一句话就够了……');
         const captureNote = $('#idea-capture-note');
-        if (captureNote) captureNote.placeholder = t('Why did this feel worth keeping?', '为什么这个念头值得留下？');
+        if (captureNote) captureNote.placeholder = t('Why did this feel worth keeping?','为什么这个念头值得留下？');
       };
 
       const renderLibrary = () => {
@@ -449,47 +434,17 @@ const seedIdeas = ideas.map(idea => ({
         const stageFilter = $('#idea-library-stage')?.value || 'all';
         const areaFilter = $('#idea-library-area')?.value || 'all';
         const items = allItems().filter(item => {
-          const haystack = [item.title, item.titleZh, item.summary, item.summaryZh, item.note, item.area, ...(item.tags || [])].filter(Boolean).join(' ').toLowerCase();
-          return (!query || haystack.includes(query)) && (stageFilter === 'all' || getStage(item) === stageFilter) && (areaFilter === 'all' || (item.area || 'Unsorted') === areaFilter);
-        }).sort((a,b) => new Date(b.updatedDate || b.updatedAt || b.createdDate) - new Date(a.updatedDate || a.updatedAt || a.createdDate));
-
+          const haystack = [item.title,item.titleZh,item.summary,item.summaryZh,item.note,item.area,...(item.tags || [])].filter(Boolean).join(' ').toLowerCase();
+          return (!query || haystack.includes(query)) && (stageFilter === 'all' || getStage(item) === stageFilter) && (areaFilter === 'all' || normalizeArea(item.area) === areaFilter);
+        }).sort((a,b) => Date.parse(b.updatedDate || b.updatedAt || b.createdDate) - Date.parse(a.updatedDate || a.updatedAt || a.createdDate));
         const list = $('#idea-library-list');
         const empty = $('#idea-library-empty');
-        if (list) {
-          list.innerHTML = items.map(item => {
-            const date = item.updatedDate || item.updatedAt || item.createdDate;
-            return `
-              <button class="library-row" type="button" data-open-idea="${escapeText(item.id)}">
-                <time>${escapeText(formatDate(date))}</time>
-                <span class="library-row-copy"><strong>${escapeText(getTitle(item))}</strong><small>${escapeText(getSummary(item))}</small></span>
-                <span class="library-row-area">${escapeText(getAreaLabel(item.area || 'Unsorted'))}</span>
-                <span class="library-row-stage">${escapeText(getStageLabel(getStage(item)))}</span>
-                <span class="library-row-source">${escapeText(item.source === 'private' ? t('private', '私密') : t('public', '公开'))}</span>
-                <span class="library-row-arrow">→</span>
-              </button>`;
-          }).join('');
-        }
-        if (empty) {
-          empty.hidden = items.length > 0;
-          empty.textContent = t('No ideas match this view.', '没有符合当前条件的想法。');
-        }
+        if (list) list.innerHTML = items.map(item => `<button class="library-row" type="button" data-open-idea="${escapeText(item.id)}"><time>${escapeText(formatDate(item.updatedDate || item.updatedAt || item.createdDate))}</time><span class="library-row-copy"><strong>${escapeText(getTitle(item))}</strong><small>${escapeText(getSummary(item))}</small></span><span class="library-row-area">${escapeText(getAreaLabel(item.area))}</span><span class="library-row-stage">${escapeText(getStageLabel(getStage(item)))}</span><span class="library-row-source">${escapeText(item.source === 'private' ? t('private','私密') : t('public','公开'))}</span><span class="library-row-arrow">→</span></button>`).join('');
+        if (empty) { empty.hidden = items.length > 0; empty.textContent = t('No ideas match this view.','没有符合当前条件的想法。'); }
       };
 
-      const stageSelectMarkup = (item, currentStage) => `
-        <label class="peek-field">
-          <span>${escapeText(t('Stage', '状态'))}</span>
-          <select id="peek-stage-select">
-            ${['Spark','Exploring','Active','Realized','Parked'].map(stage => `<option value="${stage}"${stage === currentStage ? ' selected' : ''}>${escapeText(getStageLabel(stage))}</option>`).join('')}
-          </select>
-        </label>`;
-
-      const areaSelectMarkup = item => `
-        <label class="peek-field">
-          <span>${escapeText(t('Area', '领域'))}</span>
-          <select id="peek-area-select">
-            ${areas.map(area => `<option value="${area}"${area === (item.area || 'Unsorted') ? ' selected' : ''}>${escapeText(getAreaLabel(area))}</option>`).join('')}
-          </select>
-        </label>`;
+      const stageSelectMarkup = currentStage => `<label class="peek-field"><span>${escapeText(t('Stage','状态'))}</span><select id="peek-stage-select">${validStages.map(stage => `<option value="${stage}"${stage === currentStage ? ' selected' : ''}>${escapeText(getStageLabel(stage))}</option>`).join('')}</select></label>`;
+      const areaSelectMarkup = item => `<label class="peek-field"><span>${escapeText(t('Area','领域'))}</span><select id="peek-area-select">${areas.map(area => `<option value="${area}"${area === normalizeArea(item.area) ? ' selected' : ''}>${escapeText(getAreaLabel(area))}</option>`).join('')}</select></label>`;
 
       const renderPeek = id => {
         const item = byId(id);
@@ -499,64 +454,22 @@ const seedIdeas = ideas.map(idea => ({
         const currentStage = getStage(item);
         const next = getNext(item);
         const publicMilestones = milestoneState(item);
-        const staticProgress = item.source === 'public' ? item.progress || [] : item.progress || [];
-        const localProgress = item.source === 'public' ? (workbench.progress[item.id] || []) : (item.progress || []);
+        const staticProgress = item.progress || [];
+        const localProgress = item.source === 'public' ? (workbench.progress[item.id] || []) : [];
         const combinedProgress = item.source === 'public' ? [...localProgress.map(entry => ({ ...entry, local:true })), ...staticProgress] : staticProgress;
         const scratch = item.source === 'public' ? (workbench.scratch[item.id] || '') : (item.note || '');
-
-        inner.innerHTML = `
-          <div class="peek-topbar">
-            <span class="peek-source">${escapeText(item.source === 'private' ? t('PRIVATE CAPTURE', '私人记录') : t('PUBLIC IDEA · LOCAL WORKBENCH', '公开想法 · 本地工作台'))}</span>
-            <button class="peek-close" id="peek-close" type="button" aria-label="Close">×</button>
-          </div>
-          <header class="peek-header">
-            <div class="peek-meta">${escapeText(getAreaLabel(item.area || 'Unsorted'))} · ${escapeText(getStageLabel(currentStage))}</div>
-            ${item.source === 'private' ? `<input class="peek-title-input" id="peek-private-title" value="${escapeText(item.title)}" maxlength="160" aria-label="Idea title" />` : `<h2>${escapeText(getTitle(item))}</h2>`}
-            <p>${escapeText(getSummary(item))}</p>
-          </header>
-
-          <div class="peek-fields-row">
-            ${stageSelectMarkup(item, currentStage)}
-            ${item.source === 'private' ? areaSelectMarkup(item) : `<div class="peek-field is-static"><span>${escapeText(t('Area', '领域'))}</span><strong>${escapeText(getAreaLabel(item.area))}</strong></div>`}
-          </div>
-
-          <section class="peek-section">
-            <div class="peek-section-head"><span>${escapeText(t('Next action', '下一步'))}</span><small>${escapeText(t('local', '本地'))}</small></div>
-            <textarea class="peek-next-input" id="peek-next-input" rows="2" placeholder="${escapeText(t('What is the next concrete move?', '下一步最具体的动作是什么？'))}">${escapeText(next)}</textarea>
-          </section>
-
-          <section class="peek-section">
-            <div class="peek-section-head"><span>${escapeText(item.source === 'private' ? t('Quick note', '随手记') : t('Local scratchpad', '本地草稿'))}</span><small>${escapeText(t('browser only', '仅本机'))}</small></div>
-            <textarea class="peek-scratch-input" id="peek-scratch-input" rows="5" placeholder="${escapeText(t('Think here without publishing anything…', '可以在这里继续想，不会公开……'))}">${escapeText(scratch)}</textarea>
-          </section>
-
-          ${publicMilestones.length ? `
-            <section class="peek-section">
-              <div class="peek-section-head"><span>${escapeText(t('Milestones', '里程碑'))}</span><small>${publicMilestones.filter(m => m.done).length}/${publicMilestones.length}</small></div>
-              <div class="peek-milestones">
-                ${publicMilestones.map(milestone => `<label><input type="checkbox" data-peek-milestone="${milestone.index}"${milestone.done ? ' checked' : ''} /><span>${escapeText(t(milestone.text, milestone.textZh))}</span></label>`).join('')}
-              </div>
-            </section>` : ''}
-
-          <section class="peek-section">
-            <div class="peek-section-head"><span>${escapeText(t('Progress log', '推进记录'))}</span><small>${combinedProgress.length}</small></div>
-            <div class="peek-progress-list">
-              ${combinedProgress.slice().sort((a,b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt)).map(entry => `<div><time>${escapeText(formatDate(entry.date || entry.createdAt))}</time><p>${escapeText(entry.local || item.source === 'private' ? entry.note : t(entry.note, entry.noteZh))}</p></div>`).join('') || `<p class="peek-empty-copy">${escapeText(t('No updates yet.', '还没有推进记录。'))}</p>`}
-            </div>
-            <form class="peek-add-progress" id="peek-progress-form">
-              <input id="peek-progress-input" maxlength="300" placeholder="${escapeText(t('Add a short update…', '补一条简短进展……'))}" />
-              <button type="submit">+</button>
-            </form>
-          </section>
-
-          <footer class="peek-footer">
-            ${item.source === 'public' ? `<a href="${escapeText(item.href)}">${escapeText(t('Open full page ↗', '打开完整页面 ↗'))}</a>` : `<button class="peek-delete" id="peek-delete-private" type="button">${escapeText(t('Delete capture', '删除记录'))}</button>`}
-            <span>${escapeText(t('Local edits never change the public site.', '本地修改不会自动改变公开网站。'))}</span>
-          </footer>`;
-
-        $('#idea-peek').setAttribute('aria-hidden', 'false');
-        $('#idea-peek').classList.add('open');
-        $('#idea-peek-backdrop').hidden = false;
+        const progress = progressPct(item);
+        inner.innerHTML = `<div class="peek-topbar"><span class="peek-source">${escapeText(item.source === 'private' ? t('PRIVATE CAPTURE','私人记录') : t('PUBLIC IDEA · LOCAL WORKBENCH','公开想法 · 本地工作台'))}</span><button class="peek-close" id="peek-close" type="button" aria-label="Close">×</button></div>
+          <header class="peek-header"><div class="peek-header-visual"><span class="peek-stage-orb" data-stage="${currentStage}"></span>${progress ? progressOrbit(progress) : ''}</div><div class="peek-meta">${escapeText(getAreaLabel(item.area))} · ${escapeText(getStageLabel(currentStage))}</div>${item.source === 'private' ? `<input class="peek-title-input" id="peek-private-title" value="${escapeText(item.title)}" maxlength="160" aria-label="Idea title" />` : `<h2>${escapeText(getTitle(item))}</h2>`}<p>${escapeText(getSummary(item))}</p></header>
+          <div class="peek-fields-row">${stageSelectMarkup(currentStage)}${item.source === 'private' ? areaSelectMarkup(item) : `<div class="peek-field is-static"><span>${escapeText(t('Area','领域'))}</span><strong>${escapeText(getAreaLabel(item.area))}</strong></div>`}</div>
+          <section class="peek-section peek-next-section"><div class="peek-section-head"><span>${escapeText(t('Next action','下一步'))}</span><small>${escapeText(t('local','本地'))}</small></div><textarea class="peek-next-input" id="peek-next-input" rows="2" placeholder="${escapeText(t('What is the next concrete move?','下一步最具体的动作是什么？'))}">${escapeText(next)}</textarea></section>
+          <section class="peek-section"><div class="peek-section-head"><span>${escapeText(item.source === 'private' ? t('Quick note','随手记') : t('Local scratchpad','本地草稿'))}</span><small>${escapeText(t('browser only','仅本机'))}</small></div><textarea class="peek-scratch-input" id="peek-scratch-input" rows="5" placeholder="${escapeText(t('Think here without publishing anything…','可以在这里继续想，不会公开……'))}">${escapeText(scratch)}</textarea></section>
+          ${publicMilestones.length ? `<section class="peek-section"><div class="peek-section-head"><span>${escapeText(t('Milestones','里程碑'))}</span><small>${publicMilestones.filter(m => m.done).length}/${publicMilestones.length}</small></div><div class="peek-milestones">${publicMilestones.map(m => `<label><input type="checkbox" data-peek-milestone="${m.index}"${m.done ? ' checked' : ''} /><span>${escapeText(t(m.text,m.textZh))}</span></label>`).join('')}</div></section>` : ''}
+          <section class="peek-section"><div class="peek-section-head"><span>${escapeText(t('Progress log','推进记录'))}</span><small>${combinedProgress.length}</small></div><div class="peek-progress-list">${combinedProgress.slice().sort((a,b) => Date.parse(b.date || b.createdAt) - Date.parse(a.date || a.createdAt)).map(entry => `<div><time>${escapeText(formatDate(entry.date || entry.createdAt))}</time><p>${escapeText(entry.local || item.source === 'private' ? entry.note : t(entry.note,entry.noteZh))}</p></div>`).join('') || `<p class="peek-empty-copy">${escapeText(t('No updates yet.','还没有推进记录。'))}</p>`}</div><form class="peek-add-progress" id="peek-progress-form"><input id="peek-progress-input" maxlength="300" placeholder="${escapeText(t('Add a short update…','补一条简短进展……'))}" /><button type="submit" aria-label="Add progress">+</button></form></section>
+          <footer class="peek-footer">${item.source === 'public' ? `<a href="${escapeText(item.href)}">${escapeText(t('Open full page ↗','打开完整页面 ↗'))}</a>` : `<button class="peek-delete" id="peek-delete-private" type="button">${escapeText(t('Delete capture','删除记录'))}</button>`}<span>${escapeText(t('Local edits never change the public site.','本地修改不会自动改变公开网站。'))}</span></footer>`;
+        $('#idea-peek')?.setAttribute('aria-hidden','false');
+        $('#idea-peek')?.classList.add('open');
+        const backdrop = $('#idea-peek-backdrop'); if (backdrop) backdrop.hidden = false;
         document.body.classList.add('idea-peek-open');
         bindPeek(item);
       };
@@ -566,114 +479,68 @@ const seedIdeas = ideas.map(idea => ({
         $('#peek-stage-select')?.addEventListener('change', event => setStage(item.id, event.target.value, { reopen:true }));
         $('#peek-area-select')?.addEventListener('change', event => {
           if (item.source !== 'private') return;
-          const local = findPrivate(item.id);
-          if (!local) return;
-          local.area = event.target.value;
-          local.updatedAt = new Date().toISOString();
-          savePrivate(); renderAll(); renderPeek(item.id);
+          const local = findPrivate(item.id); if (!local) return;
+          local.area = normalizeArea(event.target.value); local.updatedAt = nowIso(); savePrivate(); renderAll(); renderPeek(item.id);
         });
-        $('#peek-private-title')?.addEventListener('input', event => {
-          const local = findPrivate(item.id);
-          if (!local) return;
-          local.title = event.target.value;
-          local.updatedAt = new Date().toISOString();
-          savePrivate();
-        });
-        $('#peek-private-title')?.addEventListener('change', () => renderAll());
+        $('#peek-private-title')?.addEventListener('input', event => { const local = findPrivate(item.id); if (!local) return; local.title = String(event.target.value || '').slice(0,160); local.updatedAt = nowIso(); savePrivate(); });
+        $('#peek-private-title')?.addEventListener('change', renderAll);
         $('#peek-next-input')?.addEventListener('input', event => {
-          if (item.source === 'private') {
-            const local = findPrivate(item.id);
-            if (!local) return;
-            local.nextAction = event.target.value;
-            local.updatedAt = new Date().toISOString();
-            savePrivate();
-          } else {
-            workbench.next[item.id] = event.target.value;
-            saveWorkbench();
-          }
+          if (item.source === 'private') { const local = findPrivate(item.id); if (!local) return; local.nextAction = event.target.value; local.updatedAt = nowIso(); savePrivate(); }
+          else { workbench.next[item.id] = event.target.value; saveWorkbench(); }
         });
         $('#peek-next-input')?.addEventListener('change', renderAll);
         $('#peek-scratch-input')?.addEventListener('input', event => {
-          if (item.source === 'private') {
-            const local = findPrivate(item.id);
-            if (!local) return;
-            local.note = event.target.value;
-            local.updatedAt = new Date().toISOString();
-            savePrivate();
-          } else {
-            workbench.scratch[item.id] = event.target.value;
-            saveWorkbench();
-          }
+          if (item.source === 'private') { const local = findPrivate(item.id); if (!local) return; local.note = event.target.value; local.updatedAt = nowIso(); savePrivate(); }
+          else { workbench.scratch[item.id] = event.target.value; saveWorkbench(); }
         });
-        $$('[data-peek-milestone]').forEach(checkbox => checkbox.addEventListener('change', event => {
-          workbench.milestones[item.id] ||= {};
-          workbench.milestones[item.id][event.target.dataset.peekMilestone] = event.target.checked;
-          saveWorkbench(); renderAll(); renderPeek(item.id);
-        }));
+        $$('[data-peek-milestone]').forEach(checkbox => checkbox.addEventListener('change', event => { workbench.milestones[item.id] ||= {}; workbench.milestones[item.id][event.target.dataset.peekMilestone] = event.target.checked; saveWorkbench(); renderAll(); renderPeek(item.id); }));
         $('#peek-progress-form')?.addEventListener('submit', event => {
           event.preventDefault();
-          const input = $('#peek-progress-input');
-          const note = String(input?.value || '').trim();
-          if (!note) return;
-          const entry = { date:new Date().toISOString(), note };
-          if (item.source === 'private') {
-            const local = findPrivate(item.id);
-            if (!local) return;
-            local.progress ||= [];
-            local.progress.unshift(entry);
-            local.updatedAt = entry.date;
-            savePrivate();
-          } else {
-            workbench.progress[item.id] ||= [];
-            workbench.progress[item.id].unshift(entry);
-            saveWorkbench();
-          }
-          renderAll(); renderPeek(item.id); toast(t('Progress saved locally.', '推进记录已保存在本机。'));
+          const input = $('#peek-progress-input'); const note = String(input?.value || '').trim(); if (!note) return;
+          const entry = { date:nowIso(), note };
+          if (item.source === 'private') { const local = findPrivate(item.id); if (!local) return; local.progress ||= []; local.progress.unshift(entry); local.updatedAt = entry.date; savePrivate(); }
+          else { workbench.progress[item.id] ||= []; workbench.progress[item.id].unshift(entry); saveWorkbench(); }
+          renderAll(); renderPeek(item.id); toast(t('Progress saved locally.','推进记录已保存在本机。'));
         });
-        $('#peek-delete-private')?.addEventListener('click', () => {
-          privateIdeas = privateIdeas.filter(local => local.id !== item.id);
-          savePrivate(); closePeek(); renderAll(); toast(t('Capture deleted.', '记录已删除。'));
-        });
+        $('#peek-delete-private')?.addEventListener('click', () => { privateIdeas = privateIdeas.filter(local => local.id !== item.id); savePrivate(); closePeek(); renderAll(); toast(t('Capture deleted.','记录已删除。')); });
       };
 
-      const openPeek = id => renderPeek(id);
+      const openPeek = (id, trigger = null) => {
+        if (!byId(id)) return;
+        if (trigger) lastPeekTrigger = trigger;
+        renderPeek(id);
+        requestAnimationFrame(() => $('#peek-close')?.focus({ preventScroll:true }));
+      };
       const closePeek = () => {
         openIdeaId = null;
         $('#idea-peek')?.classList.remove('open');
-        $('#idea-peek')?.setAttribute('aria-hidden', 'true');
-        $('#idea-peek-backdrop').hidden = true;
+        $('#idea-peek')?.setAttribute('aria-hidden','true');
+        const backdrop = $('#idea-peek-backdrop'); if (backdrop) backdrop.hidden = true;
         document.body.classList.remove('idea-peek-open');
+        const target = lastPeekTrigger; lastPeekTrigger = null;
+        if (target?.isConnected) requestAnimationFrame(() => target.focus({ preventScroll:true }));
       };
 
       const setStage = (id, stage, options = {}) => {
+        const normalized = normalizeStage(stage);
         const local = findPrivate(id);
-        if (local) {
-          local.stage = stage;
-          local.updatedAt = new Date().toISOString();
-          savePrivate();
-        } else if (publicById.has(id)) {
-          workbench.stage[id] = stage;
-          saveWorkbench();
-        }
+        if (local) { local.stage = normalized; local.updatedAt = nowIso(); savePrivate(); }
+        else if (publicById.has(id)) { workbench.stage[id] = normalized; saveWorkbench(); }
+        else return;
         renderAll();
         if (options.reopen && openIdeaId === id) renderPeek(id);
-        toast(t(`Moved to ${stageEn[stage] || stage}.`, `已移动到${stageZh[stage] || stage}。`));
+        toast(t(`Moved to ${stageEn[normalized]}.`, `已移动到${stageZh[normalized]}。`));
       };
 
+      const focusBoardLane = stage => {
+        setView('board');
+        requestAnimationFrame(() => document.querySelector(`[data-board-lane="${normalizeStage(stage)}"]`)?.scrollIntoView({ behavior:'smooth', block:'nearest', inline:'center' }));
+      };
       const setView = view => {
         if (!['cockpit','board','library'].includes(view)) return;
-        currentView = view;
-        try { localStorage.setItem(VIEW_KEY, view); } catch {}
-        $$('[data-idea-view]').forEach(button => {
-          const active = button.dataset.ideaView === view;
-          button.classList.toggle('active', active);
-          button.setAttribute('aria-pressed', active ? 'true' : 'false');
-        });
-        $$('[data-idea-view-panel]').forEach(panel => {
-          const active = panel.dataset.ideaViewPanel === view;
-          panel.hidden = !active;
-          panel.classList.toggle('active', active);
-        });
+        currentView = view; try { localStorage.setItem(VIEW_KEY,view); } catch {}
+        $$('[data-idea-view]').forEach(button => { const active = button.dataset.ideaView === view; button.classList.toggle('active',active); button.setAttribute('aria-pressed',active ? 'true' : 'false'); });
+        $$('[data-idea-view-panel]').forEach(panel => { const active = panel.dataset.ideaViewPanel === view; panel.hidden = !active; panel.classList.toggle('active',active); });
         if (view === 'board') renderBoard();
         if (view === 'library') renderLibrary();
       };
@@ -683,81 +550,38 @@ const seedIdeas = ideas.map(idea => ({
       const captureTitle = $('#idea-capture-title');
       const openCapture = () => {
         renderLibraryControls();
-        if (!captureDialog) return;
-        captureDialog.showModal();
+        if (!captureDialog || captureDialog.open) return;
+        if (openIdeaId) closePeek();
+        try { captureDialog.showModal(); } catch { captureDialog.setAttribute('open',''); }
         requestAnimationFrame(() => captureTitle?.focus());
       };
-      const closeCapture = () => captureDialog?.close();
+      const closeCapture = () => { if (!captureDialog?.open) return; try { captureDialog.close(); } catch { captureDialog.removeAttribute('open'); } };
+      const toast = message => { const node = $('#idea-toast'); if (!node) return; node.textContent = message; node.classList.add('visible'); clearTimeout(toast.timer); toast.timer = setTimeout(() => node.classList.remove('visible'),2100); };
 
-      const toast = message => {
-        const node = $('#idea-toast');
-        if (!node) return;
-        node.textContent = message;
-        node.classList.add('visible');
-        clearTimeout(toast.timer);
-        toast.timer = setTimeout(() => node.classList.remove('visible'), 2100);
-      };
-
-      const renderAll = () => {
-        updateStatusLine();
-        renderCockpit();
-        renderBoard();
-        renderLibrary();
-        bindDynamicOpeners();
-      };
-
-      const bindDynamicOpeners = () => {
+      const bindDynamic = () => {
         $$('[data-open-idea]').forEach(element => {
-          if (element.dataset.boundOpen) return;
-          element.dataset.boundOpen = '1';
-          element.addEventListener('click', event => {
-            if (dragMoved) { dragMoved = false; return; }
-            event.preventDefault();
-            openPeek(element.dataset.openIdea);
-          });
-          element.addEventListener('keydown', event => {
-            if (event.key === 'Enter' || event.key === ' ') {
-              event.preventDefault(); openPeek(element.dataset.openIdea);
-            }
-          });
+          if (element.dataset.boundOpen) return; element.dataset.boundOpen = '1';
+          element.addEventListener('click', event => { if (performance.now() < suppressOpenUntil) { event.preventDefault(); return; } event.preventDefault(); openPeek(element.dataset.openIdea, element); });
+          element.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openPeek(element.dataset.openIdea, element); } });
         });
-        $$('[data-switch-view]').forEach(button => button.addEventListener('click', () => setView(button.dataset.switchView)));
-        $$('[data-resurface-move]').forEach(button => button.addEventListener('click', () => setStage(button.dataset.resurfaceId, button.dataset.resurfaceMove)));
-        $$('[data-resurface-park]').forEach(button => button.addEventListener('click', () => setStage(button.dataset.resurfacePark, 'Parked')));
-        $$('[data-resurface-another]').forEach(button => button.addEventListener('click', () => {
-          const count = resurfaceCandidates().length || 1;
-          workbench.resurfaceIndex = (Number(workbench.resurfaceIndex || 0) + 1) % count;
-          saveWorkbench(); renderResurface(); bindDynamicOpeners();
-        }));
-
+        $$('[data-flow-stage]').forEach(button => { if (button.dataset.boundFlow) return; button.dataset.boundFlow='1'; button.addEventListener('click', () => focusBoardLane(button.dataset.flowStage)); });
+        $$('[data-switch-view]').forEach(button => { if (button.dataset.boundSwitch) return; button.dataset.boundSwitch='1'; button.addEventListener('click', () => setView(button.dataset.switchView)); });
+        $$('[data-resurface-move]').forEach(button => { if (button.dataset.boundMove) return; button.dataset.boundMove='1'; button.addEventListener('click', () => setStage(button.dataset.resurfaceId, button.dataset.resurfaceMove)); });
+        $$('[data-resurface-park]').forEach(button => { if (button.dataset.boundPark) return; button.dataset.boundPark='1'; button.addEventListener('click', () => setStage(button.dataset.resurfacePark,'Parked')); });
+        $$('[data-resurface-another]').forEach(button => { if (button.dataset.boundAnother) return; button.dataset.boundAnother='1'; button.addEventListener('click', () => { const count = resurfaceCandidates().length || 1; workbench.resurfaceIndex = (workbench.resurfaceIndex + 1) % count; saveWorkbench(); renderResurface(); bindDynamic(); }); });
         $$('[data-drag-idea]').forEach(card => {
-          if (card.dataset.boundDrag) return;
-          card.dataset.boundDrag = '1';
-          card.addEventListener('dragstart', event => {
-            draggingId = card.dataset.dragIdea;
-            dragMoved = true;
-            card.classList.add('dragging');
-            event.dataTransfer.effectAllowed = 'move';
-            event.dataTransfer.setData('text/plain', draggingId || '');
-          });
-          card.addEventListener('dragend', () => {
-            card.classList.remove('dragging');
-            draggingId = null;
-            $$('.board-dropzone').forEach(zone => zone.classList.remove('drag-over'));
-            setTimeout(() => { dragMoved = false; }, 50);
-          });
+          if (card.dataset.boundDrag) return; card.dataset.boundDrag='1';
+          card.addEventListener('dragstart', event => { draggingId = card.dataset.dragIdea; suppressOpenUntil = performance.now() + 900; card.classList.add('dragging'); if (event.dataTransfer) { event.dataTransfer.effectAllowed='move'; event.dataTransfer.setData('text/plain',draggingId || ''); } });
+          card.addEventListener('dragend', () => { card.classList.remove('dragging'); draggingId = null; $$('.board-dropzone').forEach(zone => zone.classList.remove('drag-over')); suppressOpenUntil = Math.max(suppressOpenUntil, performance.now() + 180); });
         });
       };
+
+      const renderAll = () => { updateStatusLine(); renderFlow(); renderCockpit(); renderBoard(); renderLibrary(); bindDynamic(); };
 
       $$('.board-dropzone').forEach(zone => {
-        zone.addEventListener('dragover', event => { event.preventDefault(); zone.classList.add('drag-over'); event.dataTransfer.dropEffect = 'move'; });
+        zone.addEventListener('dragover', event => { event.preventDefault(); zone.classList.add('drag-over'); if (event.dataTransfer) event.dataTransfer.dropEffect='move'; });
         zone.addEventListener('dragleave', event => { if (!zone.contains(event.relatedTarget)) zone.classList.remove('drag-over'); });
-        zone.addEventListener('drop', event => {
-          event.preventDefault();
-          zone.classList.remove('drag-over');
-          const id = draggingId || event.dataTransfer.getData('text/plain');
-          if (id) setStage(id, zone.dataset.dropStage);
-        });
+        zone.addEventListener('drop', event => { event.preventDefault(); zone.classList.remove('drag-over'); const id = draggingId || event.dataTransfer?.getData('text/plain'); draggingId = null; suppressOpenUntil = performance.now() + 350; if (id) setStage(id, zone.dataset.dropStage); });
       });
 
       $$('[data-idea-view]').forEach(button => button.addEventListener('click', () => setView(button.dataset.ideaView)));
@@ -766,64 +590,35 @@ const seedIdeas = ideas.map(idea => ({
       $('#idea-empty-capture')?.addEventListener('click', openCapture);
       $('#idea-capture-close')?.addEventListener('click', closeCapture);
       $('#idea-peek-backdrop')?.addEventListener('click', closePeek);
-      $('#show-parked')?.addEventListener('click', () => { parkedVisible = !parkedVisible; renderBoard(); bindDynamicOpeners(); });
+      $('#show-parked')?.addEventListener('click', () => { parkedVisible = !parkedVisible; renderBoard(); bindDynamic(); });
       $('#idea-library-search')?.addEventListener('input', renderLibrary);
       $('#idea-library-stage')?.addEventListener('change', renderLibrary);
       $('#idea-library-area')?.addEventListener('change', renderLibrary);
 
-      captureDialog?.addEventListener('click', event => {
-        const rect = captureDialog.getBoundingClientRect();
-        const inside = event.clientX >= rect.left && event.clientX <= rect.right && event.clientY >= rect.top && event.clientY <= rect.bottom;
-        if (!inside) closeCapture();
-      });
+      captureDialog?.addEventListener('click', event => { const rect = captureDialog.getBoundingClientRect(); const inside = event.clientX >= rect.left && event.clientX <= rect.right && event.clientY >= rect.top && event.clientY <= rect.bottom; if (!inside) closeCapture(); });
       captureForm?.addEventListener('submit', event => {
         event.preventDefault();
-        const data = new FormData(captureForm);
-        const title = String(data.get('title') || '').trim();
-        if (!title) return;
-        const now = new Date().toISOString();
-        privateIdeas.unshift({
-          id:`local-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,
-          title,
-          note:String(data.get('note') || '').trim(),
-          area:String(data.get('area') || 'Unsorted'),
-          stage:'Spark',
-          nextAction:'',
-          createdAt:now,
-          updatedAt:now,
-          progress:[]
-        });
-        savePrivate();
-        captureForm.reset();
-        closeCapture();
-        renderAll();
-        toast(t('Saved to your private Inbox.', '已存入你的私人收件箱。'));
+        const data = new FormData(captureForm); const title = String(data.get('title') || '').trim(); if (!title) return;
+        const now = nowIso(); const id = `local-${Date.now()}-${Math.random().toString(36).slice(2,7)}`;
+        privateIdeas.unshift({ id, title:title.slice(0,160), note:String(data.get('note') || '').trim(), area:normalizeArea(String(data.get('area') || 'Unsorted')), stage:'Spark', nextAction:'', createdAt:now, updatedAt:now, progress:[] });
+        savePrivate(); captureForm.reset(); closeCapture(); setView('cockpit'); renderAll(); toast(t('Saved to your private Inbox.','已存入你的私人收件箱。'));
       });
 
       document.addEventListener('keydown', event => {
         const tag = document.activeElement?.tagName?.toLowerCase();
         const editing = ['input','textarea','select'].includes(tag) || document.activeElement?.isContentEditable;
-        if (event.key === 'Escape') {
-          if (openIdeaId) { event.preventDefault(); closePeek(); return; }
-          if (captureDialog?.open) { event.preventDefault(); closeCapture(); return; }
-        }
-        if (!editing && !event.metaKey && !event.ctrlKey && !event.altKey && event.key.toLowerCase() === 'c') {
-          event.preventDefault(); openCapture();
-        }
+        if (event.key === 'Escape') { if (captureDialog?.open) { event.preventDefault(); closeCapture(); return; } if (openIdeaId) { event.preventDefault(); closePeek(); return; } }
+        if (!editing && !openIdeaId && !captureDialog?.open && !event.metaKey && !event.ctrlKey && !event.altKey && event.key.toLowerCase() === 'c') { event.preventDefault(); openCapture(); }
       });
-
-      document.addEventListener('kaize:ui-language', () => {
-        renderAll();
-        renderLibraryControls();
-        if (openIdeaId) renderPeek(openIdeaId);
-      });
-
-      renderLibraryControls();
-      setView(currentView);
-      renderAll();
+      document.addEventListener('kaize:ui-language', () => { renderAll(); renderLibraryControls(); if (openIdeaId) renderPeek(openIdeaId); });
 
       const params = new URLSearchParams(location.search);
-      if (params.get('capture') === '1') setTimeout(openCapture, 80);
+      const requestedView = params.get('view');
+      if (['cockpit','board','library'].includes(requestedView)) currentView = requestedView;
+      renderLibraryControls(); setView(currentView); renderAll();
+      const requestedOpen = params.get('open');
+      if (params.get('capture') === '1') setTimeout(openCapture,80);
+      else if (requestedOpen && byId(requestedOpen)) setTimeout(() => openPeek(requestedOpen),80);
     })();
   </script>
 </BaseLayout>
