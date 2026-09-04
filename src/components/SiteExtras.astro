@@ -1,5 +1,6 @@
 ---
 import PaperReaderWorkspace from '@/components/PaperReaderWorkspace.astro';
+import IdeaOwnerBridge from '@/components/IdeaOwnerBridge.astro';
 import '@/styles/article-reading-polish.css';
 import '@/styles/editorial-lighting.css';
 import '@/styles/ideas-drag-polish.css';
@@ -17,6 +18,8 @@ const isHuangReader = Astro.url.pathname.endsWith('/notes/paper-reading-huang-20
     appendixPdfPageStart={15}
   />
 )}
+
+<IdeaOwnerBridge />
 
 <script is:inline>
 (() => {
@@ -247,7 +250,9 @@ const isHuangReader = Astro.url.pathname.endsWith('/notes/paper-reading-huang-20
     };
 
     document.addEventListener('dragstart', event => {
-      if (event.target?.closest?.('.ideas-studio-v3 .board-card')) event.preventDefault();
+      if (!event.target?.closest?.('.ideas-studio-v3 .board-card')) return;
+      event.preventDefault();
+      if (!window.__kaizeIdeaOwner?.verified) event.stopImmediatePropagation();
     }, true);
 
     studio.addEventListener('click', event => {
@@ -258,6 +263,7 @@ const isHuangReader = Astro.url.pathname.endsWith('/notes/paper-reading-huang-20
     }, true);
 
     studio.addEventListener('pointerdown', event => {
+      if (!window.__kaizeIdeaOwner?.verified) return;
       const card = event.target?.closest?.('.board-card[data-drag-idea]');
       if (!card || event.isPrimary === false || event.button !== 0) return;
       if (event.target?.closest?.('input, textarea, select, button, a')) return;
