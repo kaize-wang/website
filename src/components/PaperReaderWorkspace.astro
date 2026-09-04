@@ -28,6 +28,12 @@ const {
       <button class="reader-source-tab" type="button" role="tab" aria-selected="false" data-source-mode="markdown">Markdown</button>
     </div>
     <button class="reader-source-close" type="button" data-reader-exit aria-label="Exit Reader">×</button>
+    <div class="reader-source-actions">
+      <label class="reader-file-button reader-entry-button">
+        <span data-reader-i18n="loadReplace">Load / Replace</span>
+        <input id="reader-source-file" type="file" accept="application/pdf,.pdf" />
+      </label>
+    </div>
   </header>
 
   <div class="reader-source-status" aria-live="polite">
@@ -36,12 +42,12 @@ const {
   </div>
 
   <div class="reader-pdf-stage" data-source-stage="pdf">
-    <div class="reader-loading" id="reader-pdf-loading"><span data-reader-i18n="restoringPdf">Restoring saved PDF…</span></div>
+    <div class="reader-loading" id="reader-pdf-loading"><span data-reader-i18n="pdfWaiting">PDF will load when Reader opens.</span></div>
     <iframe class="reader-pdf-frame" id="reader-pdf-frame" title="Huang 2008 paper PDF" hidden></iframe>
   </div>
 
   <div class="reader-markdown-stage" data-source-stage="markdown" hidden>
-    <div class="reader-loading" id="reader-markdown-loading"><span data-reader-i18n="restoringMarkdown">Restoring saved Markdown…</span></div>
+    <div class="reader-loading" id="reader-markdown-loading"><span data-reader-i18n="markdownWaiting">Markdown will load when selected.</span></div>
     <article class="reader-markdown-content" id="reader-markdown-content" hidden></article>
   </div>
 </aside>
@@ -62,6 +68,7 @@ const {
   const STORE_NAME = 'pdfs';
   const SPLIT_KEY = `kaize-reader-split:${noteId}`;
   const MODE_KEY = `kaize-reader-source-mode:${noteId}`;
+  const DB_TIMEOUT = 2500;
 
   const source = document.getElementById('paper-reader-source');
   const divider = document.getElementById('paper-reader-divider');
@@ -70,12 +77,13 @@ const {
   const mdStage = document.querySelector('[data-source-stage="markdown"]');
   const mdLoading = document.getElementById('reader-markdown-loading');
   const mdContent = document.getElementById('reader-markdown-content');
+  const fileInput = document.getElementById('reader-source-file');
   const status = document.getElementById('reader-source-status');
   const pageStatus = document.getElementById('reader-page-status');
   const articleWrap = document.querySelector('.article-wrap');
   const layout = document.querySelector('.article-page-layout');
   const toolbox = document.querySelector('.article-toolbox');
-  if (!source || !divider || !frame || !pdfLoading || !mdStage || !mdLoading || !mdContent || !articleWrap || !layout || !toolbox) return;
+  if (!source || !divider || !frame || !pdfLoading || !mdStage || !mdLoading || !mdContent || !fileInput || !articleWrap || !layout || !toolbox) return;
 
   const firstArticleChild = layout.firstElementChild;
   layout.insertBefore(source, firstArticleChild);
@@ -87,46 +95,120 @@ const {
     notes: ['Notes', '笔记'],
     source: ['Source', '原文'],
     exit: ['Exit', '退出'],
+    loadReplace: ['Load / Replace', '载入 / 替换'],
+    pdfWaiting: ['PDF will load when Reader opens.', '进入对照阅读后再载入 PDF。'],
+    markdownWaiting: ['Markdown will load when selected.', '切换到 Markdown 后再载入。'],
     restoringPdf: ['Restoring saved PDF…', '正在读取已保存的 PDF…'],
     restoringMarkdown: ['Restoring saved Markdown…', '正在读取已保存的 Markdown…'],
-    pdfReady: ['PDF · article + electronic companion · saved in this browser', 'PDF · 正文 + electronic companion · 已保存在此浏览器'],
-    markdownReady: ['Clean Markdown · article + electronic companion · saved in this browser', '清理版 Markdown · 正文 + electronic companion · 已保存在此浏览器'],
-    pdfMissing: ['No saved PDF was found in this browser.', '此浏览器中没有找到已保存的 PDF。'],
-    markdownMissing: ['No saved Markdown was found in this browser.', '此浏览器中没有找到已保存的 Markdown。']
+    pdfReady: ['PDF · saved in this browser', 'PDF · 已保存在此浏览器'],
+    markdownReady: ['Markdown · saved in this browser', 'Markdown · 已保存在此浏览器'],
+    pdfMissing: ['No saved PDF. Use Load / Replace.', '没有找到已保存的 PDF，可用“载入 / 替换”选择文件。'],
+    markdownMissing: ['No saved Markdown. Use Load / Replace.', '没有找到已保存的 Markdown，可用“载入 / 替换”选择文件。'],
+    sourceTimeout: ['Local source storage did not respond. You can still exit Reader or load the file again.', '本地原文存储没有响应。你仍可退出对照阅读，或重新载入文件。'],
+    sourceError: ['Could not read the saved source. Load the file again if needed.', '无法读取已保存的原文，如有需要请重新载入文件。'],
+    saving: ['Saving locally…', '正在保存到本地…']
   };
   const lang = () => window.__kaizeUi?.language === 'zh' ? 'zh' : 'en';
   const tr = key => (i18n[key] || [key, key])[lang() === 'zh' ? 1 : 0];
 
   let pdfUrl = '';
-  let pdfName = '';
   let pdfTrimmed = false;
-  let mdName = '';
   let mdText = '';
-  let restored = false;
-  let restorePromise = null;
   let pendingToken = '';
   let savedWindowY = 0;
   let activeMode = 'pdf';
+  let pdfState = 'idle';
+  let markdownState = 'idle';
+  let pdfPromise = null;
+  let markdownPromise = null;
   try { activeMode = localStorage.getItem(MODE_KEY) === 'markdown' ? 'markdown' : 'pdf'; } catch {}
+
+  const timeoutError = () => Object.assign(new Error('IndexedDB timeout'), { code: 'READER_DB_TIMEOUT' });
 
   const openDb = () => new Promise((resolve, reject) => {
     if (!('indexedDB' in window)) return reject(new Error('IndexedDB unavailable'));
-    const request = indexedDB.open(DB_NAME, 1);
-    request.onupgradeneeded = () => {
-      const db = request.result;
-      if (!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+    let settled = false;
+    let request;
+    const finish = (fn, value) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      fn(value);
     };
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error || new Error('Could not open local source store'));
+    const timer = window.setTimeout(() => finish(reject, timeoutError()), DB_TIMEOUT);
+    try {
+      request = indexedDB.open(DB_NAME, 1);
+      request.onupgradeneeded = () => {
+        const db = request.result;
+        if (!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+      };
+      request.onsuccess = () => {
+        if (settled) {
+          try { request.result.close(); } catch {}
+          return;
+        }
+        finish(resolve, request.result);
+      };
+      request.onerror = () => finish(reject, request.error || new Error('Could not open local source store'));
+      request.onblocked = () => finish(reject, new Error('Local source store is blocked'));
+    } catch (error) {
+      finish(reject, error);
+    }
   });
+
   const dbGet = async id => {
     const db = await openDb();
     return new Promise((resolve, reject) => {
-      const tx = db.transaction(STORE_NAME, 'readonly');
-      const req = tx.objectStore(STORE_NAME).get(id);
-      req.onsuccess = () => resolve(req.result || null);
-      req.onerror = () => reject(req.error || new Error('Could not read saved source'));
-      tx.oncomplete = () => db.close();
+      let settled = false;
+      let tx;
+      const finish = (fn, value) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        try { db.close(); } catch {}
+        fn(value);
+      };
+      const timer = window.setTimeout(() => {
+        try { tx?.abort(); } catch {}
+        finish(reject, timeoutError());
+      }, DB_TIMEOUT);
+      try {
+        tx = db.transaction(STORE_NAME, 'readonly');
+        const req = tx.objectStore(STORE_NAME).get(id);
+        req.onsuccess = () => finish(resolve, req.result || null);
+        req.onerror = () => finish(reject, req.error || new Error('Could not read saved source'));
+        tx.onabort = () => finish(reject, tx.error || new Error('Local source read was aborted'));
+      } catch (error) {
+        finish(reject, error);
+      }
+    });
+  };
+
+  const dbPut = async record => {
+    const db = await openDb();
+    return new Promise((resolve, reject) => {
+      let settled = false;
+      let tx;
+      const finish = (fn, value) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        try { db.close(); } catch {}
+        fn(value);
+      };
+      const timer = window.setTimeout(() => {
+        try { tx?.abort(); } catch {}
+        finish(reject, timeoutError());
+      }, DB_TIMEOUT);
+      try {
+        tx = db.transaction(STORE_NAME, 'readwrite');
+        const req = tx.objectStore(STORE_NAME).put(record);
+        req.onerror = () => finish(reject, req.error || new Error('Could not save local source'));
+        tx.oncomplete = () => finish(resolve, true);
+        tx.onabort = () => finish(reject, tx.error || new Error('Local source save was aborted'));
+      } catch (error) {
+        finish(reject, error);
+      }
     });
   };
 
@@ -135,9 +217,7 @@ const {
   const appendixPdfStart = () => Math.max(1, Number(appendixPdfPageStart) - (pdfTrimmed ? 1 : 0));
   const pdfPageForToken = token => {
     const value = String(token || '');
-    if (/^ec\d+$/i.test(value)) {
-      return Math.max(1, appendixPdfStart() + (Number(value.slice(2)) - Number(appendixPrintedPageStart)));
-    }
+    if (/^ec\d+$/i.test(value)) return Math.max(1, appendixPdfStart() + (Number(value.slice(2)) - Number(appendixPrintedPageStart)));
     return Math.max(1, mainPdfStart() + (Number(value) - Number(printedPageStart)));
   };
   const prettyToken = token => /^ec/i.test(String(token)) ? `EC p. ${String(token).slice(2)}` : `p. ${token}`;
@@ -148,26 +228,22 @@ const {
     const formalMarker = lines.findIndex(line => /MANAGEMENT SCIENCE Vol\. 54, No\. 8, August 2008, pp\. 1441[–-]1452/i.test(line));
     let start = formalMarker;
     if (start < 0) {
-      const titleIndexes = [];
+      const indexes = [];
       lines.forEach((line, index) => {
-        if (/^#\s+Managing the Inventory of an Item with a Replacement Warranty\s*$/i.test(line.trim())) titleIndexes.push(index);
+        if (/^#\s+Managing the Inventory of an Item with a Replacement Warranty\s*$/i.test(line.trim())) indexes.push(index);
       });
-      start = titleIndexes.length > 1 ? titleIndexes[1] : (titleIndexes[0] ?? 0);
+      start = indexes.length > 1 ? indexes[1] : (indexes[0] ?? 0);
     }
-    const body = lines.slice(Math.max(0, start));
-    const cleaned = [];
-    for (let index = 0; index < body.length; index += 1) {
-      const line = body[index];
-      const trimmed = line.trim();
-      if (/^RIGHTSLINKI?$/i.test(trimmed)) continue;
-      if (/^Downloaded from informs\.org by /i.test(trimmed)) continue;
-      if (/^Huang, Kulkarni, and Swaminathan: Managing the Inventory of an Item/i.test(trimmed)) continue;
-      if (/^with a Replacement Warranty Management Science 54\(8\)/i.test(trimmed)) continue;
-      if (/^Management Science 54\(8\), pp\. 1441[–-]1452/i.test(trimmed)) continue;
-      if (/^©\s*2008 INFORMS$/i.test(trimmed)) continue;
-      cleaned.push(line);
-    }
-    return cleaned.join('\n').trim();
+    return lines.slice(Math.max(0, start)).filter(line => {
+      const value = line.trim();
+      if (/^RIGHTSLINKI?$/i.test(value)) return false;
+      if (/^Downloaded from informs\.org by /i.test(value)) return false;
+      if (/^Huang, Kulkarni, and Swaminathan: Managing the Inventory of an Item/i.test(value)) return false;
+      if (/^with a Replacement Warranty Management Science 54\(8\)/i.test(value)) return false;
+      if (/^Management Science 54\(8\), pp\. 1441[–-]1452/i.test(value)) return false;
+      if (/^©\s*2008 INFORMS$/i.test(value)) return false;
+      return true;
+    }).join('\n').trim();
   };
 
   const escapeHtml = value => String(value).replace(/[&<>"']/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch]));
@@ -180,6 +256,7 @@ const {
     text = text.replace(/\*([^*]+)\*/g, '<em>$1</em>');
     return text;
   };
+
   const renderTable = rows => {
     const parsed = rows.map(row => row.trim().replace(/^\||\|$/g, '').split('|').map(cell => cell.trim()));
     if (parsed.length < 2) return rows.map(row => `<p>${inlineMarkdown(row)}</p>`).join('');
@@ -187,8 +264,9 @@ const {
     const body = parsed.slice(2);
     return `<div class="reader-md-table-wrap"><table><thead><tr>${header.map(cell => `<th>${inlineMarkdown(cell)}</th>`).join('')}</tr></thead><tbody>${body.map(row => `<tr>${row.map(cell => `<td>${inlineMarkdown(cell)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
   };
-  const renderMarkdown = raw => {
-    const lines = cleanMarkdown(raw).split(/\r?\n/);
+
+  const renderMarkdown = cleaned => {
+    const lines = String(cleaned || '').split(/\r?\n/);
     const out = [];
     let paragraph = [];
     let math = [];
@@ -229,14 +307,8 @@ const {
       if (/^\|.*\|$/.test(trimmed)) { flushParagraph(); table.push(trimmed); return; }
       if (table.length) flushTable();
       if (!trimmed) { flushParagraph(); return; }
-
-      if (/^14(?:4[1-9]|5[0-2])$/.test(trimmed)) {
-        flushParagraph(); addPageAnchor(trimmed); return;
-      }
-      if (appendixMode && /^(?:29|30|31|32|33|34|35)$/.test(trimmed)) {
-        flushParagraph(); addPageAnchor(`ec${trimmed}`); return;
-      }
-
+      if (/^14(?:4[1-9]|5[0-2])$/.test(trimmed)) { flushParagraph(); addPageAnchor(trimmed); return; }
+      if (appendixMode && /^(?:29|30|31|32|33|34|35)$/.test(trimmed)) { flushParagraph(); addPageAnchor(`ec${trimmed}`); return; }
       const heading = trimmed.match(/^(#{1,4})\s+(.+)$/);
       if (heading) {
         flushParagraph();
@@ -244,21 +316,9 @@ const {
         out.push(`<h${level}>${inlineMarkdown(heading[2])}</h${level}>`);
         return;
       }
-      if (/^>\s?/.test(trimmed)) {
-        flushParagraph();
-        out.push(`<blockquote>${inlineMarkdown(trimmed.replace(/^>\s?/, ''))}</blockquote>`);
-        return;
-      }
-      if (/^[-*+]\s+/.test(trimmed)) {
-        flushParagraph();
-        out.push(`<div class="reader-md-list-item">• ${inlineMarkdown(trimmed.replace(/^[-*+]\s+/, ''))}</div>`);
-        return;
-      }
-      if (/^\d+[.)]\s+/.test(trimmed)) {
-        flushParagraph();
-        out.push(`<div class="reader-md-list-item">${inlineMarkdown(trimmed)}</div>`);
-        return;
-      }
+      if (/^>\s?/.test(trimmed)) { flushParagraph(); out.push(`<blockquote>${inlineMarkdown(trimmed.replace(/^>\s?/, ''))}</blockquote>`); return; }
+      if (/^[-*+]\s+/.test(trimmed)) { flushParagraph(); out.push(`<div class="reader-md-list-item">• ${inlineMarkdown(trimmed.replace(/^[-*+]\s+/, ''))}</div>`); return; }
+      if (/^\d+[.)]\s+/.test(trimmed)) { flushParagraph(); out.push(`<div class="reader-md-list-item">${inlineMarkdown(trimmed)}</div>`); return; }
       paragraph.push(trimmed);
     });
     flushParagraph(); flushTable();
@@ -271,30 +331,49 @@ const {
     if (pdfUrl) URL.revokeObjectURL(pdfUrl);
     pdfUrl = '';
   };
+
   const showPdf = (blob, name = 'paper.pdf', trimmed = false) => {
     releasePdfUrl();
     pdfUrl = URL.createObjectURL(blob);
-    pdfName = name;
-    pdfTrimmed = Boolean(trimmed);
+    pdfTrimmed = Boolean(trimmed) || isTrimmedName(name);
+    pdfState = 'ready';
     pdfLoading.hidden = true;
     frame.hidden = false;
-    frame.src = `${pdfUrl}#page=${mainPdfStart()}&view=FitH`;
+    const page = pendingToken ? pdfPageForToken(pendingToken) : mainPdfStart();
+    frame.src = `${pdfUrl}#page=${page}&view=FitH`;
+    syncStatus();
   };
-  const showMarkdown = (text, name = 'paper.md') => {
+
+  const showMarkdown = async (text, name = 'paper.md') => {
     mdText = cleanMarkdown(text);
-    mdName = name;
+    await new Promise(resolve => requestAnimationFrame(resolve));
     mdContent.innerHTML = renderMarkdown(mdText);
+    markdownState = 'ready';
     mdLoading.hidden = true;
     mdContent.hidden = false;
+    syncStatus();
+    if (pendingToken) {
+      const target = mdContent.querySelector(`[data-reader-md-page="${CSS.escape(pendingToken)}"]`);
+      target?.scrollIntoView({ block: 'start', behavior: 'auto' });
+    }
+  };
+
+  const stateMessage = mode => {
+    const state = mode === 'markdown' ? markdownState : pdfState;
+    if (state === 'loading') return tr(mode === 'markdown' ? 'restoringMarkdown' : 'restoringPdf');
+    if (state === 'ready') return tr(mode === 'markdown' ? 'markdownReady' : 'pdfReady');
+    if (state === 'timeout') return tr('sourceTimeout');
+    if (state === 'error') return tr('sourceError');
+    if (state === 'missing') return tr(mode === 'markdown' ? 'markdownMissing' : 'pdfMissing');
+    return tr(mode === 'markdown' ? 'markdownWaiting' : 'pdfWaiting');
   };
 
   const syncStatus = () => {
-    if (activeMode === 'markdown') {
-      if (mdText) status.textContent = tr('markdownReady');
-      else status.textContent = tr('markdownMissing');
-    } else if (pdfUrl) status.textContent = tr('pdfReady');
-    else status.textContent = tr('pdfMissing');
+    if (status) status.textContent = stateMessage(activeMode);
+    if (activeMode === 'pdf' && pdfState !== 'ready') pdfLoading.textContent = stateMessage('pdf');
+    if (activeMode === 'markdown' && markdownState !== 'ready') mdLoading.textContent = stateMessage('markdown');
   };
+
   const syncLanguage = () => {
     document.querySelectorAll('[data-reader-i18n]').forEach(node => {
       const key = node.dataset.readerI18n;
@@ -305,7 +384,55 @@ const {
     if (toggle) toggle.textContent = document.body.classList.contains('paper-reader-active') ? tr('exitReader') : tr('reader');
   };
 
-  const setSourceMode = mode => {
+  const handleLoadFailure = (mode, error) => {
+    const next = error?.code === 'READER_DB_TIMEOUT' ? 'timeout' : 'error';
+    if (mode === 'markdown') markdownState = next;
+    else pdfState = next;
+    syncStatus();
+  };
+
+  const loadPdf = () => {
+    if (pdfState === 'ready') return Promise.resolve();
+    if (pdfPromise) return pdfPromise;
+    pdfState = 'loading';
+    syncStatus();
+    pdfPromise = (async () => {
+      try {
+        const saved = await dbGet(`${noteId}:pdf`) || await dbGet(noteId);
+        if (saved?.blob) showPdf(saved.blob, saved.name || 'paper.pdf', Boolean(saved.trimmed));
+        else { pdfState = 'missing'; syncStatus(); }
+      } catch (error) {
+        handleLoadFailure('pdf', error);
+      } finally {
+        pdfPromise = null;
+      }
+    })();
+    return pdfPromise;
+  };
+
+  const loadMarkdown = () => {
+    if (markdownState === 'ready') return Promise.resolve();
+    if (markdownPromise) return markdownPromise;
+    markdownState = 'loading';
+    syncStatus();
+    markdownPromise = (async () => {
+      try {
+        const saved = await dbGet(`${noteId}:markdown`);
+        if (saved?.text) await showMarkdown(saved.text, saved.name || 'paper.md');
+        else { markdownState = 'missing'; syncStatus(); }
+      } catch (error) {
+        handleLoadFailure('markdown', error);
+      } finally {
+        markdownPromise = null;
+      }
+    })();
+    return markdownPromise;
+  };
+
+  const ensureSource = mode => mode === 'markdown' ? loadMarkdown() : loadPdf();
+  const scheduleSource = mode => window.setTimeout(() => { void ensureSource(mode); }, 0);
+
+  const setSourceMode = (mode, shouldLoad = true) => {
     activeMode = mode === 'markdown' ? 'markdown' : 'pdf';
     try { localStorage.setItem(MODE_KEY, activeMode); } catch {}
     document.querySelectorAll('[data-source-mode]').forEach(button => {
@@ -315,46 +442,30 @@ const {
     });
     document.querySelector('[data-source-stage="pdf"]')?.toggleAttribute('hidden', activeMode !== 'pdf');
     mdStage.toggleAttribute('hidden', activeMode !== 'markdown');
+    fileInput.accept = activeMode === 'markdown' ? '.md,.markdown,text/markdown,text/plain' : 'application/pdf,.pdf';
     syncStatus();
-  };
-
-  const restoreSources = async () => {
-    if (restored) return;
-    if (restorePromise) return restorePromise;
-    restorePromise = (async () => {
-      try {
-        const pdf = await dbGet(`${noteId}:pdf`) || await dbGet(noteId);
-        if (pdf?.blob) showPdf(pdf.blob, pdf.name || 'paper.pdf', Boolean(pdf.trimmed) || isTrimmedName(pdf.name));
-        else { pdfLoading.textContent = tr('pdfMissing'); }
-      } catch { pdfLoading.textContent = tr('pdfMissing'); }
-      try {
-        const md = await dbGet(`${noteId}:markdown`);
-        if (md?.text) showMarkdown(md.text, md.name || 'paper.md');
-        else { mdLoading.textContent = tr('markdownMissing'); }
-      } catch { mdLoading.textContent = tr('markdownMissing'); }
-      restored = true;
-      restorePromise = null;
-      setSourceMode(activeMode);
-      syncLanguage();
-    })();
-    return restorePromise;
+    if (shouldLoad && document.body.classList.contains('paper-reader-active')) scheduleSource(activeMode);
   };
 
   const jumpToSource = (token, preferredMode = activeMode) => {
     if (!token) return;
     pendingToken = String(token);
     document.querySelectorAll('.source-page-marker').forEach(marker => marker.classList.toggle('is-active', marker.dataset.sourcePage === pendingToken));
-    if (preferredMode === 'markdown' && mdText) {
-      setSourceMode('markdown');
-      const target = mdContent.querySelector(`[data-reader-md-page="${CSS.escape(pendingToken)}"]`);
-      if (pageStatus) pageStatus.textContent = `${prettyToken(pendingToken)} · Markdown`;
-      target?.scrollIntoView({ block: 'start', behavior: 'smooth' });
-      return;
-    }
-    setSourceMode('pdf');
-    const pdfPage = pdfPageForToken(pendingToken);
-    if (pageStatus) pageStatus.textContent = `${prettyToken(pendingToken)} · PDF ${pdfPage}`;
-    if (pdfUrl) frame.src = `${pdfUrl}#page=${pdfPage}&view=FitH`;
+    setSourceMode(preferredMode, false);
+    if (pageStatus) pageStatus.textContent = prettyToken(pendingToken);
+    void ensureSource(activeMode).then(() => {
+      if (activeMode === 'markdown' && markdownState === 'ready') {
+        const target = mdContent.querySelector(`[data-reader-md-page="${CSS.escape(pendingToken)}"]`);
+        if (pageStatus) pageStatus.textContent = `${prettyToken(pendingToken)} · Markdown`;
+        target?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+        return;
+      }
+      if (activeMode === 'pdf' && pdfState === 'ready' && pdfUrl) {
+        const page = pdfPageForToken(pendingToken);
+        if (pageStatus) pageStatus.textContent = `${prettyToken(pendingToken)} · PDF ${page}`;
+        frame.src = `${pdfUrl}#page=${page}&view=FitH`;
+      }
+    });
   };
 
   const applySavedSplit = () => {
@@ -363,12 +474,14 @@ const {
     value = Math.min(68, Math.max(32, Number.isFinite(value) ? value : 48));
     layout.style.setProperty('--reader-left', `${value}vw`);
   };
+
   const setPane = pane => {
     const next = pane === 'source' ? 'source' : 'notes';
     document.body.dataset.readerPane = next;
     document.querySelectorAll('[data-reader-pane-button]').forEach(button => button.classList.toggle('active', button.dataset.readerPaneButton === next));
   };
-  const openReader = async (pane = 'notes', marker = null) => {
+
+  const openReader = (pane = 'notes', marker = null) => {
     if (!document.body.classList.contains('paper-reader-active')) savedWindowY = window.scrollY;
     document.body.classList.remove('focus-reading', 'academic-view');
     document.body.classList.add('paper-reader-active');
@@ -376,11 +489,15 @@ const {
     divider.hidden = false;
     applySavedSplit();
     setPane(pane);
-    await restoreSources();
-    if (pendingToken) jumpToSource(pendingToken, activeMode);
+    setSourceMode(activeMode, false);
     syncLanguage();
-    if (marker) requestAnimationFrame(() => { articleWrap.scrollTop = Math.max(0, marker.offsetTop - 120); });
+    requestAnimationFrame(() => {
+      if (!document.body.classList.contains('paper-reader-active')) return;
+      scheduleSource(activeMode);
+      if (marker) articleWrap.scrollTop = Math.max(0, marker.offsetTop - 120);
+    });
   };
+
   const closeReader = () => {
     document.body.classList.remove('paper-reader-active', 'reader-resizing');
     document.body.removeAttribute('data-reader-pane');
@@ -398,9 +515,9 @@ const {
   readerButton.setAttribute('aria-pressed', 'false');
   const focusButton = document.getElementById('focus-reading');
   toolbox.insertBefore(readerButton, focusButton || null);
-  readerButton.addEventListener('click', async () => {
+  readerButton.addEventListener('click', () => {
     if (document.body.classList.contains('paper-reader-active')) closeReader();
-    else await openReader('notes');
+    else openReader('notes');
     readerButton.setAttribute('aria-pressed', document.body.classList.contains('paper-reader-active') ? 'true' : 'false');
   });
 
@@ -429,8 +546,8 @@ const {
         button.dataset.sourcePage = token;
         button.textContent = prettyToken(token);
         button.title = `Open source at ${prettyToken(token)}`;
-        button.addEventListener('click', async () => {
-          await openReader('source', button);
+        button.addEventListener('click', () => {
+          openReader('source', button);
           jumpToSource(token, activeMode);
         });
         fragment.append(button);
@@ -442,11 +559,35 @@ const {
   }
 
   document.querySelectorAll('[data-source-mode]').forEach(button => button.addEventListener('click', () => {
-    setSourceMode(button.dataset.sourceMode);
+    setSourceMode(button.dataset.sourceMode, true);
     if (pendingToken) jumpToSource(pendingToken, activeMode);
   }));
   document.querySelectorAll('[data-reader-pane-button]').forEach(button => button.addEventListener('click', () => setPane(button.dataset.readerPaneButton)));
   document.querySelectorAll('[data-reader-exit]').forEach(button => button.addEventListener('click', closeReader));
+
+  fileInput.addEventListener('change', async () => {
+    const file = fileInput.files?.[0];
+    if (!file) return;
+    if (status) status.textContent = tr('saving');
+    try {
+      if (activeMode === 'markdown') {
+        const text = await file.text();
+        await dbPut({ id: `${noteId}:markdown`, name: file.name, text, savedAt: Date.now() });
+        markdownState = 'loading';
+        await showMarkdown(text, file.name);
+      } else {
+        const blob = file.slice(0, file.size, file.type || 'application/pdf');
+        const trimmed = isTrimmedName(file.name);
+        await dbPut({ id: `${noteId}:pdf`, name: file.name, blob, trimmed, savedAt: Date.now() });
+        showPdf(blob, file.name, trimmed);
+      }
+    } catch (error) {
+      handleLoadFailure(activeMode, error);
+    } finally {
+      fileInput.value = '';
+      syncStatus();
+    }
+  });
 
   let resizing = false;
   const setSplitFromX = clientX => {
@@ -465,7 +606,7 @@ const {
     if (!resizing) return;
     resizing = false;
     document.body.classList.remove('reader-resizing');
-    divider.releasePointerCapture?.(event.pointerId);
+    try { divider.releasePointerCapture?.(event.pointerId); } catch {}
   };
   divider.addEventListener('pointerup', endResize);
   divider.addEventListener('pointercancel', endResize);
@@ -483,7 +624,7 @@ const {
     if (event.key === 'Escape' && document.body.classList.contains('paper-reader-active')) closeReader();
   });
   window.addEventListener('pagehide', releasePdfUrl, { once: true });
-  setSourceMode(activeMode);
+  setSourceMode(activeMode, false);
   syncLanguage();
 })();
 </script>
