@@ -80,12 +80,14 @@ const notes = defineCollection({
 
 const ideaMilestoneSchema = z.object({
   text: z.string(),
+  textZh: z.string().optional(),
   done: z.boolean().default(false)
 });
 
 const ideaProgressSchema = z.object({
   date: z.coerce.date(),
-  note: z.string()
+  note: z.string(),
+  noteZh: z.string().optional()
 });
 
 const ideas = defineCollection({
@@ -96,13 +98,17 @@ const ideas = defineCollection({
   }),
   schema: z.object({
     title: z.string(),
+    titleZh: z.string().optional(),
     summary: z.string(),
+    summaryZh: z.string().optional(),
     area: z.enum(['Research', 'Build', 'Life', 'Writing', 'Learning']).default('Build'),
     stage: z.enum(['Spark', 'Exploring', 'Active', 'Realized', 'Parked']).default('Spark'),
     createdDate: z.coerce.date(),
     updatedDate: z.coerce.date().optional(),
     nextAction: z.string().optional(),
+    nextActionZh: z.string().optional(),
     whyNow: z.string().optional(),
+    whyNowZh: z.string().optional(),
     milestones: z.array(ideaMilestoneSchema).default([]),
     progress: z.array(ideaProgressSchema).default([]),
     tags: z.array(z.string()).default([]),
