@@ -1,0 +1,49 @@
+/* Long display equations keep their normal mathematical size.
+   Only the formula cell scrolls; the equation number remains in its own column. */
+.prose .katex-display.math-wide,
+.prose .katex-display.math-very-wide {
+  font-size: 1em !important;
+}
+
+.equation-layout {
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center;
+}
+
+.equation-layout .equation-scroll-cell {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--muted) 42%, transparent) transparent;
+}
+
+.equation-layout .equation-scroll-cell::-webkit-scrollbar {
+  height: 5px;
+}
+
+.equation-layout .equation-scroll-cell::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.equation-layout .equation-scroll-cell::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--muted) 42%, transparent);
+}
+
+.equation-layout .equation-number {
+  flex: none;
+  position: relative;
+  z-index: 1;
+  align-self: center;
+  white-space: nowrap;
+}
+
+@media (max-width: 620px) {
+  .prose .katex-display.math-wide,
+  .prose .katex-display.math-very-wide {
+    font-size: 1em !important;
+  }
+}
