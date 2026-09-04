@@ -1,10 +1,37 @@
 /* Ideas Board interaction layer: reliable pointer drag + clearer stage headers. */
 
+/* Keep the view indices deliberately small, but no longer cryptic. */
+.ideas-studio-v3 .idea-view-tab::before {
+  min-width: 14px;
+  color: color-mix(in srgb, var(--muted) 76%, var(--text));
+  font-size: 8px;
+  font-weight: 650;
+  letter-spacing: .06em;
+  opacity: .86;
+}
+.ideas-studio-v3 .idea-view-tab.active::before {
+  color: var(--accent);
+  opacity: 1;
+}
+
 .ideas-studio-v3 .board-lane header {
   grid-template-columns: 30px minmax(0, 1fr) auto;
   gap: 10px;
   align-items: center;
   min-height: 30px;
+}
+
+/* The old stage node sat half outside an overflow container and was visibly clipped.
+   Keep the railway metaphor, but move the node fully inside the Board surface. */
+.ideas-studio-v3 .board-lane::before {
+  top: 5px;
+  width: 5px;
+  height: 5px;
+}
+.ideas-studio-v3 .board-lane[data-board-lane='Active']::before {
+  top: 4px;
+  width: 7px;
+  height: 7px;
 }
 
 .ideas-studio-v3 .board-lane-index {
@@ -157,6 +184,7 @@ body.idea-pointer-dragging * { cursor: grabbing !important; }
 }
 
 @media (max-width: 760px) {
+  .ideas-studio-v3 .idea-view-tab::before { font-size: 8.5px; }
   .ideas-studio-v3 .board-lane-index {
     width: 26px;
     height: 26px;
