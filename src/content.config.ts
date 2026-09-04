@@ -78,4 +78,37 @@ const notes = defineCollection({
   })
 });
 
-export const collections = { notes };
+const ideaMilestoneSchema = z.object({
+  text: z.string(),
+  done: z.boolean().default(false)
+});
+
+const ideaProgressSchema = z.object({
+  date: z.coerce.date(),
+  note: z.string()
+});
+
+const ideas = defineCollection({
+  loader: glob({
+    base: './src/content/ideas',
+    pattern: '**/*.{md,mdx}',
+    generateId: ({ entry }) => entry.replace(/\/index\.(md|mdx)$/i, '').replace(/\.(md|mdx)$/i, '')
+  }),
+  schema: z.object({
+    title: z.string(),
+    summary: z.string(),
+    area: z.enum(['Research', 'Build', 'Life', 'Writing', 'Learning']).default('Build'),
+    stage: z.enum(['Spark', 'Exploring', 'Active', 'Realized', 'Parked']).default('Spark'),
+    createdDate: z.coerce.date(),
+    updatedDate: z.coerce.date().optional(),
+    nextAction: z.string().optional(),
+    whyNow: z.string().optional(),
+    milestones: z.array(ideaMilestoneSchema).default([]),
+    progress: z.array(ideaProgressSchema).default([]),
+    tags: z.array(z.string()).default([]),
+    draft: z.boolean().default(false),
+    featured: z.boolean().default(false)
+  })
+});
+
+export const collections = { notes, ideas };
