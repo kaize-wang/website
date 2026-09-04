@@ -1,0 +1,113 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import SiteExtras from '@/components/SiteExtras.astro';
+import '@/styles/research-primer.css';
+import { withBase } from '@/utils/url';
+---
+<BaseLayout title="Operations Research" active="Research">
+  <main class="site-shell research-primer-page">
+    <header class="page-hero">
+      <div class="eyebrow"><span class="ui-copy-en">Research primer · 03</span><span class="ui-copy-zh">研究科普 · 03</span></div>
+      <h1>Operations Research</h1>
+      <p class="research-primer-lede">
+        <span class="ui-copy-en">Operations research turns a real decision system into a mathematical object that can be reasoned about, optimized, computed, and tested. The goal is not a beautiful model by itself; the goal is a better decision.</span>
+        <span class="ui-copy-zh">运筹学把真实世界里的决策系统转化成可以分析、优化、计算与检验的数学对象。目标并不是“模型本身漂亮”，而是最终能得到更好的决策。</span>
+      </p>
+      <div class="research-primer-meta">
+        <span><span class="ui-copy-en">Mathematical modelling</span><span class="ui-copy-zh">数学建模</span></span>
+        <span><span class="ui-copy-en">Optimization</span><span class="ui-copy-zh">优化</span></span>
+        <span><span class="ui-copy-en">Probability</span><span class="ui-copy-zh">概率</span></span>
+        <span><span class="ui-copy-en">Algorithms</span><span class="ui-copy-zh">算法</span></span>
+      </div>
+    </header>
+
+    <section class="primer-flow" aria-label="Operations research mental model">
+      <div class="primer-flow-track" style="--flow-count:5">
+        <div class="primer-flow-step"><b>01</b><span><span class="ui-copy-en">Real system</span><span class="ui-copy-zh">真实系统</span></span></div>
+        <div class="primer-flow-step"><b>02</b><span><span class="ui-copy-en">Mathematical model</span><span class="ui-copy-zh">数学模型</span></span></div>
+        <div class="primer-flow-step is-focus"><b>03</b><span><span class="ui-copy-en">Optimize</span><span class="ui-copy-zh">求解优化</span></span></div>
+        <div class="primer-flow-step"><b>04</b><span><span class="ui-copy-en">Decision rule</span><span class="ui-copy-zh">形成决策规则</span></span></div>
+        <div class="primer-flow-step"><b>05</b><span><span class="ui-copy-en">Validate</span><span class="ui-copy-zh">验证效果</span></span></div>
+      </div>
+    </section>
+
+    <section class="primer-section">
+      <div class="primer-section-head">
+        <span class="primer-section-index">01</span>
+        <div>
+          <h2><span class="ui-copy-en">What does operations research actually do?</span><span class="ui-copy-zh">运筹学到底是在做什么？</span></h2>
+          <p><span class="ui-copy-en">It creates a disciplined bridge between a messy operational system and a decision that can be justified.</span><span class="ui-copy-zh">它做的事情，是在复杂、混乱的真实运营系统和一个可以被解释、被证明、被计算的决策之间搭桥。</span></p>
+        </div>
+      </div>
+      <div class="primer-prose">
+        <p><span class="ui-copy-en">A factory must decide production quantities, a hospital must schedule resources, a retailer must replenish inventory, a logistics network must route flows. These problems look different on the surface, but operations research asks a common set of questions: what are the decisions, what is uncertain, what is constrained, and what does “better” mean?</span><span class="ui-copy-zh">工厂要决定生产多少，医院要安排资源，零售商要补多少库存，物流网络要怎样分配路径。表面上它们完全不同，但运筹学会用一套共同的问题去拆解：什么是决策变量？什么存在不确定性？有哪些约束？所谓“更好”到底是什么意思？</span></p>
+        <p><span class="ui-copy-en">The power of the discipline comes from abstraction. A good model removes details that do not matter for the decision while preserving the mechanisms that do.</span><span class="ui-copy-zh">这个学科的力量来自抽象。好的模型会删掉与决策无关的细节，同时尽可能保留真正决定系统行为的机制。</span></p>
+      </div>
+      <div class="primer-concepts">
+        <article class="primer-concept"><span>A</span><h3><span class="ui-copy-en">Decision variables</span><span class="ui-copy-zh">决策变量</span></h3><p><span class="ui-copy-en">The quantities the decision maker controls: order quantities, schedules, allocations, routes, capacities, and policies.</span><span class="ui-copy-zh">真正由决策者控制的量，例如订货量、排程、资源分配、路径、容量或策略。</span></p></article>
+        <article class="primer-concept"><span>B</span><h3><span class="ui-copy-en">Objective</span><span class="ui-copy-zh">目标函数</span></h3><p><span class="ui-copy-en">A quantitative expression of what the system is trying to improve—cost, service, delay, risk, profit, or a combination.</span><span class="ui-copy-zh">把“我们想优化什么”定量化，例如成本、服务水平、延迟、风险、利润，或它们的组合。</span></p></article>
+        <article class="primer-concept"><span>C</span><h3><span class="ui-copy-en">Constraints</span><span class="ui-copy-zh">约束</span></h3><p><span class="ui-copy-en">The physical, informational, financial, or logical limits that make a mathematically attractive action actually feasible—or not.</span><span class="ui-copy-zh">现实中的物理、信息、资金或逻辑限制，它们决定一个数学上漂亮的方案究竟能不能真正执行。</span></p></article>
+      </div>
+    </section>
+
+    <section class="primer-section">
+      <div class="primer-section-head">
+        <span class="primer-section-index">02</span>
+        <div>
+          <h2><span class="ui-copy-en">A modelling pipeline</span><span class="ui-copy-zh">一个典型的建模流程</span></h2>
+          <p><span class="ui-copy-en">The hardest step is often not solving the optimization problem. It is deciding what problem should be solved in the first place.</span><span class="ui-copy-zh">很多时候最难的并不是“把优化模型求出来”，而是先判断究竟应该求解哪一个问题。</span></p>
+        </div>
+      </div>
+      <div class="primer-question-list">
+        <article class="primer-question"><span>01</span><div><strong><span class="ui-copy-en">Observe the mechanism</span><span class="ui-copy-zh">先看真实机制</span></strong><p><span class="ui-copy-en">Which flows, delays, failures, queues, replenishments, or interactions actually drive the system?</span><span class="ui-copy-zh">系统真正由哪些流、延迟、失效、排队、补货或相互作用推动？</span></p></div></article>
+        <article class="primer-question"><span>02</span><div><strong><span class="ui-copy-en">Choose the abstraction</span><span class="ui-copy-zh">选择抽象层次</span></strong><p><span class="ui-copy-en">Keep what changes decisions; discard what only adds realism without changing the policy.</span><span class="ui-copy-zh">保留真正会改变决策的因素，删掉只是“更像现实”却不改变策略的细节。</span></p></div></article>
+        <article class="primer-question"><span>03</span><div><strong><span class="ui-copy-en">Build objective and constraints</span><span class="ui-copy-zh">写出目标与约束</span></strong><p><span class="ui-copy-en">This is where practical priorities become mathematical trade-offs.</span><span class="ui-copy-zh">这一步把现实中的优先级转化成可以权衡的数学目标。</span></p></div></article>
+        <article class="primer-question"><span>04</span><div><strong><span class="ui-copy-en">Solve or approximate</span><span class="ui-copy-zh">精确求解或近似</span></strong><p><span class="ui-copy-en">Depending on the model, this may mean linear programming, dynamic programming, simulation, decomposition, heuristics, or learning-based methods.</span><span class="ui-copy-zh">根据模型不同，可能使用线性规划、动态规划、仿真、分解、启发式方法或学习方法。</span></p></div></article>
+        <article class="primer-question"><span>05</span><div><strong><span class="ui-copy-en">Interpret and validate</span><span class="ui-copy-zh">解释并验证</span></strong><p><span class="ui-copy-en">A solution is useful only if we understand when it works, how sensitive it is, and whether it survives contact with the real system.</span><span class="ui-copy-zh">一个解只有在我们知道它什么时候成立、对参数有多敏感、放回真实系统后是否仍然有效时，才真正有价值。</span></p></div></article>
+      </div>
+    </section>
+
+    <section class="primer-section">
+      <div class="primer-section-head">
+        <span class="primer-section-index">03</span>
+        <div>
+          <h2><span class="ui-copy-en">Where inventory theory fits</span><span class="ui-copy-zh">库存理论在运筹学里处于什么位置？</span></h2>
+          <p><span class="ui-copy-en">Inventory is one of the classic operational systems because it makes uncertainty, timing, cost, and information interact in a clean but nontrivial way.</span><span class="ui-copy-zh">库存是运筹学里最经典的系统之一，因为它把不确定性、时间、成本与信息放进了一个结构清晰、但绝不简单的问题里。</span></p>
+        </div>
+      </div>
+      <div class="primer-equations">
+        <div class="primer-equation"><code>system → state → action → outcome</code><span><span class="ui-copy-en">A compact way to describe a sequential operational system.</span><span class="ui-copy-zh">描述序贯运营系统的一条最简主线。</span></span></div>
+        <div class="primer-equation"><code>cost = holding + shortage + ordering + service + …</code><span><span class="ui-copy-en">The objective combines operational consequences that pull the decision in different directions.</span><span class="ui-copy-zh">目标函数把多个方向相反的运营后果放在一起权衡。</span></span></div>
+        <div class="primer-equation"><code>model value ≠ model realism</code><span><span class="ui-copy-en">A more detailed model is not automatically a better decision model; the important question is whether the added detail changes decisions meaningfully.</span><span class="ui-copy-zh">更详细的模型并不自动等于更好的决策模型；真正重要的是新增细节是否会实质改变决策。</span></span></div>
+      </div>
+      <div class="primer-prose" style="margin-top:27px">
+        <p><span class="ui-copy-en">My warranty-inventory work sits naturally here. The real system is a service operation with uncertain product failures. The modelling challenge is to represent warranty memory. The optimization challenge is to decide replenishment. The theoretical challenge is to understand policy structure. The computational challenge appears when the state becomes too rich.</span><span class="ui-copy-zh">我的保修库存研究正好处在这条链条里：真实系统是存在随机产品失效的售后运营；建模问题是怎样表达保修“记忆”；优化问题是如何补货；理论问题是策略具有什么结构；而当状态变得过于丰富时，计算问题就会随之出现。</span></p>
+      </div>
+    </section>
+
+    <section class="primer-section">
+      <div class="primer-section-head">
+        <span class="primer-section-index">04</span>
+        <div>
+          <h2><span class="ui-copy-en">What I want from an OR model</span><span class="ui-copy-zh">我希望一个运筹模型最终能给我什么？</span></h2>
+          <p><span class="ui-copy-en">Not only a number. Ideally, a model should reveal why a decision changes and which mechanism is responsible.</span><span class="ui-copy-zh">不只是一个最优数值。我更希望模型能够告诉我们：决策为什么变化，究竟是哪一种机制推动了这种变化。</span></p>
+        </div>
+      </div>
+      <div class="primer-question-list">
+        <article class="primer-question"><span>Q1</span><div><strong><span class="ui-copy-en">Structure before computation</span><span class="ui-copy-zh">先理解结构，再谈计算</span></strong><p><span class="ui-copy-en">Can we prove monotonicity, thresholds, bounds, or comparative statics before relying on numerical output?</span><span class="ui-copy-zh">在依赖数值结果之前，能否先证明单调性、阈值、界或比较静态性质？</span></p></div></article>
+        <article class="primer-question"><span>Q2</span><div><strong><span class="ui-copy-en">Mechanism before complexity</span><span class="ui-copy-zh">先抓机制，再加复杂度</span></strong><p><span class="ui-copy-en">Which modelling ingredient creates the phenomenon we see, and which details can safely be removed?</span><span class="ui-copy-zh">究竟是哪一个建模因素产生了我们看到的现象？哪些细节可以安全删掉？</span></p></div></article>
+        <article class="primer-question"><span>Q3</span><div><strong><span class="ui-copy-en">Decision value before prediction score</span><span class="ui-copy-zh">先看决策价值，再看预测分数</span></strong><p><span class="ui-copy-en">When data or learning enters the model, I care about how much the resulting information improves the operational decision.</span><span class="ui-copy-zh">当数据与学习进入模型时，我更关心新增信息到底给运营决策带来了多少真正价值。</span></p></div></article>
+      </div>
+      <div class="primer-related">
+        <a href={withBase('/research/inventory-warranty')}><small>01 · Application</small><strong>Inventory & Warranty</strong><span><span class="ui-copy-en">The operational system currently at the center of my work.</span><span class="ui-copy-zh">我目前研究最集中的具体运营系统。</span></span></a>
+        <a href={withBase('/research/stochastic-optimization')}><small>02 · Method</small><strong>Stochastic Optimization</strong><span><span class="ui-copy-en">The machinery for sequential decisions under uncertainty.</span><span class="ui-copy-zh">处理不确定环境下序贯决策的核心方法体系。</span></span></a>
+      </div>
+    </section>
+
+    <div class="research-primer-back">
+      <a href={withBase('/research')}>← <span class="ui-copy-en">Back to Research</span><span class="ui-copy-zh">返回研究主页</span></a>
+      <a href={withBase('/ideas')}><span class="ui-copy-en">See ideas in motion →</span><span class="ui-copy-zh">看看正在推进的想法 →</span></a>
+    </div>
+  </main>
+  <SiteExtras />
+</BaseLayout>
