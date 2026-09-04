@@ -38,6 +38,32 @@ const { citation = { plain: '', markdown: '', bibtex: '' } } = Astro.props;
 
   const detailsPattern = /^\s*\[!details(?:\s+([^\]]+))?\]\s*/i;
   const blockPattern = /^\s*\[!(definition|theorem|lemma|proposition|corollary|proof|assumption|notation)(?:\s+id=([^\]\s|]+))?(?:\s*\|\s*([^\]]+))?\]\s*/i;
+
+  const makeDetails = ({ quote, first, className, titleText, id = '', crossrefKey = '', crossrefLabel = '' }) => {
+    const details = document.createElement('details');
+    details.className = className;
+    if (id) details.id = id;
+
+    const summary = document.createElement('summary');
+    const title = document.createElement('span');
+    title.className = 'scholarly-summary-title';
+    title.textContent = titleText;
+    const affordance = document.createElement('span');
+    affordance.className = 'scholarly-summary-affordance';
+    affordance.setAttribute('aria-hidden', 'true');
+    summary.append(title, affordance);
+
+    const body = document.createElement('div');
+    body.className = 'scholarly-details-body';
+    if (first && !first.textContent?.trim() && first.children.length === 0) first.remove();
+    while (quote.firstChild) body.appendChild(quote.firstChild);
+    details.append(summary, body);
+    quote.replaceWith(details);
+
+    if (crossrefKey && id) crossrefs.set(crossrefKey, { href: `#${id}`, label: crossrefLabel || titleText });
+    return details;
+  };
+
   [...prose.querySelectorAll('blockquote')].forEach(quote => {
     const first = quote.querySelector('p');
     const text = first?.textContent || '';
@@ -46,21 +72,12 @@ const { citation = { plain: '', markdown: '', bibtex: '' } } = Astro.props;
     const detailsMatch = text.match(detailsPattern);
     if (detailsMatch) {
       first.innerHTML = first.innerHTML.replace(detailsPattern, '');
-      const details = document.createElement('details');
-      details.className = 'scholarly-details';
-      const summary = document.createElement('summary');
-      const title = document.createElement('span');
-      title.className = 'scholarly-summary-title';
-      title.textContent = (detailsMatch[1] || '').trim() || 'Details';
-      const affordance = document.createElement('span');
-      affordance.className = 'scholarly-summary-affordance';
-      affordance.setAttribute('aria-hidden', 'true');
-      summary.append(title, affordance);
-      const body = document.createElement('div');
-      body.className = 'scholarly-details-body';
-      while (quote.firstChild) body.appendChild(quote.firstChild);
-      details.append(summary, body);
-      quote.replaceWith(details);
+      makeDetails({
+        quote,
+        first,
+        className: 'scholarly-details',
+        titleText: (detailsMatch[1] || '').trim() || 'Details'
+      });
       return;
     }
 
@@ -72,26 +89,28 @@ const { citation = { plain: '', markdown: '', bibtex: '' } } = Astro.props;
     first.innerHTML = first.innerHTML.replace(blockPattern, '');
 
     if (kind === 'proof') {
-      const details = document.createElement('details');
-      details.className = 'scholarly-proof';
-      const summary = document.createElement('summary');
-      const title = document.createElement('span');
-      title.className = 'scholarly-summary-title';
-      title.textContent = customLabel || 'Proof';
-      const affordance = document.createElement('span');
-      affordance.className = 'scholarly-summary-affordance';
-      affordance.setAttribute('aria-hidden', 'true');
-      summary.append(title, affordance);
-      const body = document.createElement('div');
-      body.className = 'scholarly-proof-body';
-      while (quote.firstChild) body.appendChild(quote.firstChild);
-      details.append(summary, body);
-      quote.replaceWith(details);
+      makeDetails({ quote, first, className: 'scholarly-proof', titleText: customLabel || 'Proof' });
       return;
     }
 
     const config = kindConfig[kind];
     if (!config) return;
+
+    if (kind === 'notation' || kind === 'assumption') {
+      const anchorId = id ? `${config.prefix}-${id}` : '';
+      const label = customLabel || config.label;
+      makeDetails({
+        quote,
+        first,
+        className: `scholarly-details scholarly-inline-block scholarly-${kind}`,
+        titleText: label,
+        id: anchorId,
+        crossrefKey: id ? `${config.prefix}:${id}` : '',
+        crossrefLabel: label
+      });
+      return;
+    }
+
     const number = nextNumber(kind);
     quote.classList.add('scholarly-block', `scholarly-${kind}`);
     quote.dataset.scholarKind = kind;
@@ -106,23 +125,25 @@ const { citation = { plain: '', markdown: '', bibtex: '' } } = Astro.props;
     }
   });
 
-  [...prose.querySelectorAll('.katex-display')].forEach((display, index) => {
-    const number = index + 1;
+  let numberedEquationCount = 0;
+  [...prose.querySelectorAll('.katex-display')].forEach(display => {
+    const next = display.nextElementSibling;
+    if (next?.tagName !== 'P') return;
+    const markerMatch = (next.textContent || '').trim().match(/^:eq\[([^\]]+)\]$/);
+    if (!markerMatch) return;
+
+    numberedEquationCount += 1;
+    const number = numberedEquationCount;
+    const id = markerMatch[1].trim();
     display.classList.add('numbered-equation');
+    display.id = `eq-${id}`;
+    next.classList.add('equation-marker');
+
     const marker = document.createElement('span');
     marker.className = 'equation-number';
     marker.textContent = `(${number})`;
     display.appendChild(marker);
-    const next = display.nextElementSibling;
-    if (next?.tagName === 'P') {
-      const markerMatch = (next.textContent || '').trim().match(/^:eq\[([^\]]+)\]$/);
-      if (markerMatch) {
-        const id = markerMatch[1].trim();
-        display.id = `eq-${id}`;
-        next.classList.add('equation-marker');
-        crossrefs.set(`eq:${id}`, { href: `#eq-${id}`, label: `Equation (${number})` });
-      }
-    }
+    crossrefs.set(`eq:${id}`, { href: `#eq-${id}`, label: `Equation (${number})` });
   });
 
   const refPattern = /\[\[(eq|def|thm|lem|prop|cor|assumption|notation):([^\]]+)\]\]/g;
@@ -163,39 +184,6 @@ const { citation = { plain: '', markdown: '', bibtex: '' } } = Astro.props;
     if (last < text.length) fragment.append(document.createTextNode(text.slice(last)));
     textNode.replaceWith(fragment);
   });
-
-  const fillAside = (kind, panelName) => {
-    const panel = document.querySelector(`[data-aside-panel="${panelName}"]`);
-    if (!panel) return;
-    const list = panel.querySelector('.article-aside-list');
-    const empty = panel.querySelector('.article-aside-empty');
-    const blocks = [...prose.querySelectorAll(`.scholarly-${kind}`)];
-    if (!list) return;
-    blocks.forEach((block, index) => {
-      const item = document.createElement(block.id ? 'a' : 'div');
-      item.className = 'article-aside-item';
-      if (block.id) item.href = `#${block.id}`;
-      const strong = document.createElement('strong');
-      const label = block.querySelector('.scholarly-label')?.textContent || `${kind} ${index + 1}`;
-      strong.textContent = label;
-      const copy = document.createElement('span');
-      const firstText = [...block.querySelectorAll('p')].map(p => p.textContent?.trim()).find(Boolean) || '';
-      copy.textContent = firstText.length > 95 ? `${firstText.slice(0, 93)}…` : firstText;
-      item.append(strong, copy);
-      list.appendChild(item);
-    });
-    if (empty) empty.hidden = blocks.length > 0;
-  };
-  fillAside('notation', 'notation');
-  fillAside('assumption', 'assumptions');
-
-  const tabs = [...document.querySelectorAll('[data-aside-tab]')];
-  const panels = [...document.querySelectorAll('[data-aside-panel]')];
-  tabs.forEach(tab => tab.addEventListener('click', () => {
-    const name = tab.dataset.asideTab;
-    tabs.forEach(item => item.classList.toggle('active', item === tab));
-    panels.forEach(panel => { panel.hidden = panel.dataset.asidePanel !== name; });
-  }));
 
   const copyText = async value => {
     try { await navigator.clipboard.writeText(value); return true; }
