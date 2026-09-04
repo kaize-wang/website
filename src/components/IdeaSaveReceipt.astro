@@ -1,0 +1,157 @@
+---
+const isIdeasStudio = /\/ideas\/?$/.test(Astro.url.pathname);
+---
+
+{isIdeasStudio && (
+  <script is:inline>
+    (() => {
+      const REMOTE_MARKER_KEY = 'kaize-ideas-remote-state-v1';
+      const STATE_VIEW = 'https://github.com/kaize-wang/website/blob/main/src/data/idea-workbench-state.json';
+
+      const language = () => window.__kaizeUi?.language === 'zh' ? 'zh' : 'en';
+      const t = (en, zh) => language() === 'zh' ? zh : en;
+      const readMarker = () => {
+        try { return localStorage.getItem(REMOTE_MARKER_KEY) || ''; } catch { return ''; }
+      };
+      const formatSavedTime = iso => {
+        if (!iso) return '';
+        const date = new Date(iso);
+        if (Number.isNaN(date.valueOf())) return '';
+        return new Intl.DateTimeFormat(language() === 'zh' ? 'zh-CN' : 'en', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        }).format(date);
+      };
+
+      let statusNode = null;
+      let receipt = null;
+      let dataLink = null;
+      let mutating = false;
+
+      const isOwner = () => Boolean(window.__kaizeIdeaOwner?.verified || document.body.classList.contains('idea-owner-active'));
+
+      const ensureReceipt = () => {
+        statusNode = document.querySelector('.idea-owner-save-state');
+        if (!statusNode) return false;
+        if (receipt?.isConnected) return true;
+
+        receipt = document.createElement('span');
+        receipt.className = 'idea-save-receipt';
+        statusNode.insertAdjacentElement('afterend', receipt);
+
+        dataLink = document.createElement('a');
+        dataLink.className = 'idea-save-data-link';
+        dataLink.href = STATE_VIEW;
+        dataLink.target = '_blank';
+        dataLink.rel = 'noreferrer';
+        receipt.appendChild(dataLink);
+        return true;
+      };
+
+      const render = () => {
+        if (!ensureReceipt() || mutating) return;
+        const owner = isOwner();
+        receipt.hidden = !owner;
+        if (!owner) return;
+
+        const raw = String(statusNode.textContent || '').trim();
+        const saving = statusNode.classList.contains('is-saving');
+        const failed = statusNode.classList.contains('is-error');
+        const marker = readMarker();
+        const clock = formatSavedTime(marker);
+
+        if (!saving && !failed && marker) {
+          const desired = clock
+            ? t(`Saved · GitHub · ${clock}`, `已保存 · GitHub · ${clock}`)
+            : t('Saved · GitHub', '已保存 · GitHub');
+          if (raw !== desired) {
+            mutating = true;
+            statusNode.textContent = desired;
+            queueMicrotask(() => { mutating = false; });
+          }
+        } else if (!saving && !failed && !marker && /Public|公开/.test(raw)) {
+          mutating = true;
+          statusNode.textContent = t('Connected · GitHub', '已连接 · GitHub');
+          queueMicrotask(() => { mutating = false; });
+        }
+
+        if (dataLink) {
+          dataLink.textContent = t('View saved data ↗', '查看已保存数据 ↗');
+          dataLink.title = t('Open the persistent Ideas state stored in GitHub', '打开 GitHub 中永久保存的 Ideas 状态文件');
+        }
+      };
+
+      const init = () => {
+        if (!ensureReceipt()) {
+          const wait = new MutationObserver(() => {
+            if (!ensureReceipt()) return;
+            wait.disconnect();
+            initObservers();
+            render();
+          });
+          wait.observe(document.body, { childList: true, subtree: true });
+          return;
+        }
+        initObservers();
+        render();
+      };
+
+      const initObservers = () => {
+        if (!statusNode) return;
+        new MutationObserver(render).observe(statusNode, {
+          childList: true,
+          characterData: true,
+          subtree: true,
+          attributes: true,
+          attributeFilter: ['class']
+        });
+        new MutationObserver(render).observe(document.body, {
+          attributes: true,
+          attributeFilter: ['class']
+        });
+      };
+
+      document.addEventListener('kaize:ui-language', render);
+      window.addEventListener('storage', event => {
+        if (event.key === REMOTE_MARKER_KEY) render();
+      });
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true });
+      else init();
+    })();
+  </script>
+)}
+
+<style is:global>
+  .idea-save-receipt {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    margin-left: 2px;
+  }
+  .idea-save-receipt[hidden] { display: none !important; }
+  .idea-save-data-link {
+    color: var(--muted);
+    font-size: 8px;
+    letter-spacing: .035em;
+    text-decoration: none;
+    white-space: nowrap;
+    opacity: .76;
+    transition: color .16s ease, opacity .16s ease;
+  }
+  .idea-save-data-link::before {
+    content: '';
+    display: inline-block;
+    width: 13px;
+    height: 1px;
+    margin: 0 6px 2px 2px;
+    background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 45%, var(--line)), transparent);
+  }
+  .idea-save-data-link:hover {
+    color: var(--accent);
+    opacity: 1;
+  }
+  @media (max-width: 760px) {
+    .idea-save-receipt { display: none; }
+  }
+</style>
