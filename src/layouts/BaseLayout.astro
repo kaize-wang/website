@@ -10,7 +10,6 @@ import { site } from '@/site.config';
 import { getPublishedNotes, noteSlug } from '@/utils/notes';
 import { withBase } from '@/utils/url';
 const { title = site.title, description = site.shortBio, active = '' } = Astro.props;
-const pageTitle = title === site.title ? title : `${title} · ${site.title}`;
 
 const rawBase = import.meta.env.BASE_URL || '/';
 const basePrefix = rawBase === '/' ? '' : rawBase.replace(/\/$/, '');
@@ -19,6 +18,57 @@ if (basePrefix && routePath.startsWith(basePrefix)) routePath = routePath.slice(
 routePath = routePath.replace(/\/+$/, '') || '/';
 
 const isHome = routePath === '/';
+const identityName = site.chineseName ? `${site.fullName} (${site.chineseName})` : site.fullName;
+const pageTitle = isHome ? `${identityName} | Nankai University` : `${title} · ${site.fullName}`;
+const seoDescription = isHome
+  ? `${identityName}, a student and researcher at Nankai University (南开大学), working on inventory systems, replacement warranty, stochastic optimization, and operations research.`
+  : description;
+const siteOrigin = Astro.site ?? Astro.url.origin;
+const canonicalUrl = new URL(Astro.url.pathname, siteOrigin).toString();
+const homeUrl = new URL(`${basePrefix || ''}/`, siteOrigin).toString();
+const sitemapUrl = new URL(`${basePrefix || ''}/sitemap-index.xml`, siteOrigin).toString();
+const socialProfiles = [site.github, site.scholar].filter(Boolean);
+const structuredData = isHome
+  ? {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'Person',
+          '@id': `${homeUrl}#person`,
+          name: site.fullName,
+          alternateName: [site.chineseName, site.title].filter(Boolean),
+          url: homeUrl,
+          image: site.avatar,
+          description: seoDescription,
+          jobTitle: site.role,
+          affiliation: {
+            '@type': 'CollegeOrUniversity',
+            name: site.affiliation,
+            alternateName: '南开大学'
+          },
+          sameAs: socialProfiles,
+          knowsAbout: [
+            'Inventory management',
+            'Replacement warranty',
+            'Stochastic optimization',
+            'Operations research',
+            'Supply chain management'
+          ]
+        },
+        {
+          '@type': 'WebSite',
+          '@id': `${homeUrl}#website`,
+          url: homeUrl,
+          name: identityName,
+          alternateName: site.title,
+          description: seoDescription,
+          inLanguage: ['en', 'zh-CN'],
+          about: { '@id': `${homeUrl}#person` }
+        }
+      ]
+    }
+  : null;
+
 const isArticle = routePath.startsWith('/notes/');
 const isIdeaDetail = routePath.startsWith('/ideas/');
 const isResearchDetail = routePath.startsWith('/research/');
@@ -128,9 +178,30 @@ const commandItems = [
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
-    <meta name="description" content={description} />
+    <meta name="description" content={seoDescription} />
+    <meta name="author" content={identityName} />
+    <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />
+    <meta name="googlebot" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />
     <meta name="generator" content={Astro.generator} />
+    <link rel="canonical" href={canonicalUrl} />
+    <link rel="sitemap" type="application/xml" href={sitemapUrl} />
+
+    <meta property="og:type" content={isHome ? 'profile' : 'website'} />
+    <meta property="og:site_name" content={identityName} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={seoDescription} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:image" content={site.avatar} />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:locale:alternate" content="zh_CN" />
+
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={seoDescription} />
+    <meta name="twitter:image" content={site.avatar} />
+
     <title>{pageTitle}</title>
+    {structuredData && <script type="application/ld+json" set:html={JSON.stringify(structuredData)} />}
     <script is:inline>
       try {
         const saved = localStorage.getItem('theme');
