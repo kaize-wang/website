@@ -1,4 +1,5 @@
 ---
+import { getCollection } from 'astro:content';
 import '@/styles/global.css';
 import '@/styles/interaction.css';
 import '@/styles/advanced-tools.css';
@@ -19,6 +20,7 @@ routePath = routePath.replace(/\/+$/, '') || '/';
 
 const isHome = routePath === '/';
 const isArticle = routePath.startsWith('/notes/');
+const isIdeaDetail = routePath.startsWith('/ideas/');
 const labRoute = ['/graph', '/literature', '/questions', '/sandbox', '/explore'].includes(routePath);
 const noteUtilityRoute =
   routePath === '/archive' ||
@@ -29,20 +31,25 @@ const contextBack = isHome
   ? null
   : isArticle
     ? { label: 'Notes', href: '/notes' }
-    : routePath === '/papers'
-      ? { label: 'Notes', href: '/notes' }
-      : labRoute
-        ? { label: 'Lab', href: '/lab' }
-        : noteUtilityRoute
-          ? { label: 'Notes', href: '/notes' }
-          : { label: 'Home', href: '/' };
+    : isIdeaDetail
+      ? { label: 'Ideas', href: '/ideas' }
+      : routePath === '/papers'
+        ? { label: 'Notes', href: '/notes' }
+        : labRoute
+          ? { label: 'Lab', href: '/lab' }
+          : noteUtilityRoute
+            ? { label: 'Notes', href: '/notes' }
+            : { label: 'Home', href: '/' };
 
 const navZh: Record<string, string> = {
   Home: '首页',
   Research: '研究',
-  Notes: '笔记'
+  Notes: '笔记',
+  Ideas: '想法'
 };
 const commandNotes = await getPublishedNotes();
+const commandIdeas = (await getCollection('ideas', ({ data }) => !data.draft))
+  .sort((a, b) => (b.data.updatedDate ?? b.data.createdDate).valueOf() - (a.data.updatedDate ?? a.data.createdDate).valueOf());
 const commandItems = [
   ...site.nav.map(item => ({
     type: 'Page',
@@ -59,8 +66,8 @@ const commandItems = [
     typeZh: '页面',
     title: 'Lab',
     titleZh: '杂物间',
-    description: 'Optional experiments, visual toys, maps, and ideas kept away from the main navigation.',
-    descriptionZh: '收纳实验、可视化、小工具和不必占据主导航的新奇想法。',
+    description: 'Optional experiments, visual toys, maps, and curiosities kept away from the main navigation.',
+    descriptionZh: '收纳实验、可视化、小工具和不必占据主导航的新奇玩意。',
     href: withBase('/lab'),
     keywords: 'lab attic experiments graph map sandbox visitor 杂物间 实验 图谱 地图 沙盒'
   },
@@ -84,6 +91,16 @@ const commandItems = [
     href: withBase('/search'),
     keywords: 'search full text notes paper 搜索 全文 笔记 论文'
   },
+  ...commandIdeas.map(idea => ({
+    type: 'Idea',
+    typeZh: '想法',
+    title: idea.data.title,
+    titleZh: idea.data.titleZh || idea.data.title,
+    description: idea.data.summary,
+    descriptionZh: idea.data.summaryZh || idea.data.summary,
+    href: withBase(`/ideas/${idea.id}/`),
+    keywords: [idea.data.area, idea.data.stage, ...idea.data.tags, idea.data.titleZh].filter(Boolean).join(' ')
+  })),
   ...commandNotes.map(note => ({
     type: note.data.paper ? 'Paper note' : 'Note',
     typeZh: note.data.paper ? '论文笔记' : '笔记',
