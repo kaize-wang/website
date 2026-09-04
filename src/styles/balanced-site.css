@@ -171,6 +171,13 @@
 .contextual-backlink-item small { color: var(--muted); font-size: 9px; letter-spacing: .04em; text-transform: uppercase; }
 .contextual-backlink-item:hover strong { color: var(--accent); }
 
+body.focus-reading .floating-toc-toggle,
+body.focus-reading .floating-toc,
+body.paper-reader-active .floating-toc-toggle,
+body.paper-reader-active .floating-toc {
+  display: none !important;
+}
+
 @media (max-width: 980px) {
   .note-shelf-guide { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .lab-page .explore-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
