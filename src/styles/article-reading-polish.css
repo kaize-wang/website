@@ -1,0 +1,53 @@
+.floating-toc,
+.article-aside-panel,
+.article-contents nav,
+.article-wrap,
+.scholarly-details-body,
+.scholarly-proof-body {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--muted) 54%, transparent) transparent;
+}
+.floating-toc::-webkit-scrollbar,
+.article-aside-panel::-webkit-scrollbar,
+.article-contents nav::-webkit-scrollbar,
+.article-wrap::-webkit-scrollbar,
+.scholarly-details-body::-webkit-scrollbar,
+.scholarly-proof-body::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+.floating-toc::-webkit-scrollbar-track,
+.article-aside-panel::-webkit-scrollbar-track,
+.article-contents nav::-webkit-scrollbar-track,
+.article-wrap::-webkit-scrollbar-track,
+.scholarly-details-body::-webkit-scrollbar-track,
+.scholarly-proof-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+.floating-toc::-webkit-scrollbar-thumb,
+.article-aside-panel::-webkit-scrollbar-thumb,
+.article-contents nav::-webkit-scrollbar-thumb,
+.article-wrap::-webkit-scrollbar-thumb,
+.scholarly-details-body::-webkit-scrollbar-thumb,
+.scholarly-proof-body::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-clip: padding-box;
+  background-color: color-mix(in srgb, var(--muted) 52%, transparent);
+}
+.floating-toc::-webkit-scrollbar-thumb:hover,
+.article-wrap::-webkit-scrollbar-thumb:hover {
+  background-color: var(--muted);
+}
+:root[data-theme='dark'] .floating-toc,
+:root[data-theme='dark'] .article-aside-panel,
+:root[data-theme='dark'] .article-contents nav,
+:root[data-theme='dark'] .article-wrap {
+  scrollbar-color: #555a54 transparent;
+}
+:root[data-theme='dark'] .floating-toc::-webkit-scrollbar-thumb,
+:root[data-theme='dark'] .article-aside-panel::-webkit-scrollbar-thumb,
+:root[data-theme='dark'] .article-contents nav::-webkit-scrollbar-thumb,
+:root[data-theme='dark'] .article-wrap::-webkit-scrollbar-thumb {
+  background-color: #555a54;
+}
