@@ -1,26 +1,26 @@
 ---
-title: Paper-reading workspace
-summary: Make close reading feel like one continuous surface: source on the left, my own reasoning on the right.
+title: "Paper-reading workspace"
+summary: "Make close reading feel like one continuous surface: source on the left, my own reasoning on the right."
 area: Build
 stage: Active
 createdDate: 2026-09-03
 updatedDate: 2026-09-04
-nextAction: Test the PDF/Markdown source switch and simplify the remaining Reader controls.
-whyNow: This is already becoming part of the paper-reading workflow, so small usability improvements have immediate value.
+nextAction: "Test the PDF/Markdown source switch and simplify the remaining Reader controls."
+whyNow: "This is already becoming part of the paper-reading workflow, so small usability improvements have immediate value."
 milestones:
-  - text: Build the split source-and-notes layout
+  - text: "Build the split source-and-notes layout"
     done: true
-  - text: Add local PDF persistence
+  - text: "Add local PDF persistence"
     done: true
-  - text: Add PDF / Markdown source switching
+  - text: "Add PDF / Markdown source switching"
     done: true
-  - text: Finish a calm usability pass
+  - text: "Finish a calm usability pass"
     done: false
 progress:
   - date: 2026-09-04
-    note: Simplified Reader controls and kept source files local to the browser.
+    note: "Simplified Reader controls and kept source files local to the browser."
   - date: 2026-09-03
-    note: First working split-view prototype for Huang (2008).
+    note: "First working split-view prototype for Huang (2008)."
 tags: [reader, papers, workflow]
 featured: true
 ---
