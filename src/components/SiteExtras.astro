@@ -1,3 +1,26 @@
+---
+import PaperReaderWorkspace from '@/components/PaperReaderWorkspace.astro';
+import '@/styles/article-reading-polish.css';
+import { withBase } from '@/utils/url';
+
+const isHuangReader = Astro.url.pathname.endsWith('/notes/paper-reading-huang-2008/');
+const huangPdfParts = [1, 2, 3, 4].map(index => withBase(`/sources/huang-2008.pdf.b64.part${index}`));
+const huangMarkdownParts = [1, 2, 3, 4, 5].map(index => withBase(`/sources/huang-2008.md.part${index}`));
+---
+
+{isHuangReader && (
+  <PaperReaderWorkspace
+    noteId="paper-reading-huang-2008"
+    paperTitle="Managing the Inventory of an Item with a Replacement Warranty"
+    pdfParts={huangPdfParts}
+    markdownParts={huangMarkdownParts}
+    printedPageStart={1441}
+    pdfPageStart={1}
+    appendixPrintedPageStart={29}
+    appendixPdfPageStart={14}
+  />
+)}
+
 <script is:inline>
 (() => {
   const init = () => {
