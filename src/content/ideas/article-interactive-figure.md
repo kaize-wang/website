@@ -1,12 +1,12 @@
 ---
-title: Article-native interactive figures
-summary: Instead of a generic playground, build tiny explorable figures only when a specific paragraph genuinely benefits from interaction.
+title: "Article-native interactive figures"
+summary: "Instead of a generic playground, build tiny explorable figures only when a specific paragraph genuinely benefits from interaction."
 area: Build
 stage: Spark
 createdDate: 2026-09-04
 updatedDate: 2026-09-04
-nextAction: Wait until one note has a mechanism that is genuinely easier to understand by manipulating a variable.
-whyNow: The idea is attractive, but it should stay a spark until a real explanatory need appears.
+nextAction: "Wait until one note has a mechanism that is genuinely easier to understand by manipulating a variable."
+whyNow: "The idea is attractive, but it should stay a spark until a real explanatory need appears."
 milestones: []
 progress: []
 tags: [interaction, writing, visualization]
